@@ -21,9 +21,8 @@ remove_pam_config() {
 }
 
 remove_hyprlock_fingerprint_icon() {
-  echo "Removing fingerprint icon from hyprlock placeholder text..."
-  sed -i 's/placeholder_text = .*/placeholder_text = Enter Password/' ~/.config/hypr/hyprlock.conf
-  sed -i 's/fingerprint:enabled = .*/fingerprint:enabled = false/' ~/.config/hypr/hyprlock.conf
+  # NOTE(sway): no swaylock lock-screen icon/placeholder to revert (PAM-based auth).
+  :
 }
 
 echo -e "\e[32mRemoving fingerprint scanner from authentication.\n\e[0m"

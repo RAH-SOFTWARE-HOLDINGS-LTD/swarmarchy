@@ -1,34 +1,24 @@
 #!/bin/bash
 
-# omarchy:summary=Toggle to pop-out a tile to stay fixed on a display basis.
+# omarchy:summary=Pop the focused tile out to a fixed floating, pinned window (toggle).
 # omarchy:args=[width height x y]
+# (Ported to Sway; uses a "pop" mark to track state. Filename retained.)
 
 width=${1:-1300}
 height=${2:-900}
 x=${3:-}
 y=${4:-}
 
-active=$(hyprctl activewindow -j)
-pinned=$(echo "$active" | jq ".pinned")
-addr=$(echo "$active" | jq -r ".address")
+marks=$(swaymsg -t get_tree | jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.focused? == true) | (.marks // []) | join(" ")')
 
-if [[ $pinned == "true" ]]; then
-  hyprctl -q --batch \
-    "dispatch pin address:$addr;" \
-    "dispatch togglefloating address:$addr;" \
-    "dispatch tagwindow -pop address:$addr;"
-elif [[ -n $addr ]]; then
-  hyprctl dispatch togglefloating address:$addr
-  hyprctl dispatch resizeactive exact $width $height address:$addr
-
+if [[ " $marks " == *" pop "* ]]; then
+  # Already popped -> restore to tiling
+  swaymsg 'unmark pop, sticky disable, floating disable' >/dev/null
+else
+  swaymsg "floating enable, resize set width ${width}px height ${height}px, sticky enable, mark --add pop" >/dev/null
   if [[ -n $x && -n $y ]]; then
-    hyprctl dispatch moveactive $x $y address:$addr
+    swaymsg "move absolute position ${x} ${y}" >/dev/null
   else
-    hyprctl dispatch centerwindow address:$addr
+    swaymsg "move position center" >/dev/null
   fi
-
-  hyprctl -q --batch \
-    "dispatch pin address:$addr;" \
-    "dispatch alterzorder top address:$addr;" \
-    "dispatch tagwindow +pop address:$addr;"
 fi

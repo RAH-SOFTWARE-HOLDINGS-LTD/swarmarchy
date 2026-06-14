@@ -1,5 +1,6 @@
 #!/bin/bash
 
-# omarchy:summary=Return success if the focused Hyprland monitor is an Apple display.
+# omarchy:summary=Return success if the focused monitor is an Apple display.
+# (Ported to Sway; filename retained for compatibility.)
 
-hyprctl monitors -j | jq -e '.[] | select(.focused == true) | select(.make == "Apple Computer Inc" and (.model | test("StudioDisplay|ProDisplayXDR|Studio XDR")))' >/dev/null
+swaymsg -t get_outputs | jq -e '.[] | select(.focused == true) | select(.make == "Apple Computer Inc" and (.model | test("StudioDisplay|ProDisplayXDR|Studio XDR")))' >/dev/null

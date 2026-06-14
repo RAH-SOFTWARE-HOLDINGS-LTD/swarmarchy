@@ -1,5 +1,6 @@
 #!/bin/bash
 
-# omarchy:summary=Overwrite the user config for hyprlock with the Omarchy default.
+# omarchy:summary=Overwrite the user config for the lock screen (swaylock) with the Omarchy default.
+# (Ported to Sway: hyprlock -> swaylock. Filename retained for compatibility.)
 
-omarchy-refresh-config hypr/hyprlock.conf
+omarchy-refresh-config swaylock/config

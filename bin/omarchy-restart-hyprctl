@@ -1,5 +1,6 @@
 #!/bin/bash
 
-# omarchy:summary=Reload hyprland configuration (used by the Omarchy theme switching).
+# omarchy:summary=Reload the Sway configuration (used by Omarchy theme switching).
+# (Ported to Sway; filename retained for compatibility.)
 
-hyprctl reload >/dev/null
+swaymsg reload >/dev/null

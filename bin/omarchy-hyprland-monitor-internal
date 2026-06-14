@@ -2,18 +2,21 @@
 
 # omarchy:summary=Enable, disable, toggle, or recover the internal laptop display
 # omarchy:args=<on|off|toggle|recover>
+# (Ported to Sway; filename retained for compatibility.)
 
 TOGGLE="internal-monitor-disable"
-TOGGLE_FLAG="$HOME/.local/state/omarchy/toggles/hypr/$TOGGLE.conf"
+TOGGLE_FLAG="$HOME/.local/state/omarchy/toggles/sway/$TOGGLE.conf"
 MIRROR_TOGGLE="internal-monitor-mirror"
 
 # Get internal monitor name dynamically
-INTERNAL=$(hyprctl monitors -j | jq -r '.[] | select(.name | contains("eDP")).name' | head -n 1)
+INTERNAL=$(swaymsg -t get_outputs | jq -r '.[] | select(.name | contains("eDP")).name' | head -n 1)
 
 enable() {
   if omarchy-hyprland-toggle-enabled "$TOGGLE"; then
     omarchy-hyprland-toggle --disabled-notification "󰍹    Laptop display enabled" "$TOGGLE"
   fi
+  # Sway reload won't re-enable an output on its own, so do it explicitly.
+  [[ -n $INTERNAL ]] && swaymsg output "$INTERNAL" enable
 }
 
 disable() {
@@ -22,15 +25,16 @@ disable() {
     exit 1
   fi
   if omarchy-hyprland-toggle-disabled "$TOGGLE" && omarchy-hyprland-toggle-disabled "$MIRROR_TOGGLE"; then
-    echo "monitor=$INTERNAL,disable" >"$TOGGLE_FLAG"
+    echo "output $INTERNAL disable" >"$TOGGLE_FLAG"
     notify-send -u low "󰍹    Laptop display disabled"
-    hyprctl reload
+    swaymsg reload
   fi
 }
 
 recover() {
   if ! omarchy-hw-external-monitors && omarchy-hyprland-toggle-enabled "$TOGGLE"; then
     omarchy-hyprland-toggle "$TOGGLE"
+    [[ -n $INTERNAL ]] && swaymsg output "$INTERNAL" enable
   fi
 }
 

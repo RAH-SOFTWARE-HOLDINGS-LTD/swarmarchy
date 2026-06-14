@@ -43,9 +43,9 @@ EOF
 }
 
 add_hyprlock_fingerprint_icon() {
-  echo "Adding fingerprint icon to hyprlock placeholder text..."
-  sed -i 's/placeholder_text = .*/placeholder_text = <span> Enter Password 󰈷 <\/span>/' ~/.config/hypr/hyprlock.conf
-  sed -i 's/fingerprint:enabled = .*/fingerprint:enabled = true/' ~/.config/hypr/hyprlock.conf
+  # NOTE(sway): swaylock authenticates via PAM, so fingerprint works once the PAM
+  # config above is in place — there is no lock-screen placeholder/icon to edit.
+  :
 }
 
 echo -e "\e[32mSetting up fingerprint scanner for authentication.\n\e[0m"

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# omarchy:summary=Toggle permanent Hyprland flags by copying them into a directory that's sourced entirely.
+# omarchy:summary=Toggle permanent Sway flags by copying them into a directory that's included entirely.
 # omarchy:args=[--enabled-notification <text>] [--disabled-notification <text>] <flag-name>
+# (Ported to Sway; filename retained for compatibility.)
 
 ENABLED_NOTIFICATION=""
 DISABLED_NOTIFICATION=""
@@ -15,8 +16,8 @@ while [[ $# -gt 1 ]]; do
 done
 
 FLAG_NAME="$1"
-FLAG="$HOME/.local/state/omarchy/toggles/hypr/$FLAG_NAME.conf"
-FLAG_SOURCE="$OMARCHY_PATH/default/hypr/toggles/$FLAG_NAME.conf"
+FLAG="$HOME/.local/state/omarchy/toggles/sway/$FLAG_NAME.conf"
+FLAG_SOURCE="$OMARCHY_PATH/default/sway/toggles/$FLAG_NAME.conf"
 
 if [[ -f $FLAG ]]; then
   rm $FLAG
@@ -29,4 +30,4 @@ else
   exit 1
 fi
 
-hyprctl reload
+swaymsg reload

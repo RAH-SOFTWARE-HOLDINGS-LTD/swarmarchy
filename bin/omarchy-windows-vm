@@ -55,7 +55,7 @@ install_windows() {
 [Desktop Entry]
 Name=Windows
 Comment=Start Windows VM via Docker and connect with RDP
-Exec=uwsm app -- omarchy-windows-vm launch
+Exec=omarchy-windows-vm launch
 Icon=$HOME/.local/share/applications/icons/windows.png
 Terminal=false
 Type=Application
@@ -334,8 +334,8 @@ To stop: omarchy-windows-vm stop"
     "" \
     "$LIFECYCLE"
 
-  # Detect display scale from Hyprland
-  HYPR_SCALE=$(hyprctl monitors -j | jq -r '.[] | select (.focused == true) | .scale')
+  # Detect display scale from Sway
+  HYPR_SCALE=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused == true) | .scale')
   SCALE_PERCENT=$(echo "$HYPR_SCALE" | awk '{print int($1 * 100)}')
 
   RDP_SCALE=""

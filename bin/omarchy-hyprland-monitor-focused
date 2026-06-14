@@ -1,5 +1,6 @@
 #!/bin/bash
 
-# omarchy:summary=Print the name of the currently focused Hyprland monitor.
+# omarchy:summary=Print the name of the currently focused monitor.
+# (Ported to Sway; filename retained for compatibility.)
 
-hyprctl monitors -j | jq -r '.[] | select(.focused == true).name'
+swaymsg -t get_outputs | jq -r '.[] | select(.focused == true).name'

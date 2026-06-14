@@ -5,8 +5,8 @@
 
 set -e
 
-# Ensure screensaver/sleep doesn't set in during updates
-hyprctl dispatch tagwindow +noidle &>/dev/null || true
+# Ensure screensaver/sleep doesn't set in during updates (pause swayidle)
+pkill -x swayidle &>/dev/null || true
 
 # Perform all update steps
 omarchy-update-keyring
@@ -21,5 +21,5 @@ omarchy-update-analyze-logs
 
 omarchy-update-restart
 
-# Re-enable screensaver/sleep after updates
-hyprctl dispatch tagwindow -- -noidle &>/dev/null || true
+# Re-enable screensaver/sleep after updates (resume swayidle)
+omarchy-swayidle &>/dev/null & disown

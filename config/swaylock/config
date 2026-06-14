@@ -1,0 +1,40 @@
+# Swarmarchy — swaylock config (replaces config/hypr/hyprlock.conf)
+# man 1 swaylock.  Theme should override colors via current/theme/swaylock.conf.
+#
+# NOTE: base `swaylock` has NO blur. The Hyprland lock used blur_passes=3.
+#       For blur, install `swaylock-effects` and add: effect-blur=7x5
+
+# Background (hypr: path = current/background)
+image=~/.config/omarchy/current/background
+scaling=fill
+
+# Behaviour (hypr: ignore_empty_input = true)
+# NOTE: no `daemonize` — omarchy-system-lock relies on swaylock blocking in the
+# foreground so it can run omarchy-system-wake after unlock.
+ignore-empty-password
+show-failed-attempts
+
+# Indicator (hypr input-field)
+indicator
+indicator-radius=100
+indicator-thickness=10
+font=JetBrainsMono Nerd Font
+
+# Colors — dark defaults (overridden by theme when present)
+color=1e1e2e
+inside-color=1e1e2eff
+inside-clear-color=1e1e2eff
+inside-ver-color=1e1e2eff
+inside-wrong-color=1e1e2eff
+ring-color=33ccffff
+ring-clear-color=00ff99ff
+ring-ver-color=33ccffff
+ring-wrong-color=ff5555ff
+key-hl-color=00ff99ff
+bs-hl-color=ff5555ff
+line-color=00000000
+separator-color=00000000
+text-color=ffffffff
+text-clear-color=ffffffff
+text-ver-color=ffffffff
+text-wrong-color=ffffffff

@@ -1,5 +1,7 @@
 #!/bin/bash
 
-# omarchy:summary=Restart the hypridle service (used for idle detection and auto-lock).
+# omarchy:summary=Restart the swayidle service (used for idle detection and auto-lock).
+# (Ported to Sway; filename retained for compatibility.)
 
-omarchy-restart-app hypridle
+pkill -x swayidle
+omarchy-swayidle >/dev/null 2>&1 &

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# omarchy:summary=Print the detected Hyprland touchpad or trackpad device name
+# omarchy:summary=Print the detected touchpad or trackpad device name
+# (Ported to Sway; filename retained for compatibility.)
 
-device=$(hyprctl devices -j | jq -r '[.mice[] | .name | select(test("touchpad|trackpad"; "i"))] | first // empty')
+device=$(swaymsg -t get_inputs | jq -r '[.[] | select(.type == "touchpad") | .name] | first // empty')
 [[ -n $device ]] && echo "$device"
