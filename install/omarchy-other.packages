@@ -1,73 +1,46 @@
 # Packages installed outside of install/packages.sh or optional packages
 # Utilized by ISO builder to ensure package availability in the ISO
+#
+# Swarmarchy: aarch64 / Snapdragon X Elite (Adreno X1-85). All x86-only driver
+# stacks removed. See docs/removed-packages.md and docs/summary-of-changes.md.
 
 autoconf-archive
-asusctl
 base
 base-devel
-broadcom-wl
 btrfs-progs
 dkms
-egl-wayland
 git
 gst-plugin-pipewire
 gtk4-layer-shell
-jdk-openjdk
 libpulse
-intel-ipu7-camera
-intel-lpmd
-intel-media-driver
-libva-intel-driver
-libva-nvidia-driver
 limine
 limine-mkinitcpio-hook
 limine-snapper-sync
 linux
 linux-firmware
 linux-headers
-linux-ptl
-linux-ptl-headers
-macbook12-spi-driver-dkms
-nvidia-580xx-dkms
-nvidia-dkms
-nvidia-open-dkms
-nvidia-580xx-utils
-nvidia-utils
-lib32-nvidia-580xx-utils
-lib32-nvidia-utils
 pipewire
 pipewire-alsa
 pipewire-jack
 pipewire-pulse
 qt6-wayland
 snapper
-sof-firmware
-thermald
 webp-pixbuf-loader
-yay-debug
-tuxedo-drivers-nocompatcheck-dkms
-yt6801-dkms
 zram-generator
 
-# Intel encoding processing
-libvpl
-vpl-gpu-rt
+# GPU — Qualcomm Adreno X1-85 (Mesa freedreno / turnip)
+mesa
+vulkan-freedreno
 
-# Vulkan drivers (auto-detected by hardware)
-vulkan-intel
-vulkan-radeon
-vulkan-asahi
-
-# Surface laptop support packages
-linux-firmware-marvell
-
-# Dell laptop support packages
-dell-xps-touchpad-haptics
-
-# T2 MacBook support packages
-apple-bcm-firmware
-apple-t2-audio-config
-linux-t2
-linux-t2-headers
-t2fanrd
-tiny-dfr
+# ── AARCH64 / SNAPDRAGON-X TODO (not yet resolvable from the offline mirror) ──
+# These are required but live in the AUR or need a Snapdragon-specific source,
+# so they cannot be downloaded by the ISO's `pacman -Syw` offline-mirror step.
+# Handle them via an AUR packaging script (yay) or a custom repo — see
+# docs/summary-of-changes.md §4/§6. Listed here so they are not forgotten:
+#
+#   linux-x1e (or patched aarch64 kernel)  # replaces generic `linux` above
+#   qualcomm firmware (ath12k Wi-Fi, Adreno A7xx)  # confirm exact set
+#   walker            # keyboard-first launcher (wlroots-native)
+#   yay               # AUR helper (replaces removed yay-debug)
+#   displaylink       # Plugable DisplayLink adapter
+#   evdi              # DisplayLink kernel module (built via dkms, above)
