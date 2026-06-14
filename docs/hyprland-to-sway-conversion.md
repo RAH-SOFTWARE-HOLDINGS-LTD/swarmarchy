@@ -38,17 +38,19 @@ Reference mapping used: `hyprctl monitors -j` → `swaymsg -t get_outputs`; `hyp
 
 **No change needed:** `omarchy-theme-set` (only called the now-ported `omarchy-restart-hyprctl`), `omarchy-refresh-config` (generic file-copier; matched only on a comment).
 
-### ⏭️ Skipped — need a decision/rewrite (see summary below)
-| Script | Why skipped |
+### ✅ Skip list — resolved
+| Item | Resolution |
 |---|---|
-| `omarchy-hyprland-monitor-internal-mirror` | Sway has **no native display mirroring** — needs `wl-mirror` (extra pkg) + rewrite |
-| `omarchy-hyprland-workspace-layout-toggle` | Sway has no dwindle/scrolling per-workspace layouts |
-| `omarchy-hyprland-window-transparency-toggle` | Sway has no per-window opacity *toggle* mechanism |
-| `omarchy-capture-screenrecording` | Depends on `gpu-screen-recorder` (removed for ARM/Adreno) — needs `wf-recorder` + rewrite |
-| `omarchy-launch-screensaver`, `omarchy-screensaver` | Depend on `tte`/`python-terminaltexteffects` (removed) — they exit *before* any `hyprctl`, so safe as-is |
-| `omarchy-menu` | Config-edit submenu points at `~/.config/hypr/*`; several feature toggles are dropped — needs curation (design decision) |
-| `omarchy-menu-keybindings` | Relies on `hyprctl -j binds` (no Sway equivalent) — needs a parser for `bindsym` + `##` comments in the sway config |
-| `omarchy-refresh-{hypridle,hyprsunset}` | Obsolete — swayidle has no config file, wlsunset uses CLI args (harmless if left) |
+| `omarchy-menu` | **Curated.** Config-edit + refresh + restart submenus repointed to `~/.config/sway/*` (`sway/config`, `swaylock/config`, `sway/{monitors,input,bindings,looknfeel}.conf`); dropped toggle items (Workspace Layout, Window Gaps, 1-Window Ratio, Screensaver) removed; `*Sway*` cases ordered after `*Swaylock*`/`*Swayosd*` to avoid glob collisions. |
+| `omarchy-menu-keybindings` | **Rewritten** to parse `default/sway/bindings.conf` + `config/sway/bindings.conf`, pairing each `bindsym` with its `## Description` comment (no keycode mapping needed — Sway uses named keys). |
+| `omarchy-capture-screenrecording` | **Rewritten** around `wf-recorder` (region/output via slurp, optional desktop/mic audio). **Optional install** — offers `omarchy-pkg-add wf-recorder` on first use; not in base packages. Webcam/HDR/portal paths dropped. |
+| `omarchy-hyprland-monitor-internal-mirror` | **Rewritten** around `wl-mirror` (mirrors the internal output into a window fullscreened on the external). **Optional install.** wl-mirror's `app_id` match may need tuning per build. |
+| `omarchy-hyprland-window-transparency-toggle` | **Dropped** (deleted) — opacity toggle deemed not useful. |
+| `omarchy-hyprland-workspace-layout-toggle` | **Dropped** (deleted) — Sway has no dwindle/scrolling layouts. |
+| `omarchy-launch-screensaver`, `omarchy-screensaver` | **Dropped** (deleted) — depended on removed `tte`; also removed the `timeout 150` screensaver step from `omarchy-swayidle` (idle now just dims + locks at 5 min). |
+| `omarchy-refresh-{hypridle,hyprsunset}` | **Dropped** (deleted) — swayidle has no config file, wlsunset uses CLI args. New `omarchy-refresh-sway` added for the Sway configs. |
+
+> New packages are **optional** (install-on-first-use): `wf-recorder`, `wl-mirror`. Themes purged to `tokyo-night` only (default); the theme *system* is retained.
 
 ## ⚠️ Theme system
 **Decision:** themes are out of scope for this build. Purged 18 of 19 theme folders, keeping only `tokyo-night` (the installer default — set by `install/config/theme.sh`). Per-theme `sway.conf` border-color files are **not** created (most themes lacked even the Hyprland equivalent). `config/sway/config` still includes `current/theme/sway.conf`, which is simply absent (Sway warns-but-continues).

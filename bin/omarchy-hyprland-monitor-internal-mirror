@@ -1,56 +1,62 @@
 #!/bin/bash
 
-# omarchy:summary=Enable, disable, toggle, or recover mirroring the internal display to an external monitor
+# omarchy:summary=Enable, disable, or toggle mirroring the internal display to an external monitor
 # omarchy:args=<on|off|toggle|recover>
+#
+# Ported to Sway: wlroots has NO native output mirroring, so this uses wl-mirror
+# (mirrors a source output into a window we fullscreen on the external display).
+# wl-mirror is NOT preinstalled — it is offered for install on first use.
+# (Filename retained for menu/reference compatibility.)
 
-TOGGLE="internal-monitor-mirror"
-TOGGLE_FLAG="$HOME/.local/state/omarchy/toggles/hypr/$TOGGLE.conf"
-DISABLE_TOGGLE="internal-monitor-disable"
+MIRROR=wl-mirror
 
-# Get names dynamically
-INTERNAL=$(hyprctl monitors -j | jq -r '.[] | select(.name | contains("eDP")).name' | head -n 1)
-# Get the first available external monitor
-EXTERNAL=$(hyprctl monitors -j | jq -r '.[] | select(.name | contains("eDP") | not).name' | head -n 1)
+INTERNAL=$(swaymsg -t get_outputs | jq -r '.[] | select(.name | contains("eDP")).name' | head -n 1)
+EXTERNAL=$(swaymsg -t get_outputs | jq -r '.[] | select(.name | contains("eDP") | not).name' | head -n 1)
+
+ensure_mirror() {
+  command -v "$MIRROR" >/dev/null && return 0
+  if command -v gum >/dev/null && gum confirm "wl-mirror is not installed. Install it now?"; then
+    omarchy-pkg-add wl-mirror && return 0
+  fi
+  notify-send "󰍹    Mirroring unavailable" "Install it with: omarchy-pkg-add wl-mirror" -u critical -t 5000
+  return 1
+}
 
 enable() {
-  if [[ -z "$EXTERNAL" ]]; then
-    notify-send -u low "󰍹    No external monitors found for mirror"
+  if [[ -z $EXTERNAL ]]; then
+    notify-send -u low "󰍹    No external monitor found for mirror"
     exit 1
   fi
-
-  if [[ -z "$INTERNAL" ]]; then
-    notify-send -u low "󰍹    No laptop monitor found to mirror"
+  if [[ -z $INTERNAL ]]; then
+    notify-send -u low "󰍹    No laptop display found to mirror"
     exit 1
   fi
+  ensure_mirror || exit 1
 
-  if omarchy-hyprland-toggle-enabled "$DISABLE_TOGGLE"; then
-    omarchy-hyprland-toggle "$DISABLE_TOGGLE"
-  fi
+  setsid "$MIRROR" "$INTERNAL" >/dev/null 2>&1 &
 
-  if omarchy-hyprland-toggle-disabled "$TOGGLE"; then
-    echo "monitor=$EXTERNAL, preferred, auto, 1, mirror, $INTERNAL" > "$TOGGLE_FLAG"
-    notify-send -u low "󰍹    Mirroring enabled ($EXTERNAL)"
-    hyprctl reload
-  fi
+  # Move the mirror window onto the external output and fullscreen it. Retry a
+  # few times because the window takes a moment to appear.
+  # NOTE: wl-mirror's app_id is matched loosely; adjust the regex if your build
+  # reports a different app_id (check with: swaymsg -t get_tree | grep app_id).
+  for _ in 1 2 3 4 5 6; do
+    sleep 0.3
+    if swaymsg "[app_id=\"(?i)wl[-_.]?mirror\"] move container to output \"$EXTERNAL\", fullscreen enable" >/dev/null 2>&1; then
+      break
+    fi
+  done
+  notify-send -u low "󰍹    Mirroring laptop → $EXTERNAL"
 }
 
 disable() {
-  if omarchy-hyprland-toggle-enabled "$TOGGLE"; then
-    omarchy-hyprland-toggle --disabled-notification "󰍹    Extended mode restored" "$TOGGLE"
-  fi
+  pkill -x "$MIRROR" && notify-send -u low "󰍹    Extended mode restored"
 }
 
-recover() {
-  if ! omarchy-hw-external-monitors && omarchy-hyprland-toggle-enabled "$TOGGLE"; then
-    omarchy-hyprland-toggle "$TOGGLE"
-  fi
-}
-
-case "$1" in
+case "${1:-toggle}" in
   on) enable ;;
   off) disable ;;
-  toggle) if omarchy-hyprland-toggle-enabled "$TOGGLE"; then disable; else enable; fi ;;
-  recover) recover ;;
+  toggle) if pgrep -x "$MIRROR" >/dev/null; then disable; else enable; fi ;;
+  recover) pgrep -x "$MIRROR" >/dev/null && ! swaymsg -t get_outputs | jq -e '.[] | select(.name | contains("eDP") | not)' >/dev/null && disable ;;
   *)
     echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
     exit 1

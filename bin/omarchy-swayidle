@@ -6,7 +6,6 @@
 # omarchy-toggle-idle (replaces hypridle + config/hypr/hypridle.conf).
 
 exec swayidle -w \
-  timeout 150 'omarchy-launch-screensaver' \
   timeout 152 'omarchy-system-lock' resume 'omarchy-system-wake' \
   before-sleep 'OMARCHY_LOCK_ONLY=true omarchy-system-lock' \
   after-sleep 'sleep 1 && omarchy-system-wake' \

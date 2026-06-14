@@ -204,17 +204,13 @@ show_share_menu() {
 }
 
 show_toggle_menu() {
-  local options="󱄄  Screensaver\n󰔎  Nightlight\n󱫖  Idle Lock\n󰂛  Notifications\n󰍜  Top Bar\n󱂬  Workspace Layout\n  Window Gaps\n  1-Window Ratio\n󰍹  Monitor Scaling\n  Direct Boot\n󰟵  Passwordless Sudo"
+  local options="󰔎  Nightlight\n󱫖  Idle Lock\n󰂛  Notifications\n󰍜  Top Bar\n󰍹  Monitor Scaling\n  Direct Boot\n󰟵  Passwordless Sudo"
 
   case $(menu "Toggle" "$options") in
-  *Screensaver*) omarchy-toggle-screensaver ;;
   *Nightlight*) omarchy-toggle-nightlight ;;
   *Idle*) omarchy-toggle-idle ;;
   *Notifications*) omarchy-toggle-notification-silencing ;;
   *Bar*) omarchy-toggle-waybar ;;
-  *Layout*) omarchy-hyprland-workspace-layout-toggle ;;
-  *Ratio*) omarchy-hyprland-window-single-square-aspect-toggle ;;
-  *Gaps*) omarchy-hyprland-window-gaps-toggle ;;
   *Scaling*) omarchy-hyprland-monitor-scaling-cycle ;;
   *"Direct Boot"*) present_terminal omarchy-config-direct-boot ;;
   *"Passwordless Sudo"*) present_terminal omarchy-sudo-passwordless ;;
@@ -264,13 +260,12 @@ show_hardware_touchpad_haptics_menu() {
 }
 
 show_style_menu() {
-  case $(menu "Style" "󰸌  Theme\n󰟵  Unlock\n  Font\n  Background\n  Hyprland\n󱄄  Screensaver\n  About") in
+  case $(menu "Style" "󰸌  Theme\n󰟵  Unlock\n  Font\n  Background\n  Sway\n  About") in
   *Theme*) show_theme_menu ;;
   *Unlock*) omarchy-launch-walker -m menus:omarchyunlocks --width 800 --minheight 400 ;;
   *Font*) show_font_menu ;;
   *Background*) show_background_menu ;;
-  *Hyprland*) open_in_editor ~/.config/hypr/looknfeel.conf ;;
-  *Screensaver*) show_screensaver_menu ;;
+  *Sway*) open_in_editor ~/.config/sway/looknfeel.conf ;;
   *About*) show_about_menu ;;
   *) show_main_menu ;;
   esac
@@ -313,8 +308,8 @@ show_font_menu() {
 
 show_setup_menu() {
   local options="  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n  System Sleep\n󰍹  Monitors"
-  [[ -f ~/.config/hypr/bindings.conf ]] && options="$options\n  Keybindings"
-  [[ -f ~/.config/hypr/input.conf ]] && options="$options\n  Input"
+  [[ -f ~/.config/sway/bindings.conf ]] && options="$options\n  Keybindings"
+  [[ -f ~/.config/sway/input.conf ]] && options="$options\n  Input"
   options="$options\n  Defaults\n󰱔  DNS\n  Security\n  Config"
 
   case $(menu "Setup" "$options") in
@@ -323,9 +318,9 @@ show_setup_menu() {
   *Bluetooth*) omarchy-launch-bluetooth ;;
   *Power*) show_setup_power_menu ;;
   *System*) show_setup_system_menu ;;
-  *Monitors*) open_in_editor ~/.config/hypr/monitors.conf ;;
-  *Keybindings*) open_in_editor ~/.config/hypr/bindings.conf ;;
-  *Input*) open_in_editor ~/.config/hypr/input.conf ;;
+  *Monitors*) open_in_editor ~/.config/sway/monitors.conf ;;
+  *Keybindings*) open_in_editor ~/.config/sway/bindings.conf ;;
+  *Input*) open_in_editor ~/.config/sway/input.conf ;;
   *Defaults*) show_setup_default_menu ;;
   *DNS*) present_terminal omarchy-setup-dns ;;
   *Security*) show_setup_security_menu ;;
@@ -460,11 +455,9 @@ show_setup_default_editor_menu() {
 
 show_setup_config_menu() {
   case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprlock\n  Hyprsunset\n  Swayosd\n󰌧  Walker\n󰍜  Waybar\n󰞅  XCompose") in
-  *Hyprland*) open_in_editor ~/.config/hypr/hyprland.conf ;;
-  *Hypridle*) open_in_editor ~/.config/hypr/hypridle.conf && omarchy-restart-hypridle ;;
-  *Hyprlock*) open_in_editor ~/.config/hypr/hyprlock.conf ;;
-  *Hyprsunset*) open_in_editor ~/.config/hypr/hyprsunset.conf && omarchy-restart-hyprsunset ;;
+  *Swaylock*) open_in_editor ~/.config/swaylock/config ;;
   *Swayosd*) open_in_editor ~/.config/swayosd/config.toml && omarchy-restart-swayosd ;;
+  *Sway*) open_in_editor ~/.config/sway/config && omarchy-restart-hyprctl ;;
   *Walker*) open_in_editor ~/.config/walker/config.toml && omarchy-restart-walker ;;
   *Waybar*) open_in_editor ~/.config/waybar/config.jsonc && omarchy-restart-waybar ;;
   *XCompose*) open_in_editor ~/.XCompose && omarchy-restart-xcompose ;;
@@ -782,9 +775,9 @@ show_update_channel_menu() {
   esac
 }
 show_update_process_menu() {
-  case $(menu "Restart" "  Hypridle\n  Hyprsunset\n󰎟  Mako\n  Swayosd\n󰌧  Walker\n󰍜  Waybar") in
-  *Hypridle*) omarchy-restart-hypridle ;;
-  *Hyprsunset*) omarchy-restart-hyprsunset ;;
+  case $(menu "Restart" "  Swayidle\n  Nightlight\n󰎟  Mako\n  Swayosd\n󰌧  Walker\n󰍜  Waybar") in
+  *Swayidle*) omarchy-restart-hypridle ;;
+  *Nightlight*) omarchy-restart-hyprsunset ;;
   *Mako*) omarchy-restart-mako ;;
   *Swayosd*) omarchy-restart-swayosd ;;
   *Walker*) omarchy-restart-walker ;;
@@ -794,13 +787,10 @@ show_update_process_menu() {
 }
 
 show_update_config_menu() {
-  case $(menu "Use default config" "  Hyprland\n  Hypridle\n  Hyprlock\n  Hyprsunset\n󱣴  Plymouth\n  Swayosd\n  Tmux\n󰌧  Walker\n󰍜  Waybar") in
-  *Hyprland*) present_terminal omarchy-refresh-hyprland ;;
-  *Hypridle*) present_terminal omarchy-refresh-hypridle ;;
-  *Hyprlock*) present_terminal omarchy-refresh-hyprlock ;;
-  *Hyprsunset*) present_terminal omarchy-refresh-hyprsunset ;;
-  *Plymouth*) present_terminal omarchy-refresh-plymouth ;;
+  case $(menu "Use default config" "  Sway\n  Swaylock\n  Swayosd\n  Tmux\n󰌧  Walker\n󰍜  Waybar") in
+  *Swaylock*) present_terminal omarchy-refresh-hyprlock ;;
   *Swayosd*) present_terminal omarchy-refresh-swayosd ;;
+  *Sway*) present_terminal omarchy-refresh-sway ;;
   *Tmux*) present_terminal omarchy-refresh-tmux ;;
   *Walker*) present_terminal omarchy-refresh-walker ;;
   *Waybar*) present_terminal omarchy-refresh-waybar ;;
