@@ -4,7 +4,7 @@ Goal: validate the parts of swarmarchy that need a **real aarch64 Linux session 
 a display**, safely, before touching your dual-boot disk. Two things to get out of it:
 
 - **Path A — GUI Sway smoke test** (do this first; achievable today): run the
-  `docs/testing-sway.md` §3–§6 checklist against a real Sway session.
+  `docs/04-testing-sway.md` §3–§6 checklist against a real Sway session.
 - **Path B — installer / partitioning rehearsal**: practice the LUKS + Btrfs +
   Limine dual-boot layout where a mistake costs nothing. Most valuable once the
   aarch64 ISO actually builds (Track B); the manual scheme below lets you rehearse
@@ -83,7 +83,7 @@ git clone -b convert-to-sway-arm \
   https://github.com/RAH-SOFTWARE-HOLDINGS-LTD/swarmarchy.git ~/swarmarchy
 ```
 
-Apply the **minimal harness** (same as `testing-sway.md` §2 — symlinks the repo into
+Apply the **minimal harness** (same as `04-testing-sway.md` §2 — symlinks the repo into
 the omarchy paths so the `include`s and scripts resolve):
 ```bash
 export OMARCHY_PATH="$HOME/swarmarchy"
@@ -112,7 +112,7 @@ Still at the TTY (no display manager needed), start Sway directly:
 PATH="$OMARCHY_PATH/bin:$PATH" sway
 ```
 Sway should come up on the VM's virtual display. Now work through
-**`docs/testing-sway.md` §3–§6**, in this order:
+**`docs/04-testing-sway.md` §3–§6**, in this order:
 
 1. **§3 session/bindings** — `Super+Return` (foot opens), workspaces, focus/move,
    floating/fullscreen/tabbed.
@@ -199,7 +199,7 @@ qemu-system-aarch64 -machine virt -cpu host -accel whpx -m 6G -smp 4 `
 ---
 
 ## Where this fits
-- Path A (GUI Sway) — **do now**, closes `testing-sway.md` §3–§6.
+- Path A (GUI Sway) — **do now**, closes `04-testing-sway.md` §3–§6.
 - Path B (installer/partitioning) — rehearse the scheme now; do the real installer run
   in this VM once the **aarch64 ISO builds** (Track B blockers in
   `swarmarchy-iso/BUILD-AARCH64.md`).

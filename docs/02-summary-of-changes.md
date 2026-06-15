@@ -1,7 +1,7 @@
 # Swarmarchy — Summary of Changes
 
 **What this is:** an Omarchy fork re-targeted from a themed x86_64 Hyprland desktop to a **lean, keyboard-first Sway desktop on ARM64** for a Lenovo Yoga Slim 7x (Snapdragon X Elite **X1E78100**, Adreno **X1-85** GPU).
-**Companion docs:** package-level detail in [`removed-packages.md`](./removed-packages.md). ISO build in the `swarmarchy-iso` repo.
+**Companion docs:** package-level detail in [`01-removed-packages.md`](./01-removed-packages.md). ISO build in the `swarmarchy-iso` repo.
 **Last updated:** 2026-06-14
 
 ---
@@ -20,7 +20,7 @@ Terminal `alacritty` → **`foot`**. Launcher `omarchy-walker` → **`walker`** 
 
 ## 2. Package changes at a glance
 
-Detail and per-package reasons live in `removed-packages.md`. Summary:
+Detail and per-package reasons live in `01-removed-packages.md`. Summary:
 
 - **Removed — architecture-wrong (~30):** all NVIDIA (7), wrong-GPU Vulkan (intel/radeon/asahi), Intel video/camera/power, Intel `linux-ptl` kernel, and every other-laptop driver (Broadcom, ASUS, Tuxedo, Dell, Framework, Apple-T2, Surface).
 - **Removed — Hyprland stack** → replaced with Sway equivalents + `xdg-desktop-portal-wlr`.
@@ -68,7 +68,7 @@ LUKS full-disk encryption (Linux partition only — **dual-boot safe, no wipe**)
 
 ## 6. Status & next steps
 
-- [x] **#1** Package removal/keep/add decisions documented (`removed-packages.md`)
+- [x] **#1** Package removal/keep/add decisions documented (`01-removed-packages.md`)
 - [x] **#2** This summary
 - [x] **#3** ISO build GitHub Action (aarch64, with blockers flagged) — in `swarmarchy-iso`
 - [ ] **Enact #1** — apply removals/adds to `install/omarchy-base.packages` + `omarchy-other.packages`
