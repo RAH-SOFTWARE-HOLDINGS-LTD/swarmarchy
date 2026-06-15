@@ -1,46 +1,51 @@
-# Packages installed outside of install/packages.sh or optional packages
-# Utilized by ISO builder to ensure package availability in the ISO
+# Swarmarchy foundation packages — the base system, drivers, boot and audio stack.
+# Baked into the ISO's offline mirror (install/packaging never installs these
+# directly; the base install + drivers do). One package per line; text after '#'
+# is a human note — the builder parses only the first token. aarch64 / Snapdragon X.
+
+# ─── Base system ───
+base                       # core Arch base meta-package (essential userland)
+base-devel                 # compilers/make/etc — needed to build AUR packages
+git                        # version control (installer + AUR builds use it)
+linux                      # the kernel (ISO builder rewrites this to linux-aarch64)
+linux-headers              # kernel headers (rewritten to linux-aarch64-headers; for DKMS)
+linux-firmware             # device firmware blobs (Wi-Fi, GPU, etc.)
+dkms                       # builds out-of-tree kernel modules (e.g. DisplayLink's evdi)
+autoconf-archive           # extra autotools macros — helps some AUR packages compile
+
+# ─── Boot, snapshots & swap ───
+limine                     # the bootloader
+limine-mkinitcpio-hook     # regenerates boot entries when the kernel/initramfs changes
+limine-snapper-sync        # adds Btrfs snapshot entries to the boot menu (roll back a bad update)
+btrfs-progs                # Btrfs filesystem tools
+snapper                    # Btrfs snapshot manager (automatic timeline + rollback)
+zram-generator             # compressed swap in RAM (good for a laptop; aids hibernate)
+
+# ─── Audio foundation (PipeWire stack; the front-ends are in base.packages) ───
+pipewire                   # the audio/video server
+pipewire-pulse             # PulseAudio compatibility layer
+pipewire-alsa              # ALSA compatibility layer
+pipewire-jack              # JACK compatibility (pro-audio apps)
+gst-plugin-pipewire        # GStreamer ↔ PipeWire bridge (audio in screenshare/recording)
+libpulse                   # PulseAudio client libraries (for apps that expect pulse)
+
+# ─── Wayland / GUI foundation ───
+qt6-wayland                # Wayland backend for Qt6 apps
+gtk4-layer-shell           # lets GTK4 apps draw bars/overlays (layer-shell surfaces)
+webp-pixbuf-loader         # render .webp images in GTK apps and thumbnails
+
+# ─── GPU — Qualcomm Adreno X1-85 ───
+mesa                       # OpenGL + the "freedreno" driver for Adreno
+vulkan-freedreno           # Vulkan ("turnip") driver for the Adreno GPU
+
+# ── AARCH64 / SNAPDRAGON-X TODO (not resolvable from the offline mirror yet) ──
+# These are required but live in the AUR or need a Snapdragon-specific source, so
+# the ISO's `pacman -Syw` step can't fetch them. Install via an AUR helper (yay) or
+# a custom repo — see swarmarchy-iso/BUILD-AARCH64.md. Listed so they aren't lost:
 #
-# Swarmarchy: aarch64 / Snapdragon X Elite (Adreno X1-85). All x86-only driver
-# stacks removed. See docs/removed-packages.md and docs/summary-of-changes.md.
-
-autoconf-archive
-base
-base-devel
-btrfs-progs
-dkms
-git
-gst-plugin-pipewire
-gtk4-layer-shell
-libpulse
-limine
-limine-mkinitcpio-hook
-limine-snapper-sync
-linux
-linux-firmware
-linux-headers
-pipewire
-pipewire-alsa
-pipewire-jack
-pipewire-pulse
-qt6-wayland
-snapper
-webp-pixbuf-loader
-zram-generator
-
-# GPU — Qualcomm Adreno X1-85 (Mesa freedreno / turnip)
-mesa
-vulkan-freedreno
-
-# ── AARCH64 / SNAPDRAGON-X TODO (not yet resolvable from the offline mirror) ──
-# These are required but live in the AUR or need a Snapdragon-specific source,
-# so they cannot be downloaded by the ISO's `pacman -Syw` offline-mirror step.
-# Handle them via an AUR packaging script (yay) or a custom repo — see
-# docs/summary-of-changes.md §4/§6. Listed here so they are not forgotten:
-#
-#   linux-x1e (or patched aarch64 kernel)  # replaces generic `linux` above
-#   qualcomm firmware (ath12k Wi-Fi, Adreno A7xx)  # confirm exact set
-#   walker            # keyboard-first launcher (wlroots-native)
-#   yay               # AUR helper (replaces removed yay-debug)
-#   displaylink       # Plugable DisplayLink adapter
-#   evdi              # DisplayLink kernel module (built via dkms, above)
+#   linux-aarch64 (mainline 6.14+) + qcom/x1e80100-lenovo-yoga-slim7x.dtb  # the kernel
+#   Qualcomm firmware (ath12k Wi-Fi, Adreno A7xx) — extract from the Windows partition
+#   walker            # keyboard-first app launcher (wlroots-native)
+#   yay               # AUR helper
+#   displaylink       # Plugable DisplayLink adapter driver
+#   evdi              # DisplayLink's kernel module (built via dkms, above)
