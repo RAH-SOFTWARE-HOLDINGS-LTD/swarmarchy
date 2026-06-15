@@ -1,3 +1,4 @@
-# Toggles are used to turn certain features on/off in a persistent way
-mkdir -p ~/.local/state/omarchy/toggles/hypr
-cp $OMARCHY_PATH/default/hypr/toggles/flags.conf ~/.local/state/omarchy/toggles/hypr/
+# Toggles are used to turn certain features on/off in a persistent way.
+# The Sway toggle scripts write their flag files here (sourced by config/sway/config
+# via the include of ~/.local/state/omarchy/toggles/sway/*.conf).
+mkdir -p ~/.local/state/omarchy/toggles/sway

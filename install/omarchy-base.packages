@@ -79,6 +79,7 @@ localsend                  # AirDrop-style file transfer between your devices
 chromium                   # web browser (also hosts the web-apps via omarchy-launch-webapp)
 mpv                        # video/audio player
 imv                        # lightweight image viewer
+obsidian                   # markdown notes / knowledge base (vanilla — no Omarchy theming)
 
 # ─── Capture & OCR ───
 tesseract                  # OCR engine (screen region → text)

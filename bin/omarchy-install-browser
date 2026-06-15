@@ -22,6 +22,9 @@ copy_chromium_flags() {
 setup_firefox_preferences() {
   local distribution_dir="$1"
 
+  # Vanilla Firefox: the Omarchy firefox policy template was removed; only apply it
+  # if a user has restored it.
+  [[ -f "$OMARCHY_PATH/default/firefox/policies.json" ]] || return 0
   setup_policy_directory "$distribution_dir"
   sudo cp -f "$OMARCHY_PATH/default/firefox/policies.json" "$distribution_dir/policies.json"
 }

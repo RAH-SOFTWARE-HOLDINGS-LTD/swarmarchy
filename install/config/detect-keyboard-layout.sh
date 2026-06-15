@@ -1,13 +1,20 @@
-# Copy over the keyboard layout that's been set in Arch during install to Hyprland
+# Copy the keyboard layout chosen in Arch during install into the Sway config
 conf="/etc/vconsole.conf"
-hyprconf="$HOME/.config/hypr/input.conf"
+swayconf="$HOME/.config/sway/input.conf"
 
-if grep -q '^XKBLAYOUT=' "$conf"; then
-  layout=$(grep '^XKBLAYOUT=' "$conf" | cut -d= -f2 | tr -d '"')
-  sed -i "/^[[:space:]]*kb_options *=/i\  kb_layout = $layout" "$hyprconf"
-fi
+[[ -f $swayconf ]] || exit 0
+grep -q '^XKBLAYOUT=' "$conf" || exit 0
 
-if grep -q '^XKBVARIANT=' "$conf"; then
-  variant=$(grep '^XKBVARIANT=' "$conf" | cut -d= -f2 | tr -d '"')
-  sed -i "/^[[:space:]]*kb_options *=/i\  kb_variant = $variant" "$hyprconf"
-fi
+layout=$(grep '^XKBLAYOUT=' "$conf" | cut -d= -f2 | tr -d '"')
+variant=""
+grep -q '^XKBVARIANT=' "$conf" && variant=$(grep '^XKBVARIANT=' "$conf" | cut -d= -f2 | tr -d '"')
+
+# Append an input block so it overrides the default (us) layout in appearance order.
+{
+  echo ""
+  echo "# Keyboard layout detected during install"
+  echo "input \"type:keyboard\" {"
+  echo "    xkb_layout $layout"
+  [[ -n $variant ]] && echo "    xkb_variant $variant"
+  echo "}"
+} >>"$swayconf"
