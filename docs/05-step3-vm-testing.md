@@ -180,21 +180,101 @@ each step and can sanity-check it.
 
 ---
 
-## Appendix — QEMU fallback (Windows Home, or if Hyper-V won't render Sway)
+## Appendix — QEMU on Windows-on-ARM via MSYS2 (the tested path)
 
-QEMU runs an aarch64 VM with **virtio-gpu**, which gives wlroots a clean KMS device —
-often smoother for Sway than Hyper-V. Install "QEMU for Windows (ARM64)", then:
-```powershell
-qemu-system-aarch64 -machine virt -cpu host -accel whpx -m 6G -smp 4 `
-  -bios QEMU_EFI.fd `
-  -device virtio-gpu-pci -display sdl `
-  -device qemu-xhci -device usb-kbd -device usb-tablet `
-  -nic user,model=virtio-net-pci `
-  -drive if=virtio,file=disk.qcow2 `
-  -cdrom ubuntu-24.10-arm64.iso
+For **Windows 11 Home** (no Hyper-V). QEMU gives wlroots a clean virtio KMS device.
+**Use the "MSYS2 CLANGARM64" shell** (purple icon) — the native-ARM environment — for
+all of this. All commands are bash.
+
+### Phase A — Install QEMU + gather the pieces
+```bash
+pacman -S mingw-w64-clang-aarch64-qemu          # install QEMU (aarch64 host build)
+qemu-system-aarch64 --version                    # sanity check
+
+mkdir -p ~/vm && cd ~/vm                          # keep EVERYTHING here (avoids path issues)
+
+# UEFI firmware shipped with QEMU + a writable variable store (must be 64M)
+cp /clangarm64/share/qemu/edk2-aarch64-code.fd .  # adjust name via: ls /clangarm64/share/qemu | grep -i aarch64
+qemu-img create -f raw efivars.img 64M
+
+qemu-img create -f qcow2 disk.qcow2 60G           # the install target disk
+
+# Download an ARM64 Ubuntu Server ISO into ~/vm. Grab the CURRENT point release from
+# https://cdimage.ubuntu.com/releases/24.04/release/  (file: ubuntu-24.04.X-live-server-arm64.iso)
+# then drop it in ~/vm. The commands below find it by glob, so the exact version doesn't matter.
+ls -lh ~/vm/ubuntu-*-arm64.iso                    # confirm it's ~2.5–3 GB (a few KB = failed download)
 ```
-(`-accel whpx` uses the Windows hypervisor for native ARM speed; create the disk with
-`qemu-img create -f qcow2 disk.qcow2 60G`.) Then follow §2–§5 identically.
+
+### Phase B — Boot the installer
+The ISO is attached as a **virtio-blk disk** (not a CD) — Ubuntu's hybrid ISO exposes an
+EFI partition this way, which EDK2 boots. `bootindex=0` (ISO) boots before `bootindex=1`
+(disk). The `ISO=…` line picks up whatever Ubuntu ISO is in `~/vm`:
+```bash
+cd ~/vm
+ISO=$(ls ubuntu-*-arm64.iso | head -1); echo "Booting: $ISO"
+qemu-system-aarch64 \
+  -M virt -cpu max -accel whpx -m 6144 -smp 4 \
+  -drive if=pflash,format=raw,readonly=on,file=edk2-aarch64-code.fd \
+  -drive if=pflash,format=raw,file=efivars.img \
+  -device virtio-gpu-pci -display gtk \
+  -device qemu-xhci -device usb-kbd -device usb-tablet \
+  -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
+  -drive if=none,id=hd0,file=disk.qcow2,format=qcow2 \
+  -device virtio-blk-pci,drive=hd0,bootindex=1 \
+  -drive if=none,id=cd0,format=raw,file="$ISO" \
+  -device virtio-blk-pci,drive=cd0,bootindex=0
+```
+
+### Phase C — Install Ubuntu (in the QEMU window)
+Walk the text installer: accept defaults, **use the entire virtual disk** (it's the
+throwaway `disk.qcow2`), set a username/password, enable **Install OpenSSH server** when
+offered. Finish → **Reboot Now**, then **close the QEMU window**.
+
+### Phase D — Boot the installed system + run Sway
+Relaunch **without the ISO** (delete the last two `cd0` lines so it boots the disk):
+```bash
+cd ~/vm
+qemu-system-aarch64 \
+  -M virt -cpu max -accel whpx -m 6144 -smp 4 \
+  -drive if=pflash,format=raw,readonly=on,file=edk2-aarch64-code.fd \
+  -drive if=pflash,format=raw,file=efivars.img \
+  -device virtio-gpu-pci -display gtk \
+  -device qemu-xhci -device usb-kbd -device usb-tablet \
+  -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
+  -drive if=none,id=hd0,file=disk.qcow2,format=qcow2 \
+  -device virtio-blk-pci,drive=hd0,bootindex=1
+```
+Log in at the console, then install the Sway stack. **Note the Debian/Ubuntu name
+differences:** `mako` → **`mako-notifier`**; OCR is `tesseract-ocr`; `walker` is NOT
+packaged (AUR-only), so the launcher + full `omarchy-menu` won't run here.
+```bash
+sudo apt update
+sudo apt install -y sway swayidle swaylock foot waybar mako-notifier grim slurp \
+  wl-clipboard jq tesseract-ocr brightnessctl playerctl pamixer git
+
+git clone -b convert-to-sway-arm \
+  https://github.com/RAH-SOFTWARE-HOLDINGS-LTD/swarmarchy.git ~/swarmarchy
+
+export OMARCHY_PATH="$HOME/swarmarchy"; export PATH="$OMARCHY_PATH/bin:$PATH"
+mkdir -p ~/.local/share/omarchy ~/.config/omarchy/current
+ln -sfn "$OMARCHY_PATH/default" ~/.local/share/omarchy/default
+ln -sfn "$OMARCHY_PATH/config/sway" ~/.config/sway
+ln -sfn "$OMARCHY_PATH/themes/tokyo-night" ~/.config/omarchy/current/theme
+
+sway                                              # launch Sway from the console
+```
+Then work through §3–§6 above. Exit Sway with `swaymsg exit` from a terminal
+(`Super+Return`).
+
+### Troubleshooting
+- **Dropped to `UEFI Interactive Shell` with only `BLK0/BLK1` and no `FS0:`** → EDK2
+  found no bootable filesystem on the ISO. Almost always a **bad/incomplete download**
+  (`ls -lh ~/vm/*.iso` should be ~2.7 GB), or the ISO was attached as a CD — use the
+  `virtio-blk-pci` attach above.
+- **`whpx` error on launch** → delete `-accel whpx` (runs via slow software emulation,
+  but always works).
+- **Black or broken window** → swap `-display gtk` → `-display sdl`.
+- The `git clone` needs the branch pushed to GitHub; otherwise `scp` the repo in from WSL.
 
 ---
 
