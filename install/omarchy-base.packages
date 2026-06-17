@@ -86,7 +86,7 @@ tesseract                  # OCR engine (screen region → text)
 tesseract-data-eng         # English training data for tesseract
 
 # ─── Editor / dev tools / TUIs ───
-nvim                       # Neovim text editor
+neovim                     # Neovim text editor (generic Arch package; bring your own config)
 tmux                       # terminal multiplexer
 lazygit                    # git terminal UI
 btop                       # system resource monitor (TUI)
