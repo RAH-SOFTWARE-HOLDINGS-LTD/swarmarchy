@@ -35,23 +35,30 @@ echo '[]' | jq -r 'recurse(.nodes[]?, .floating_nodes[]?)' >/dev/null && echo "j
 - [ ] 1a no syntax failures.
 - [ ] 1b no obvious errors (warnings are fine).
 
-## 2. Minimal harness (run Sway from the repo, no full install)
-Point the omarchy paths at your checkout so the `include`s and scripts resolve:
+## 2. Harness (run Sway from the repo, no full install)
+Mirror what the real installer does — `install/config/config.sh` copies **all** of
+`config/*` to `~/.config/`. Copy (don't selectively symlink) so every supporting
+config lands: `xdg-terminals.list` (needed by the terminal binding), `foot/`,
+`walker/`, `waybar/`, `swaylock/`, etc.
 ```bash
-export OMARCHY_PATH="$HOME/dev/swarmarchy"            # adjust to your path
+export OMARCHY_PATH="$HOME/dev/swarmarchy"            # adjust to your checkout path
 export PATH="$OMARCHY_PATH/bin:$PATH"
 
 mkdir -p ~/.local/share/omarchy ~/.config/omarchy/current ~/.config
 ln -sfn "$OMARCHY_PATH/default" ~/.local/share/omarchy/default
 ln -sfn "$OMARCHY_PATH/bin"     ~/.local/share/omarchy/bin
-ln -sfn "$OMARCHY_PATH/config/sway"     ~/.config/sway
-ln -sfn "$OMARCHY_PATH/config/swaylock" ~/.config/swaylock
-ln -sfn "$OMARCHY_PATH/config/waybar"   ~/.config/waybar
+cp -r "$OMARCHY_PATH/config/"* ~/.config/             # ALL user configs (matches the installer)
 ln -sfn "$OMARCHY_PATH/themes/tokyo-night" ~/.config/omarchy/current/theme
 # a wallpaper so swaybg has something to show
-ln -sfn /usr/share/backgrounds/archlinux/*.png ~/.config/omarchy/current/background 2>/dev/null || \
-  : # or any image you like
+ln -sfn "$(find /usr/share/backgrounds -type f 2>/dev/null | head -1)" \
+  ~/.config/omarchy/current/background 2>/dev/null || true
 ```
+> **Launch Sway from this same shell** (`sway`) so it inherits `OMARCHY_PATH`/`PATH` —
+> otherwise the scripts the keybindings call (`omarchy-cmd-terminal-cwd`, …) aren't found.
+> On **Ubuntu** the `Super+Return` terminal binding also needs `xdg-terminal-exec`
+> (`sudo apt install xdg-terminal-exec`); on Arch it's already in the package set.
+> (If you already symlinked individual dirs, `rm -rf ~/.config/{sway,swaylock,waybar}`
+> first, then run the `cp` above.)
 - [ ] `sway --validate ~/.config/sway/config` → no errors (a *warning* about the
   missing `current/theme/sway.conf` is expected and harmless).
 

@@ -258,10 +258,14 @@ git clone -b convert-to-sway-arm \
 export OMARCHY_PATH="$HOME/swarmarchy"; export PATH="$OMARCHY_PATH/bin:$PATH"
 mkdir -p ~/.local/share/omarchy ~/.config/omarchy/current
 ln -sfn "$OMARCHY_PATH/default" ~/.local/share/omarchy/default
-ln -sfn "$OMARCHY_PATH/config/sway" ~/.config/sway
+ln -sfn "$OMARCHY_PATH/bin"     ~/.local/share/omarchy/bin
+cp -r "$OMARCHY_PATH/config/"* ~/.config/         # ALL configs (incl. xdg-terminals.list) — matches the installer
 ln -sfn "$OMARCHY_PATH/themes/tokyo-night" ~/.config/omarchy/current/theme
 
-sway                                              # launch Sway from the console
+# Ubuntu only: the Super+Return binding needs xdg-terminal-exec
+sudo apt install -y xdg-terminal-exec 2>/dev/null || true
+
+sway                                              # launch from THIS shell so it inherits OMARCHY_PATH/PATH
 ```
 Then work through §3–§6 above. Exit Sway with `swaymsg exit` from a terminal
 (`Super+Return`).
