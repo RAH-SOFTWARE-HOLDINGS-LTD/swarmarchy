@@ -6,7 +6,7 @@ Arch (or Arch-like) machine/VM with Sway. No aarch64 work required.
 
 > **Prerequisite: a running Sway session.** If you're already on Linux or have a VM
 > you can use, just start at §1. If not, build a throwaway aarch64 VM first
-> (**`05-step3-vm-testing.md`**), then come back and run the tests here.
+> (**`04-vm-setup.md`**), then come back and run the tests here.
 
 Legend: `[ ]` to do · note PASS/FAIL + anything weird next to each line.
 

@@ -1,10 +1,12 @@
-# Step 3 — aarch64 VM testing (Hyper-V on Windows-on-ARM)
+# Build an aarch64 test VM (to run the tests in)
 
-Goal: validate the parts of swarmarchy that need a **real aarch64 Linux session with
-a display**, safely, before touching your dual-boot disk. Two things to get out of it:
+**Skip this whole doc if you already have a Linux box or a usable VM** — go straight to
+`05-testing-sway.md`. Otherwise this builds a throwaway aarch64 VM with a real Sway
+session so you can run the tests safely (and rehearse partitioning before touching your
+dual-boot disk). When the VM is up, you continue in **`05-testing-sway.md`**.
 
-- **Path A — GUI Sway smoke test** (do this first; achievable today): run the
-  `docs/04-testing-sway.md` §3–§6 checklist against a real Sway session.
+- **Path A — GUI Sway smoke test** (do this first; achievable today): build the VM here,
+  then run the `05-testing-sway.md` checklist against the real Sway session.
 - **Path B — installer / partitioning rehearsal**: practice the LUKS + Btrfs +
   Limine dual-boot layout where a mistake costs nothing. Most valuable once the
   aarch64 ISO actually builds (Track B); the manual scheme below lets you rehearse
@@ -83,7 +85,7 @@ git clone -b convert-to-sway-arm \
   https://github.com/RAH-SOFTWARE-HOLDINGS-LTD/swarmarchy.git ~/swarmarchy
 ```
 
-Apply the **minimal harness** (same as `04-testing-sway.md` §2 — symlinks the repo into
+Apply the **minimal harness** (same as `05-testing-sway.md` §2 — symlinks the repo into
 the omarchy paths so the `include`s and scripts resolve):
 ```bash
 export OMARCHY_PATH="$HOME/swarmarchy"
@@ -112,7 +114,7 @@ Still at the TTY (no display manager needed), start Sway directly:
 PATH="$OMARCHY_PATH/bin:$PATH" sway
 ```
 Sway should come up on the VM's virtual display. Now work through
-**`docs/04-testing-sway.md` §3–§6**, in this order:
+**`docs/05-testing-sway.md` §3–§6**, in this order:
 
 1. **§3 session/bindings** — `Super+Return` (foot opens), workspaces, focus/move,
    floating/fullscreen/tabbed.
@@ -267,7 +269,7 @@ sudo apt install -y xdg-terminal-exec 2>/dev/null || true
 
 sway                                              # launch from THIS shell so it inherits OMARCHY_PATH/PATH
 ```
-Sway is up. **The VM is ready — now run the tests in `04-testing-sway.md`** (you've
+Sway is up. **The VM is ready — now run the tests in `05-testing-sway.md`** (you've
 already done the harness, so start at §3). Skip the `walker`/`omarchy-menu` items —
 walker isn't packaged on Ubuntu. Exit Sway with `swaymsg exit`.
 
@@ -284,7 +286,7 @@ walker isn't packaged on Ubuntu. Exit Sway with `swaymsg exit`.
 ---
 
 ## Where this fits
-- Path A (GUI Sway) — **do now**, closes `04-testing-sway.md` §3–§6.
+- Path A (GUI Sway) — **do now**, closes `05-testing-sway.md` §3–§6.
 - Path B (installer/partitioning) — rehearse the scheme now; do the real installer run
   in this VM once the **aarch64 ISO builds** (Track B blockers in
   `swarmarchy-iso/BUILD-AARCH64.md`).
