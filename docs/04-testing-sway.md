@@ -59,8 +59,10 @@ ln -sfn "$(find /usr/share/backgrounds -type f 2>/dev/null | head -1)" \
 > (`sudo apt install xdg-terminal-exec`); on Arch it's already in the package set.
 > (If you already symlinked individual dirs, `rm -rf ~/.config/{sway,swaylock,waybar}`
 > first, then run the `cp` above.)
-- [ ] `sway --validate ~/.config/sway/config` → no errors (a *warning* about the
-  missing `current/theme/sway.conf` is expected and harmless).
+- [ ] `sway --validate` → no errors (validates the default `~/.config/sway/config`;
+  do **not** pass a path — `sway --validate <path>` errors with "both options and
+  positional arguments". A *warning* about the missing `current/theme/sway.conf` is
+  expected and harmless).
 
 > Note: `~/.config/environment.d/sway.conf` only auto-applies under a systemd login
 > manager. For a manual `sway` launch from a TTY, export the key vars yourself if a
