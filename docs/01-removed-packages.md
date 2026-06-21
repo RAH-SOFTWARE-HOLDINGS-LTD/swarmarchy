@@ -1,7 +1,7 @@
 # Swarmarchy — Removed / Changed Packages
 
 **Target machine:** Lenovo Yoga Slim 7x — Snapdragon X Elite **X1E78100** (ARM64 / aarch64), Qualcomm **Adreno X1-85** GPU
-**Base:** Swarmarchy 3.8.2 (x86_64) → re-targeted to **aarch64 + Sway** (Hyprland removed)
+**Base:** Omarchy 3.8.2 (x86_64) → re-targeted to **aarch64 + Sway** (Hyprland removed)
 **Strip level:** Balanced — drop architecture-wrong drivers, Hyprland, and heavy/optional apps; keep dev toolchains and quality-of-life.
 **Scope of this file:** the `install/swarmarchy-base.packages` and `install/swarmarchy-other.packages` manifests (these feed both the post-install and the `swarmarchy-iso` builder).
 **Last updated:** 2026-06-14
@@ -73,7 +73,7 @@ These exist for x86 desktops/laptops that are not this machine. Most will not ev
 
 ## 3. Heavy / optional apps (balanced strip)
 
-Matches Swarmarchy's own `swarmarchy-remove-preinstalls` list and your keep-list. Re-install any of these any time.
+Matches the `swarmarchy-remove-preinstalls` list and your keep-list. Re-install any of these any time.
 
 | Package | Why removed |
 |---|---|

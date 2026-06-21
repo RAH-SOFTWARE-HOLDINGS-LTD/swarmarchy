@@ -1,6 +1,6 @@
 # Swarmarchy
 
-Swarmarchy is a beautiful, modern & opinionated Linux distribution by DHH.
+Swarmarchy is a fork of [Omarchy](https://omarchy.org) (a Linux distribution by DHH), re-targeted to Sway on aarch64 (Lenovo Yoga Slim 7x, Snapdragon X Elite).
 
 Read more at [omarchy.org](https://omarchy.org).
 

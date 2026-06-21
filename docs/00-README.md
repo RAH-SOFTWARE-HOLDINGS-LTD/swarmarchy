@@ -7,7 +7,7 @@ every directory is for, and how you'd rebuild it from scratch.
 
 ## 1. What this is
 
-Swarmarchy is a fork of **Swarmarchy** (DHH's opinionated Arch desktop), re-targeted from
+Swarmarchy is a fork of **Omarchy** (DHH's opinionated Arch desktop), re-targeted from
 x86_64 **Hyprland** to **aarch64 Sway** for a Lenovo **Yoga Slim 7x (Snapdragon X
 Elite)**. It is **two repositories**:
 
@@ -116,7 +116,7 @@ To build an ISO that installs Arch on a Snapdragon X Elite and boots into Sway:
 | # | File | What it covers |
 |---|---|---|
 | 00 | `00-README.md` | this overview |
-| 01 | `01-removed-packages.md` | every package cut from upstream Swarmarchy, and why |
+| 01 | `01-removed-packages.md` | every package cut from upstream Omarchy, and why |
 | 02 | `02-summary-of-changes.md` | high-level "what changed" (Sway, ARM64, strip) |
 | 03 | `03-hyprland-to-sway-conversion.md` | the compositor conversion + the `bin/` script ports |
 | 04 | `04-testing.md` | Testing — build a VM (or skip if you already have Linux/a VM), then run the tests |

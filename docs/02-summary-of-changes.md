@@ -1,6 +1,6 @@
 # Swarmarchy — Summary of Changes
 
-**What this is:** an Swarmarchy fork re-targeted from a themed x86_64 Hyprland desktop to a **lean, keyboard-first Sway desktop on ARM64** for a Lenovo Yoga Slim 7x (Snapdragon X Elite **X1E78100**, Adreno **X1-85** GPU).
+**What this is:** an Omarchy fork re-targeted from a themed x86_64 Hyprland desktop to a **lean, keyboard-first Sway desktop on ARM64** for a Lenovo Yoga Slim 7x (Snapdragon X Elite **X1E78100**, Adreno **X1-85** GPU).
 **Companion docs:** package-level detail in [`01-removed-packages.md`](./01-removed-packages.md). ISO build in the `swarmarchy-iso` repo.
 **Last updated:** 2026-06-14
 
