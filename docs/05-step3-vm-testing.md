@@ -267,17 +267,9 @@ sudo apt install -y xdg-terminal-exec 2>/dev/null || true
 
 sway                                              # launch from THIS shell so it inherits OMARCHY_PATH/PATH
 ```
-Now run the tests **right here** (no need to jump to 04). Open a foot terminal in Sway
-(`Ctrl+Alt+2` → `sendkey meta_l-ret` → `Ctrl+Alt+1`), then with the env still exported:
-```bash
-omarchy-menu-keybindings --print | head   # cheatsheet renders from your bindings
-omarchy-cmd-terminal-cwd                   # prints this terminal's cwd
-omarchy-capture-screenshot                 # drag a region → screenshot to ~/Pictures
-omarchy-system-lock                        # swaylock appears; type password to unlock
-```
-Spot-check the binding layer via the monitor: `sendkey meta_l-1` (→ workspace 1),
-`sendkey meta_l-w` (→ close window). **Skip `walker`/`omarchy-menu`** — walker isn't
-packaged on Ubuntu. Exit Sway with `swaymsg exit`.
+Sway is up. **The VM is ready — now run the tests in `04-testing-sway.md`** (you've
+already done the harness, so start at §3). Skip the `walker`/`omarchy-menu` items —
+walker isn't packaged on Ubuntu. Exit Sway with `swaymsg exit`.
 
 ### Troubleshooting
 - **Dropped to `UEFI Interactive Shell` with only `BLK0/BLK1` and no `FS0:`** → EDK2

@@ -119,6 +119,6 @@ To build an ISO that installs Arch on a Snapdragon X Elite and boots into Sway:
 | 01 | `01-removed-packages.md` | every package cut from upstream Omarchy, and why |
 | 02 | `02-summary-of-changes.md` | high-level "what changed" (Sway, ARM64, strip) |
 | 03 | `03-hyprland-to-sway-conversion.md` | the compositor conversion + the `bin/` script ports |
-| 04 | `04-testing-sway.md` | Test *checklist*: §1 static checks (any machine) + the Sway GUI tests |
-| 05 | `05-step3-vm-testing.md` | Build a VM to run those tests in — **self-contained** (setup + tests inline). Testing in a VM? Follow 05 end-to-end; you don't need to bounce to 04. |
+| 04 | `04-testing-sway.md` | **The tests.** Run them once you have a Sway session |
+| 05 | `05-step3-vm-testing.md` | How to build a throwaway aarch64 VM to test in (then run 04) |
 | — | `swarmarchy-iso/BUILD-AARCH64.md` | the aarch64 ISO-build blockers + the kernel/firmware plan |
