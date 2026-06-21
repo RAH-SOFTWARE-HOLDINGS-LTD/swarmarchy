@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# swarmarchy:summary=Print the installed Swarmarchy version
+
+cat $SWARMARCHY_PATH/version

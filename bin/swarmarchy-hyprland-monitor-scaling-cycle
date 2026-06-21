@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# swarmarchy:summary=Cycle focused monitor scaling through 1x, 1.25x, 1.6x, 2x, 3x, and 4x
+# (Ported to Sway; filename retained for compatibility.)
+
+MONITOR_INFO=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused == true)')
+ACTIVE_MONITOR=$(echo "$MONITOR_INFO" | jq -r '.name')
+CURRENT_SCALE=$(echo "$MONITOR_INFO" | jq -r '.scale')
+
+# Cycle through scales: 1 → 1.25 → 1.6 → 2 → 3 → 4 → 1 (or reverse with --reverse)
+SCALES=(1 1.25 1.6 2 3 4)
+
+# Find the index of the scale closest to the current one (fractional scales may
+# not match exactly)
+CURRENT_IDX=$(awk -v s="$CURRENT_SCALE" -v list="${SCALES[*]}" 'BEGIN {
+  n = split(list, arr, " ")
+  best = 0; best_diff = 1e9
+  for (i = 1; i <= n; i++) {
+    d = s - arr[i]; if (d < 0) d = -d
+    if (d < best_diff) { best_diff = d; best = i - 1 }
+  }
+  print best
+}')
+
+if [[ "$1" == "--reverse" ]]; then
+  NEW_IDX=$(( (CURRENT_IDX - 1 + ${#SCALES[@]}) % ${#SCALES[@]} ))
+else
+  NEW_IDX=$(( (CURRENT_IDX + 1) % ${#SCALES[@]} ))
+fi
+
+NEW_SCALE=${SCALES[$NEW_IDX]}
+
+swaymsg output "$ACTIVE_MONITOR" scale "$NEW_SCALE"
+
+# Persist to monitors.conf if the user has the single generic catch-all line
+# (output * scale N), so the scale survives reboots.
+MONITOR_CONF="$HOME/.config/sway/monitors.conf"
+if [[ -f $MONITOR_CONF ]] && grep -qE '^[[:space:]]*output \* scale ' "$MONITOR_CONF"; then
+  sed -i -E "s|^([[:space:]]*output \\* scale ).*|\\1${NEW_SCALE}|" "$MONITOR_CONF"
+fi
+
+notify-send -u low "󰍹    Display scaling set to ${NEW_SCALE}x"

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# swarmarchy:summary=Reload btop configuration (used by the Swarmarchy theme switching).
+
+pkill -SIGUSR2 btop

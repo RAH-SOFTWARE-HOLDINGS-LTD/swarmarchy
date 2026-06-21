@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# omarchy:summary=Print the detected touchscreen or tablet device name
-# (Ported to Sway; filename retained for compatibility.)
-
-device=$(swaymsg -t get_inputs | jq -r '[.[] | select(.type == "touch" or .type == "tablet_tool") | .name] | first // empty')
-[[ -n $device ]] && echo "$device"

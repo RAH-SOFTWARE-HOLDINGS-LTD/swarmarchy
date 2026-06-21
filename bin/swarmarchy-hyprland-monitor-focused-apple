@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# swarmarchy:summary=Return success if the focused monitor is an Apple display.
+# (Ported to Sway; filename retained for compatibility.)
+
+swaymsg -t get_outputs | jq -e '.[] | select(.focused == true) | select(.make == "Apple Computer Inc" and (.model | test("StudioDisplay|ProDisplayXDR|Studio XDR")))' >/dev/null

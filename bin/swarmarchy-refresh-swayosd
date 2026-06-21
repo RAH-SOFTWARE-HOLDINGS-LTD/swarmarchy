@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# swarmarchy:summary=Overwrite the user configs for swayosd (controls on-screen feedback for changing volume/songs etc) with the Swarmarchy defaults and restart the service.
+
+swarmarchy-refresh-config swayosd/config.toml
+swarmarchy-refresh-config swayosd/style.css
+swarmarchy-restart-swayosd

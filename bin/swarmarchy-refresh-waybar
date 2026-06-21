@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# swarmarchy:summary=Reset Waybar config to Swarmarchy defaults
+# swarmarchy:examples=swarmarchy refresh waybar
+
+swarmarchy-refresh-config waybar/config.jsonc
+swarmarchy-refresh-config waybar/style.css
+swarmarchy-restart-waybar

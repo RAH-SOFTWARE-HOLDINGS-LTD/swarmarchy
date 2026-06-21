@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# swarmarchy:summary=Finish the installation of Swarmarchy with items that can only be done after logging in.
+# swarmarchy:requires-sudo=true
+
+set -e
+
+FIRST_RUN_MODE=~/.local/state/swarmarchy/first-run.mode
+
+if [[ -f $FIRST_RUN_MODE ]]; then
+  rm -f "$FIRST_RUN_MODE"
+
+  bash "$SWARMARCHY_PATH/install/first-run/battery-monitor.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/recover-internal-monitor.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/cleanup-reboot-sudoers.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/firewall.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/dns-resolver.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/gnome-theme.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/swayosd.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/gtk-primary-paste.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/elephant.sh"
+  swarmarchy-hook-install post-update "$SWARMARCHY_PATH/install/first-run/install-voxtype.hook"
+  sudo rm -f /etc/sudoers.d/first-run
+
+  bash "$SWARMARCHY_PATH/install/first-run/welcome.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/wifi.sh"
+fi

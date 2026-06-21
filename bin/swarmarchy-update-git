@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# swarmarchy:summary=Pull the latest Swarmarchy git changes
+
+set -e
+
+echo -e "\e[32mUpdate Swarmarchy\e[0m"
+
+swarmarchy-update-time
+
+# (Sway has no equivalent of Hyprland's debug:suppress_errors; nothing to do here.)
+
+git -C $SWARMARCHY_PATH pull --autostash
+git -C $SWARMARCHY_PATH --no-pager diff --check || git -C $SWARMARCHY_PATH reset --merge
+
+swaymsg reload &>/dev/null || true

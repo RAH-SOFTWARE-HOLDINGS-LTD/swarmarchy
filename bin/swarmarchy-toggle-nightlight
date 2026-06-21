@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# swarmarchy:summary=Toggle nightlight screen temperature
+# swarmarchy:examples=swarmarchy toggle nightlight
+# Uses wlsunset (replaces hyprsunset). Nightlight = wlsunset running at a fixed
+# low temperature; daylight = wlsunset stopped (normal gamma).
+
+ON_TEMP=4000
+
+restart_nightlighted_waybar() {
+  if grep -q "custom/nightlight" ~/.config/waybar/config.jsonc; then
+    swarmarchy-restart-waybar # restart waybar in case user has a nightlight module
+  fi
+}
+
+if pgrep -x wlsunset >/dev/null; then
+  pkill -x wlsunset
+  notify-send -u low "   Daylight screen temperature"
+  restart_nightlighted_waybar
+else
+  # -T must be greater than -t; setting them adjacent forces a constant temperature.
+  setsid wlsunset -t "$ON_TEMP" -T "$((ON_TEMP + 1))" >/dev/null 2>&1 &
+  notify-send -u low "  Nightlight screen temperature"
+  restart_nightlighted_waybar
+fi

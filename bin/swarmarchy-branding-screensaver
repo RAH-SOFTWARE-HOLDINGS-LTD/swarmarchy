@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# swarmarchy:summary=Edit, set, or reset screensaver branding
+# swarmarchy:group=branding
+# swarmarchy:name=screensaver
+# swarmarchy:args=<image|text|reset>
+# swarmarchy:examples=swarmarchy branding screensaver image | swarmarchy branding screensaver text | swarmarchy branding screensaver reset
+
+set -euo pipefail
+
+case "${1:-}" in
+image)
+  image=$(swarmarchy-menu-file "Logo image" "$HOME" "svg png")
+  if [[ -n $image ]] && swarmarchy-transcode-ascii "$image" ~/.config/swarmarchy/branding/screensaver.txt; then
+    swarmarchy-launch-screensaver force >/dev/null 2>&1
+  fi
+  ;;
+text)
+  swarmarchy-launch-editor ~/.config/swarmarchy/branding/screensaver.txt >/dev/null 2>&1 && swarmarchy-launch-screensaver force >/dev/null 2>&1
+  ;;
+reset)
+  cp "$SWARMARCHY_PATH/logo.txt" ~/.config/swarmarchy/branding/screensaver.txt && swarmarchy-launch-screensaver force >/dev/null 2>&1
+  ;;
+*)
+  echo "Usage: swarmarchy-branding-screensaver <image|text|reset>" >&2
+  exit 1
+  ;;
+esac

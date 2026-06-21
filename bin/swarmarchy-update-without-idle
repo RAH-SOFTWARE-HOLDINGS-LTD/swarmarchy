@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# swarmarchy:summary=No-op now that swarmarchy-update-perform is responsible for idle management.
+# swarmarchy:hidden=true

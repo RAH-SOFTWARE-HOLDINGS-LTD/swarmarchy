@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# swarmarchy:summary=Restart the swayidle service (used for idle detection and auto-lock).
+# (Ported to Sway; filename retained for compatibility.)
+
+pkill -x swayidle
+swarmarchy-swayidle >/dev/null 2>&1 &

@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# omarchy:summary=Check if a Sway toggle is currently enabled.
-# omarchy:args=<flag-name>
-# (Ported to Sway; filename retained for compatibility.)
-
-[[ -f "$HOME/.local/state/omarchy/toggles/sway/$1.conf" ]]

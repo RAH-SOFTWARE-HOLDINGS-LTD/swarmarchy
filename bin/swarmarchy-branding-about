@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# swarmarchy:summary=Edit, set, or reset About branding
+# swarmarchy:group=branding
+# swarmarchy:name=about
+# swarmarchy:args=<image|text|reset>
+# swarmarchy:examples=swarmarchy branding about image | swarmarchy branding about text | swarmarchy branding about reset
+
+set -euo pipefail
+
+case "${1:-}" in
+image)
+  image=$(swarmarchy-menu-file "Logo image" "$HOME" "svg png")
+  if [[ -n $image ]] && swarmarchy-transcode-ascii "$image" ~/.config/swarmarchy/branding/about.txt --width 54 --height 26 --mode block; then
+    swarmarchy-launch-about >/dev/null 2>&1
+  fi
+  ;;
+text)
+  swarmarchy-launch-editor ~/.config/swarmarchy/branding/about.txt >/dev/null 2>&1 && swarmarchy-launch-about >/dev/null 2>&1
+  ;;
+reset)
+  cp "$SWARMARCHY_PATH/icon.txt" ~/.config/swarmarchy/branding/about.txt && swarmarchy-launch-about >/dev/null 2>&1
+  ;;
+*)
+  echo "Usage: swarmarchy-branding-about <image|text|reset>" >&2
+  exit 1
+  ;;
+esac

@@ -5,12 +5,12 @@
 #       For blur, install `swaylock-effects` and add: effect-blur=7x5
 
 # Background (hypr: path = current/background)
-image=~/.config/omarchy/current/background
+image=~/.config/swarmarchy/current/background
 scaling=fill
 
 # Behaviour (hypr: ignore_empty_input = true)
-# NOTE: no `daemonize` — omarchy-system-lock relies on swaylock blocking in the
-# foreground so it can run omarchy-system-wake after unlock.
+# NOTE: no `daemonize` — swarmarchy-system-lock relies on swaylock blocking in the
+# foreground so it can run swarmarchy-system-wake after unlock.
 ignore-empty-password
 show-failed-attempts
 

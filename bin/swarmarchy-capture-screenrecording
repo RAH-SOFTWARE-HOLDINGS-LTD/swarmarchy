@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# swarmarchy:summary=Start or stop screen recording
+# swarmarchy:group=capture
+# swarmarchy:args=[--with-desktop-audio] [--with-microphone-audio] [--stop-recording]
+# swarmarchy:examples=swarmarchy screenrecord | swarmarchy capture screenrecord --with-desktop-audio
+# swarmarchy:aliases=swarmarchy screenrecord
+#
+# Ported to Sway/aarch64: uses wf-recorder (wlroots recorder) instead of
+# gpu-screen-recorder. wf-recorder is NOT preinstalled — it is offered for
+# install on first use. The Hyprland version's webcam-overlay / portal / HDR
+# paths are intentionally dropped.
+
+RECORDER=wf-recorder
+RECORDING_FILE="/tmp/swarmarchy-screenrecord-filename"
+
+toggle_indicator() { pkill -RTMIN+8 waybar; }
+recording_active() { pgrep -x "$RECORDER" >/dev/null; }
+
+stop_recording() {
+  pkill -SIGINT -x "$RECORDER"
+  local n=0
+  while pgrep -x "$RECORDER" >/dev/null && ((n < 50)); do sleep 0.1; ((n++)); done
+  toggle_indicator
+  local filename
+  filename=$(cat "$RECORDING_FILE" 2>/dev/null)
+  rm -f "$RECORDING_FILE"
+  [[ -n $filename && -f $filename ]] || exit 0
+  echo "$filename"
+  (
+    ACTION=$(notify-send "Screen recording saved" "Open with Super + Alt + , (or click this)" -t 10000 -i "$filename" -A "default=open")
+    [[ $ACTION == "default" ]] && mpv "$filename"
+  ) >/dev/null 2>&1 &
+}
+
+ensure_recorder() {
+  command -v "$RECORDER" >/dev/null && return 0
+  if command -v gum >/dev/null && gum confirm "wf-recorder is not installed. Install it now?"; then
+    swarmarchy-pkg-add wf-recorder && return 0
+  fi
+  notify-send "Screen recording unavailable" "Install it with: swarmarchy-pkg-add wf-recorder" -u critical -t 5000
+  return 1
+}
+
+# Toggle: stop if already recording
+if recording_active; then
+  stop_recording
+  exit 0
+fi
+[[ "$*" == *--stop-recording* ]] && exit 1 # nothing to stop
+
+ensure_recorder || exit 1
+
+DESKTOP_AUDIO=false
+MIC_AUDIO=false
+for a in "$@"; do
+  case "$a" in
+  --with-desktop-audio) DESKTOP_AUDIO=true ;;
+  --with-microphone-audio) MIC_AUDIO=true ;;
+  esac
+done
+
+[[ -f ~/.config/user-dirs.dirs ]] && source ~/.config/user-dirs.dirs
+OUTPUT_DIR="${SWARMARCHY_SCREENRECORD_DIR:-${XDG_VIDEOS_DIR:-$HOME/Videos}}"
+mkdir -p "$OUTPUT_DIR"
+
+# Monitor + visible-window rectangles for slurp, in logical coords (Sway .rect).
+get_rectangles() {
+  swaymsg -t get_outputs | jq -r '.[] | select(.active == true) | "\(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"'
+  swaymsg -t get_tree | jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.pid? != null and .visible? == true) | "\(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"'
+}
+
+SELECTION=$(get_rectangles | slurp 2>/dev/null)
+[[ -z $SELECTION ]] && exit 0
+
+# wf-recorder supports a single audio device. Prefer desktop audio (sink monitor),
+# else microphone (default source).
+audio_args=()
+if [[ $DESKTOP_AUDIO == true ]] && command -v pactl >/dev/null; then
+  sink=$(pactl get-default-sink 2>/dev/null)
+  [[ -n $sink ]] && audio_args=(-a "${sink}.monitor")
+elif [[ $MIC_AUDIO == true ]] && command -v pactl >/dev/null; then
+  src=$(pactl get-default-source 2>/dev/null)
+  [[ -n $src ]] && audio_args=(-a "$src")
+fi
+
+filename="$OUTPUT_DIR/screenrecording-$(date +'%Y-%m-%d_%H-%M-%S').mp4"
+echo "$filename" >"$RECORDING_FILE"
+toggle_indicator
+wf-recorder -g "$SELECTION" "${audio_args[@]}" -f "$filename" >/dev/null 2>&1 &

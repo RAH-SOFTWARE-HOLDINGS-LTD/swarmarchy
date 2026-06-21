@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# swarmarchy:summary=Reinstall the Swarmarchy source directory from git
+
+set -e
+
+# Reinstall the Swarmarchy configuration directory from the git source.
+
+git clone --depth=1 --branch master "https://github.com/basecamp/omarchy.git" ~/.local/share/swarmarchy-new >/dev/null
+mv $SWARMARCHY_PATH ~/.local/share/swarmarchy-old
+mv ~/.local/share/swarmarchy-new $SWARMARCHY_PATH

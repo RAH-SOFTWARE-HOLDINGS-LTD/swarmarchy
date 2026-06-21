@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# swarmarchy:summary=Enable, disable, or toggle the touch functionality of the screen
+# swarmarchy:args=[on|off|toggle]
+# (Ported to Sway: uses `input type:touch events` + a sway toggle flag.)
+
+STATE_CONF="$HOME/.local/state/swarmarchy/toggles/sway/touchscreen-disabled.conf"
+
+if [[ -z "$(swarmarchy-hw-touchscreen)" ]]; then
+  echo "No touchscreen device found" >&2
+  exit 1
+fi
+
+enable() {
+  swaymsg input type:touch events enabled >/dev/null
+  rm -f "$STATE_CONF"
+  swarmarchy-swayosd-client --custom-icon device-support-touch-symbolic --custom-message "Touchscreen enabled"
+}
+
+disable() {
+  swaymsg input type:touch events disabled >/dev/null
+  mkdir -p "$(dirname "$STATE_CONF")"
+  printf 'input type:touch events disabled\n' > "$STATE_CONF"
+  swarmarchy-swayosd-client --custom-icon touch-disabled-symbolic --custom-message "Touchscreen disabled"
+}
+
+case "${1:-toggle}" in
+  on) enable ;;
+  off) disable ;;
+  toggle) if [[ -f $STATE_CONF ]]; then enable; else disable; fi ;;
+esac

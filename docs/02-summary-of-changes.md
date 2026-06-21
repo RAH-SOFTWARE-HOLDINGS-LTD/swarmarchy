@@ -1,6 +1,6 @@
 # Swarmarchy — Summary of Changes
 
-**What this is:** an Omarchy fork re-targeted from a themed x86_64 Hyprland desktop to a **lean, keyboard-first Sway desktop on ARM64** for a Lenovo Yoga Slim 7x (Snapdragon X Elite **X1E78100**, Adreno **X1-85** GPU).
+**What this is:** an Swarmarchy fork re-targeted from a themed x86_64 Hyprland desktop to a **lean, keyboard-first Sway desktop on ARM64** for a Lenovo Yoga Slim 7x (Snapdragon X Elite **X1E78100**, Adreno **X1-85** GPU).
 **Companion docs:** package-level detail in [`01-removed-packages.md`](./01-removed-packages.md). ISO build in the `swarmarchy-iso` repo.
 **Last updated:** 2026-06-14
 
@@ -8,13 +8,13 @@
 
 ## 1. The three big shifts
 
-| Shift | From (Omarchy) | To (Swarmarchy) |
+| Shift | From (Swarmarchy) | To (Swarmarchy) |
 |---|---|---|
 | **Compositor** | Hyprland + hypr* (idle/lock/picker/sunset) | **Sway** + `swayidle`/`swaylock`/`swaybg`/`swayosd`, portal `xdg-desktop-portal-wlr` |
 | **Architecture** | x86_64 (Intel/AMD/NVIDIA + every supported laptop) | **aarch64** (Snapdragon X kernel + Qualcomm firmware, Adreno via Mesa freedreno/turnip) |
 | **Footprint** | Full themed distro w/ office, video, AI, many apps | **Balanced strip** — keep dev + your tooling, drop heavy/optional apps |
 
-Terminal `alacritty` → **`foot`**. Launcher `omarchy-walker` → **`walker`** (kept; wlroots-native). Editor `omarchy-nvim` (opinionated config) → **stock `nvim` + your own config**.
+Terminal `alacritty` → **`foot`**. Launcher `swarmarchy-walker` → **`walker`** (kept; wlroots-native). Editor `swarmarchy-nvim` (opinionated config) → **stock `nvim` + your own config**.
 
 ---
 
@@ -51,7 +51,7 @@ The `swarmarchy-iso` builder is **archiso-based and hardcoded to x86_64**. Re-ta
 | Build assumption (x86_64) | aarch64 requirement |
 |---|---|
 | `packages.x86_64`, `releng` profile | `packages.aarch64`; archiso releng is x86-only → need ALARM/`archboot`-style aarch64 assembly |
-| Omarchy x86_64 package CDN (`pacman-online-*.conf` + `omarchy-keyring`) | **No aarch64 Omarchy repo exists** — needs an Arch Linux ARM mirror + omarchy-repo packages rebuilt for ARM (`walker`, etc.) |
+| Swarmarchy x86_64 package CDN (`pacman-online-*.conf` + `omarchy-keyring`) | **No aarch64 Swarmarchy repo exists** — needs an Arch Linux ARM mirror + swarmarchy-repo packages rebuilt for ARM (`walker`, etc.) |
 | `linux-t2` baked into live ISO (build-iso.sh:76) | Replace with Snapdragon-X / generic aarch64 kernel |
 | Node.js `linux-x64.tar.gz` (build-iso.sh:59) | `linux-arm64.tar.gz` |
 | `intel-ucode`, `amd-ucode`, `sof-firmware` (archinstall.packages) | Drop (x86 microcode); ARM uses in-kernel/qcom firmware |
@@ -60,7 +60,7 @@ The `swarmarchy-iso` builder is **archiso-based and hardcoded to x86_64**. Re-ta
 
 ---
 
-## 5. Installer features retained from Omarchy
+## 5. Installer features retained from Swarmarchy
 
 LUKS full-disk encryption (Linux partition only — **dual-boot safe, no wipe**), Btrfs + subvolumes + Snapper snapshots, Limine boot + snapshot entries, guided user/locale/timezone/hostname, Wi-Fi/ethernet during install, AUR support (`yay`), fingerprint + FIDO2 sudo, UFW firewall + Docker lockdown, suspend/hibernate toggles, Nerd Font. These live in `install/` and the iso `configs/` and are largely architecture-neutral (verified per-script in the config step).
 
@@ -71,7 +71,7 @@ LUKS full-disk encryption (Linux partition only — **dual-boot safe, no wipe**)
 - [x] **#1** Package removal/keep/add decisions documented (`01-removed-packages.md`)
 - [x] **#2** This summary
 - [x] **#3** ISO build GitHub Action (aarch64, with blockers flagged) — in `swarmarchy-iso`
-- [ ] **Enact #1** — apply removals/adds to `install/omarchy-base.packages` + `omarchy-other.packages`
+- [ ] **Enact #1** — apply removals/adds to `install/swarmarchy-base.packages` + `swarmarchy-other.packages`
 - [ ] **Config conversion** — translate `config/hypr/*` + `default/hypr/*` to Sway config (`~/.config/sway/`), Waybar, Mako, Walker, swayidle/swaylock. *(Large; separate step.)*
 - [ ] **Build-script aarch64 surgery** — ALARM mirror, `packages.aarch64`, kernel/firmware, Node arm64. *(Separate step; unblocks #3.)*
 - [ ] **Kernel/firmware pin** — confirm current Snapdragon-X support (linux-x1e / aarch64-laptops) and exact firmware set.

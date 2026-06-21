@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# swarmarchy:summary=Remove the Xbox Cloud Gaming web app.
+
+set -e
+
+swarmarchy-webapp-remove "Xbox Cloud Gaming"

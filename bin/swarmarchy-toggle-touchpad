@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# swarmarchy:summary=Enable, disable, or toggle the touchpad
+# swarmarchy:args=[on|off|toggle]
+# (Ported to Sway: uses `input type:touchpad events` + a sway toggle flag.)
+
+STATE_CONF="$HOME/.local/state/swarmarchy/toggles/sway/touchpad-disabled.conf"
+
+if [[ -z "$(swarmarchy-hw-touchpad)" ]]; then
+  echo "No touchpad device found" >&2
+  exit 1
+fi
+
+enable() {
+  swaymsg input type:touchpad events enabled >/dev/null
+  rm -f "$STATE_CONF"
+  swarmarchy-swayosd-client --custom-icon input-touchpad-symbolic --custom-message "Touchpad enabled"
+}
+
+disable() {
+  swaymsg input type:touchpad events disabled >/dev/null
+  mkdir -p "$(dirname "$STATE_CONF")"
+  printf 'input type:touchpad events disabled\n' > "$STATE_CONF"
+  swarmarchy-swayosd-client --custom-icon touchpad-disabled-symbolic --custom-message "Touchpad disabled"
+}
+
+case "${1:-toggle}" in
+  on) enable ;;
+  off) disable ;;
+  toggle) if [[ -f $STATE_CONF ]]; then enable; else disable; fi ;;
+esac

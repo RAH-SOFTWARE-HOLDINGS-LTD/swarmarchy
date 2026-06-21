@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# swarmarchy:summary=Reload mako configuration (used by the Swarmarchy theme switching).
+
+makoctl reload

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# swarmarchy:summary=Detect ASUS Zenbook UX5406AA series laptops on Intel Panther Lake.
+
+swarmarchy-hw-match "ux5406aa" && swarmarchy-hw-intel-ptl

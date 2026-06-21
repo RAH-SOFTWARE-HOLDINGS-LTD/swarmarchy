@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# swarmarchy:summary=Wake displays and restore brightness after idle
+# swarmarchy:group=system
+# swarmarchy:name=wake
+# swarmarchy:examples=swarmarchy system wake
+
+swarmarchy-brightness-display on
+swarmarchy-brightness-keyboard restore

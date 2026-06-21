@@ -1,6 +1,0 @@
-[Desktop Entry]
-Name=Omarchy (Sway)
-Comment=Omarchy Sway session
-Exec=sway
-TryExec=sway
-Type=Application

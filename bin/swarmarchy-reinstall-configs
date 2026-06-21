@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# swarmarchy:summary=Reset all Swarmarchy user configs to the defaults
+# swarmarchy:requires-sudo=true
+
+set -e
+
+# Overwrite all user configs with the Swarmarchy defaults.
+
+if (( EUID == 0 )); then
+  echo "Error: This script should not be run as root"
+  exit 1
+fi
+
+echo "Resetting all Swarmarchy configs"
+cp -R ~/.local/share/swarmarchy/config/* ~/.config/
+cp ~/.local/share/swarmarchy/default/bashrc ~/.bashrc
+echo '[[ -f ~/.bashrc ]] && . ~/.bashrc' | tee ~/.bash_profile >/dev/null
+
+$(bash $SWARMARCHY_PATH/install/config/theme.sh)
+
+swarmarchy-refresh-limine
+swarmarchy-nvim-setup

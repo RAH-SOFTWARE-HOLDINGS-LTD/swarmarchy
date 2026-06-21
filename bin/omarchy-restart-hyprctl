@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# omarchy:summary=Reload the Sway configuration (used by Omarchy theme switching).
-# (Ported to Sway; filename retained for compatibility.)
-
-swaymsg reload >/dev/null

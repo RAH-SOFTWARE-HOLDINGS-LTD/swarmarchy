@@ -1,4 +1,4 @@
 echo "Enable auto-pasting for the emoji picker"
 
-omarchy-refresh-config elephant/symbols.toml
-omarchy-restart-walker
+swarmarchy-refresh-config elephant/symbols.toml
+swarmarchy-restart-walker

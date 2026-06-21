@@ -1,3 +1,3 @@
 echo "Drop wayfreeze as hyprpicker replaces its function"
 
-omarchy-pkg-drop wayfreeze-git wayfreeze
+swarmarchy-pkg-drop wayfreeze-git wayfreeze

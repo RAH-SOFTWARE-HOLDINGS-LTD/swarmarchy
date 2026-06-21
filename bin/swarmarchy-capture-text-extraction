@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# swarmarchy:summary=Extract text from a screenshot region with OCR
+# swarmarchy:group=capture
+# swarmarchy:examples=swarmarchy capture ocr
+# (Ported to Sway: dropped the Hyprland-only hyprpicker freeze; grim+slurp+tesseract.)
+
+SELECTION=$(slurp 2>/dev/null)
+
+[[ -z $SELECTION ]] && exit 0
+
+TEXT=$(grim -g "$SELECTION" - | tesseract stdin stdout --oem 1 --psm 6 -l "${SWARMARCHY_OCR_LANGS:-eng}" --dpi 300 -c preserve_interword_spaces=1 2>/dev/null) || exit 1
+
+[[ -z $TEXT ]] && exit 1
+
+printf "%s" "$TEXT" | wl-copy
+notify-send "󰴑    Copied text from selection to clipboard"

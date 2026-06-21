@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# swarmarchy:summary=Launch the Swarmarchy wifi controls (provided by the Impala TUI).
+
+rfkill unblock wifi
+swarmarchy-launch-or-focus-tui impala

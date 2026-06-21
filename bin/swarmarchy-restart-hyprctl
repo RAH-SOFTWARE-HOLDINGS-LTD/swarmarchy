@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# swarmarchy:summary=Reload the Sway configuration (used by Swarmarchy theme switching).
+# (Ported to Sway; filename retained for compatibility.)
+
+swaymsg reload >/dev/null

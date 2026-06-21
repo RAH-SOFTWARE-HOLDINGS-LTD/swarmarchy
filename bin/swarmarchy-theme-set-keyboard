@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# swarmarchy:summary=Apply the current theme keyboard color to supported keyboards
+# swarmarchy:hidden=true
+
+swarmarchy-theme-set-keyboard-asus-rog
+swarmarchy-theme-set-keyboard-f16

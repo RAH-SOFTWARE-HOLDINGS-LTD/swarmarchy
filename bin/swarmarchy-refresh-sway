@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# swarmarchy:summary=Overwrite all the user configs in ~/.config/sway with the Swarmarchy defaults.
+
+swarmarchy-refresh-config sway/config
+swarmarchy-refresh-config sway/monitors.conf
+swarmarchy-refresh-config sway/input.conf
+swarmarchy-refresh-config sway/bindings.conf
+swarmarchy-refresh-config sway/looknfeel.conf
+swarmarchy-refresh-config sway/autostart.conf

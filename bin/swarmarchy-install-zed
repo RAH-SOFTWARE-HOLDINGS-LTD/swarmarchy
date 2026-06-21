@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# swarmarchy:summary=Install Zed Editor and configure it with the current Swarmarchy theme
+
+echo "Installing Zed Editor..."
+swarmarchy-pkg-add zed omazed
+
+# Apply Swarmarchy theme to Zed
+omazed setup
+
+setsid gtk-launch dev.zed.Zed

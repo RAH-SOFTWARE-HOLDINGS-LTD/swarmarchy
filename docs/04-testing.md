@@ -78,7 +78,7 @@ qemu-system-aarch64 \
 
 Log in, then install the Sway stack and apply the config. **Ubuntu package-name
 differences:** `mako` → `mako-notifier`, OCR is `tesseract-ocr`, and `walker` isn't
-packaged (so skip the launcher/`omarchy-menu` tests later).
+packaged (so skip the launcher/`swarmarchy-menu` tests later).
 ```bash
 sudo apt update
 sudo apt install -y sway swayidle swaylock foot waybar mako-notifier grim slurp \
@@ -87,14 +87,14 @@ sudo apt install -y sway swayidle swaylock foot waybar mako-notifier grim slurp 
 git clone -b convert-to-sway-arm \
   https://github.com/RAH-SOFTWARE-HOLDINGS-LTD/swarmarchy.git ~/swarmarchy
 
-export OMARCHY_PATH="$HOME/swarmarchy"; export PATH="$OMARCHY_PATH/bin:$PATH"
-mkdir -p ~/.local/share/omarchy ~/.config/omarchy/current
-ln -sfn "$OMARCHY_PATH/default" ~/.local/share/omarchy/default
-ln -sfn "$OMARCHY_PATH/bin"     ~/.local/share/omarchy/bin
-cp -r "$OMARCHY_PATH/config/"* ~/.config/        # ALL configs (matches install/config/config.sh)
-omarchy-theme-set "Tokyo Night"                  # GENERATES current/theme/{waybar.css,foot.ini,mako.ini,...} from templates
+export SWARMARCHY_PATH="$HOME/swarmarchy"; export PATH="$SWARMARCHY_PATH/bin:$PATH"
+mkdir -p ~/.local/share/swarmarchy ~/.config/swarmarchy/current
+ln -sfn "$SWARMARCHY_PATH/default" ~/.local/share/swarmarchy/default
+ln -sfn "$SWARMARCHY_PATH/bin"     ~/.local/share/swarmarchy/bin
+cp -r "$SWARMARCHY_PATH/config/"* ~/.config/        # ALL configs (matches install/config/config.sh)
+swarmarchy-theme-set "Tokyo Night"                  # GENERATES current/theme/{waybar.css,foot.ini,mako.ini,...} from templates
 
-sway                                             # launch from THIS shell so it inherits OMARCHY_PATH/PATH
+sway                                             # launch from THIS shell so it inherits SWARMARCHY_PATH/PATH
 ```
 
 **Sending keys into Sway under gtk** (the Windows key won't pass through directly): open
@@ -110,8 +110,8 @@ the QEMU monitor with `Ctrl+Alt+2`, type a `sendkey`, then `Ctrl+Alt+1` to retur
 ## Step 3 — Static checks (optional; any machine, no Sway needed)
 ```bash
 cd ~/swarmarchy
-for f in bin/omarchy-*; do bash -n "$f" || echo "SYNTAX FAIL: $f"; done   # all should parse
-shellcheck bin/omarchy-system-lock bin/omarchy-launch-or-focus bin/omarchy-capture-screenshot  # optional, style only
+for f in bin/swarmarchy-*; do bash -n "$f" || echo "SYNTAX FAIL: $f"; done   # all should parse
+shellcheck bin/swarmarchy-system-lock bin/swarmarchy-launch-or-focus bin/swarmarchy-capture-screenshot  # optional, style only
 ```
 
 ## Step 4 — Bindings (in the Sway session)
@@ -123,30 +123,46 @@ Send these with the monitor (`Ctrl+Alt+2` → `sendkey …` → `Ctrl+Alt+1`):
 
 ## Step 5 — Scripts (in a foot terminal)
 ```bash
-omarchy-menu-keybindings --print | head   # the cheatsheet renders from your bindings
-omarchy-cmd-terminal-cwd                   # prints this terminal's directory
-omarchy-capture-screenshot                 # drag a region with the mouse → ~/Pictures
-omarchy-system-lock                        # swaylock appears; type your password to unlock
+swarmarchy-menu-keybindings --print | head   # the cheatsheet renders from your bindings
+swarmarchy-cmd-terminal-cwd                   # prints this terminal's directory
+swarmarchy-capture-screenshot                 # drag a region with the mouse → ~/Pictures
+swarmarchy-system-lock                        # swaylock appears; type your password to unlock
 ```
 - [ ] cheatsheet lists binds with descriptions
 - [ ] cwd is correct · screenshot saved + on clipboard · lock + unlock works
 
 ## Step 6 — Optional
-- `omarchy-capture-screenrecording` → prompts to install `wf-recorder`, then records a region
-- `omarchy-toggle-nightlight` (wlsunset) · `omarchy-hyprland-monitor-scaling-cycle`
-- **Skip `walker` / `omarchy-menu`** — walker isn't packaged on Ubuntu (works on the real Arch target).
+- `swarmarchy-capture-screenrecording` → prompts to install `wf-recorder`, then records a region
+- `swarmarchy-toggle-nightlight` (wlsunset) · `swarmarchy-hyprland-monitor-scaling-cycle`
+- **Skip `walker` / `swarmarchy-menu`** — walker isn't packaged on Ubuntu (works on the real Arch target).
 
 Exit Sway with `swaymsg exit`.
 
 ---
 
-## ❌ Not testable in a VM (bare-metal only)
-Adreno GPU acceleration (Mesa turnip), Qualcomm Wi-Fi/Bluetooth (your Bose headphones),
-audio firmware, DisplayLink (`evdi`), fingerprint, the Snapdragon-X kernel itself, real
-backlight/brightness, lid switch, ZMK/Razer USB. Those wait for real hardware.
+## Step 7 — Bare-metal checks (on the real machine, after install)
+These can't be tested in a VM (real keys/hardware only). Run them once swarmarchy is on
+the Yoga; if any break, fix the script and push (see the loop below):
+- [ ] Media keys: volume up/down/mute, mic-mute (`XF86Audio*`) → SwayOSD shows
+- [ ] Brightness keys (`XF86MonBrightness*`) → backlight changes + OSD
+- [ ] `Print` → screenshot · `Super+Ctrl+Print` → OCR
+- [ ] Lid close/open → display off/on · `Super+Ctrl+Delete` laptop-display toggle
+- [ ] `Super+/` monitor scaling · `Super+Ctrl+N` nightlight (wlsunset)
+- [ ] GPU acceleration (Mesa turnip — `vulkaninfo` / a GL app)
+- [ ] Wi-Fi · Bluetooth (Bose headphones) · audio
+- [ ] DisplayLink adapter · fingerprint · ZMK keyboard · Razer mouse
 
-If Steps 3–6 pass, the Sway conversion is sound and the remaining risk is entirely the
-hardware-enablement (Track B — see `swarmarchy-iso/BUILD-AARCH64.md`).
+### Fixing something that's broken (the iteration loop)
+The install at `~/.local/share/swarmarchy` is a **git clone of this repo**, so:
+1. The `swarmarchy-*` scripts are plain shell — edit the offending one.
+2. `git commit` + `git push`.
+3. On the machine: `git -C ~/.local/share/swarmarchy pull` (or `swarmarchy-update`).
+
+No reinstall needed. (You can also edit directly in `~/.local/share/swarmarchy` on the
+machine and push back.)
+
+If Steps 3–6 pass in the VM, the Sway conversion is sound; the remaining risk is the
+hardware-enablement above (Track B — see `swarmarchy-iso/BUILD-AARCH64.md`).
 
 ---
 
@@ -157,8 +173,8 @@ hardware-enablement (Track B — see `swarmarchy-iso/BUILD-AARCH64.md`).
 - **`whpx` error** → drop `-accel whpx`. **Black window** → try `-display sdl` (may freeze;
   if so stay on gtk).
 - **foot won't open via a binding** → make sure `xdg-terminal-exec` is installed and you
-  launched Sway from a shell with `OMARCHY_PATH`/`PATH` exported.
-- **"missing waybar.css / foot.ini"** → you skipped `omarchy-theme-set` (Step 2); those
+  launched Sway from a shell with `SWARMARCHY_PATH`/`PATH` exported.
+- **"missing waybar.css / foot.ini"** → you skipped `swarmarchy-theme-set` (Step 2); those
   files are generated from `default/themed/*.tpl`, not shipped.
 
 ## Appendix B — Partitioning / dual-boot rehearsal

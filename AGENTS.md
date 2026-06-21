@@ -10,9 +10,9 @@
 
 # Command Naming
 
-All commands start with `omarchy-`. Prefixes indicate purpose.
+All commands start with `swarmarchy-`. Prefixes indicate purpose.
 
-The authoritative command group list lives in `bin/omarchy` in `GROUP_DESCRIPTIONS`. Keep `GROUP_DESCRIPTIONS` updated when adding a new command prefix.
+The authoritative command group list lives in `bin/swarmarchy` in `GROUP_DESCRIPTIONS`. Keep `GROUP_DESCRIPTIONS` updated when adding a new command prefix.
 
 Common prefixes include:
 
@@ -35,29 +35,29 @@ Other current prefixes include:
 
 # Command Metadata
 
-Commands in `bin/` can declare CLI metadata in comments near the top of the file. `bin/omarchy` scans the first 80 lines, and tests expect command metadata to remain valid.
+Commands in `bin/` can declare CLI metadata in comments near the top of the file. `bin/swarmarchy` scans the first 80 lines, and tests expect command metadata to remain valid.
 
 Supported metadata keys:
 
-- `# omarchy:summary=...` - short help text
-- `# omarchy:group=...` - command group when it differs from the filename-derived prefix
-- `# omarchy:name=...` - command name within the group
-- `# omarchy:args=...` - usage arguments
-- `# omarchy:examples=...` - examples separated with ` | `
-- `# omarchy:alias=...` / `# omarchy:aliases=...` - alternate routes
-- `# omarchy:hidden=true` - hide from default command listings
-- `# omarchy:requires-sudo=true` - mark commands that require sudo
+- `# swarmarchy:summary=...` - short help text
+- `# swarmarchy:group=...` - command group when it differs from the filename-derived prefix
+- `# swarmarchy:name=...` - command name within the group
+- `# swarmarchy:args=...` - usage arguments
+- `# swarmarchy:examples=...` - examples separated with ` | `
+- `# swarmarchy:alias=...` / `# swarmarchy:aliases=...` - alternate routes
+- `# swarmarchy:hidden=true` - hide from default command listings
+- `# swarmarchy:requires-sudo=true` - mark commands that require sudo
 
 Prefer explicit metadata for user-facing commands. Keep routes consistent with the filename unless there is a deliberate alias or compatibility route.
 
 Example:
 
 ```bash
-# omarchy:summary=Take a screenshot
-# omarchy:group=capture
-# omarchy:args=[smart|region|windows|fullscreen] [slurp|copy]
-# omarchy:examples=omarchy screenshot | omarchy capture screenshot region
-# omarchy:aliases=omarchy screenshot
+# swarmarchy:summary=Take a screenshot
+# swarmarchy:group=capture
+# swarmarchy:args=[smart|region|windows|fullscreen] [slurp|copy]
+# swarmarchy:examples=swarmarchy screenshot | swarmarchy capture screenshot region
+# swarmarchy:aliases=swarmarchy screenshot
 ```
 
 # Install Scripts
@@ -67,9 +67,9 @@ Install entry points (`install.sh`, `boot.sh`) use `#!/bin/bash`. Many scripts u
 Install stage files follow this pattern:
 
 - `install/*/all.sh` lists scripts in execution order
-- leaf scripts are sourced by `run_logged $OMARCHY_INSTALL/path/to/script.sh`
+- leaf scripts are sourced by `run_logged $SWARMARCHY_INSTALL/path/to/script.sh`
 - avoid `exit` in sourced install scripts unless intentionally aborting the install
-- use `$OMARCHY_INSTALL` and `$OMARCHY_PATH` instead of hard-coded Omarchy paths
+- use `$SWARMARCHY_INSTALL` and `$SWARMARCHY_PATH` instead of hard-coded Swarmarchy paths
 - keep hardware-specific logic under `install/config/hardware/`
 - prefer helper commands for package and command checks where available
 
@@ -79,10 +79,10 @@ Raw `command -v`, `pacman`, and `pacman-key` are acceptable in bootstrap/preflig
 
 Use these instead of raw shell commands:
 
-- `omarchy-cmd-missing` / `omarchy-cmd-present` - check for commands
-- `omarchy-pkg-missing` / `omarchy-pkg-present` - check for packages
-- `omarchy-pkg-add` - install packages (handles both pacman and AUR)
-- `omarchy-hw-asus-rog` - detect ASUS ROG hardware (and similar `hw-*` commands)
+- `swarmarchy-cmd-missing` / `swarmarchy-cmd-present` - check for commands
+- `swarmarchy-pkg-missing` / `swarmarchy-pkg-present` - check for packages
+- `swarmarchy-pkg-add` - install packages (handles both pacman and AUR)
+- `swarmarchy-hw-asus-rog` - detect ASUS ROG hardware (and similar `hw-*` commands)
 
 Exceptions are allowed for bootstrap, preflight, migration, and package-helper scripts where the helper may not be available yet, where the helper itself is being implemented, or where direct package-manager behavior is required.
 
@@ -94,30 +94,30 @@ Exceptions are allowed for bootstrap, preflight, migration, and package-helper s
 
 # Visual Changes
 
-When making visual changes, such as Waybar styles or desktop appearance, always take and analyze a screenshot after applying the change to verify the result. Use `omarchy capture screenshot fullscreen save` for fullscreen screenshots.
+When making visual changes, such as Waybar styles or desktop appearance, always take and analyze a screenshot after applying the change to verify the result. Use `swarmarchy capture screenshot fullscreen save` for fullscreen screenshots.
 
 # Refresh Pattern
 
 To copy a default config to user config with automatic backup:
 
 ```bash
-omarchy-refresh-config hypr/hyprlock.conf
+swarmarchy-refresh-config hypr/hyprlock.conf
 ```
 
-This copies `~/.local/share/omarchy/config/hypr/hyprlock.conf` to `~/.config/hypr/hyprlock.conf`.
+This copies `~/.local/share/swarmarchy/config/hypr/hyprlock.conf` to `~/.config/hypr/hyprlock.conf`.
 
 # Migrations
 
-To create a new migration, run `omarchy-dev-add-migration --no-edit`. This creates a migration file named after the unix timestamp of the last commit.
+To create a new migration, run `swarmarchy-dev-add-migration --no-edit`. This creates a migration file named after the unix timestamp of the last commit.
 
 New migration format:
 - File permissions must be `0644` (`-rw-r--r--`); migrations are sourced, not executed directly
 - No shebang line
 - Start with an `echo` describing what the migration does
-- Use `$OMARCHY_PATH` to reference the omarchy directory
-- Prefer helper commands such as `omarchy-cmd-present`, `omarchy-cmd-missing`, `omarchy-pkg-present`, and `omarchy-pkg-missing`
+- Use `$SWARMARCHY_PATH` to reference the swarmarchy directory
+- Prefer helper commands such as `swarmarchy-cmd-present`, `swarmarchy-cmd-missing`, `swarmarchy-pkg-present`, and `swarmarchy-pkg-missing`
 
-Some older migrations predate these rules. Do not copy older migrations that start with shebangs, omit the leading `echo`, or hard-code `~/.local/share/omarchy`.
+Some older migrations predate these rules. Do not copy older migrations that start with shebangs, omit the leading `echo`, or hard-code `~/.local/share/swarmarchy`.
 
 Migrations may use raw `pacman`, `command -v`, or direct config edits when needed for historical compatibility or one-off repair work.
 
@@ -125,7 +125,7 @@ Example:
 ```bash
 echo "Disable fingerprint in hyprlock if fingerprint auth is not configured"
 
-if omarchy-cmd-missing fprintd-list || ! fprintd-list "$USER" 2>/dev/null | grep -q "finger"; then
+if swarmarchy-cmd-missing fprintd-list || ! fprintd-list "$USER" 2>/dev/null | grep -q "finger"; then
   sed -i 's/fingerprint:enabled = .*/fingerprint:enabled = false/' ~/.config/hypr/hyprlock.conf
 fi
 ```

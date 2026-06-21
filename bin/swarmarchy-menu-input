@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# swarmarchy:summary=Prompt for text input with Walker
+# swarmarchy:group=menu
+# swarmarchy:name=input
+# swarmarchy:args=prompt [walker args...]
+# swarmarchy:examples=swarmarchy menu input Reminder|swarmarchy-menu-input "Reminder in minutes" --width 400
+
+set -euo pipefail
+
+prompt="${1:-Input}"
+if (( $# > 0 )); then
+  shift
+fi
+
+swarmarchy-launch-walker --dmenu --inputonly --width 295 --minheight 1 --maxheight 1 -p "$prompt…" "$@" 2>/dev/null

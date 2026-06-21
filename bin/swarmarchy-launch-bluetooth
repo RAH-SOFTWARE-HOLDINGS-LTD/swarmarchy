@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# swarmarchy:summary=Launch the Swarmarchy bluetooth controls TUI (provided by bluetui).
+
+rfkill unblock bluetooth
+exec swarmarchy-launch-or-focus-tui bluetui

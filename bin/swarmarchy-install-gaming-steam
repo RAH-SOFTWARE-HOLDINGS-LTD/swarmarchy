@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# swarmarchy:summary=Install Steam and graphics drivers selected for this system
+# swarmarchy:requires-sudo=true
+
+set -e
+
+echo "Installing Steam..."
+swarmarchy-pkg-add steam
+swarmarchy-install-gaming-gpu-lib32
+
+echo ""
+echo "Steam will start automatically now. This might take a while..."
+
+setsid gtk-launch steam >/dev/null 2>&1 &

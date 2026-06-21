@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# swarmarchy:summary=Toggle Waybar visibility
+# swarmarchy:examples=swarmarchy toggle waybar
+
+swarmarchy-toggle waybar-off
+
+if pgrep -x waybar >/dev/null; then
+  pkill -x waybar
+else
+  uwsm-app -- waybar >/dev/null 2>&1 &
+fi

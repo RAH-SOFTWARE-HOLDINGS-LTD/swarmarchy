@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Swarmarchy (Sway)
+Comment=Swarmarchy Sway session
+Exec=sway
+TryExec=sway
+Type=Application

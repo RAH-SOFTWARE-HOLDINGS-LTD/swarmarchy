@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# swarmarchy:summary=Print the current Swarmarchy git branch
+
+echo $(git -C "$SWARMARCHY_PATH" rev-parse --abbrev-ref HEAD)

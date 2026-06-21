@@ -5,20 +5,20 @@
 ### Variables
 set $mod Mod4
 set $term xdg-terminal-exec
-set $browser omarchy-launch-browser
+set $browser swarmarchy-launch-browser
 set $fileManager nautilus --new-window
 
-### Omarchy Sway defaults (don't edit these directly — change the user files below)
-include ~/.local/share/omarchy/default/sway/appearance.conf
-include ~/.local/share/omarchy/default/sway/input.conf
-include ~/.local/share/omarchy/default/sway/windows.conf
-include ~/.local/share/omarchy/default/sway/bindings.conf
-include ~/.local/share/omarchy/default/sway/autostart.conf
+### Swarmarchy Sway defaults (don't edit these directly — change the user files below)
+include ~/.local/share/swarmarchy/default/sway/appearance.conf
+include ~/.local/share/swarmarchy/default/sway/input.conf
+include ~/.local/share/swarmarchy/default/sway/windows.conf
+include ~/.local/share/swarmarchy/default/sway/bindings.conf
+include ~/.local/share/swarmarchy/default/sway/autostart.conf
 
 ### Theme (colors + border) — TODO: themes/ need a `sway.conf` variant
 ### (currently only hyprland.conf/hyprlock.conf exist per theme). Sway logs a
 ### warning if this file is missing but continues.
-include ~/.config/omarchy/current/theme/sway.conf
+include ~/.config/swarmarchy/current/theme/sway.conf
 
 ### Your own overrides (override anything from the defaults above)
 include ~/.config/sway/monitors.conf
@@ -28,4 +28,4 @@ include ~/.config/sway/looknfeel.conf
 include ~/.config/sway/autostart.conf
 
 ### Dynamically toggled flags
-include ~/.local/state/omarchy/toggles/sway/*.conf
+include ~/.local/state/swarmarchy/toggles/sway/*.conf

@@ -1,3 +1,3 @@
-echo "Add Omarchy AI skill for assistance tailoring the system"
+echo "Add Swarmarchy AI skill for assistance tailoring the system"
 
-source $OMARCHY_PATH/install/config/omarchy-ai-skill.sh
+source $SWARMARCHY_PATH/install/config/swarmarchy-ai-skill.sh

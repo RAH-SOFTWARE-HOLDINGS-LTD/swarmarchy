@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# swarmarchy:summary=Wrapper for swayosd-client that targets the currently focused monitor.
+# swarmarchy:args=<swayosd-client-args...>
+
+exec swayosd-client --monitor "$(swarmarchy-hyprland-monitor-focused)" "$@"

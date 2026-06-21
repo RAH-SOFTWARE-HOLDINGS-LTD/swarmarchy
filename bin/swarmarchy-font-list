@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# swarmarchy:summary=List available monospace fonts
+# swarmarchy:examples=swarmarchy font list | swarmarchy font set "CaskaydiaMono Nerd Font"
+
+fc-list :spacing=100 -f "%{family[0]}\n" | grep -v -i -E 'emoji|signwriting|swarmarchy' | sort -u

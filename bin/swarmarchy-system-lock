@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# swarmarchy:summary=Lock the computer and turn off the display
+# swarmarchy:group=system
+# swarmarchy:name=lock
+# swarmarchy:examples=swarmarchy system lock
+
+if ! pidof swaylock >/dev/null; then
+  (
+    swaylock
+    swarmarchy-system-wake
+  ) &
+fi
+
+# Set keyboard layout to default (first layout)
+swaymsg 'input "type:keyboard" xkb_switch_layout 0' >/dev/null 2>&1
+
+# Ensure 1password is locked
+if pgrep -x "1password" >/dev/null; then
+  1password --lock &
+fi
+
+# Avoid running screensaver when locked
+pkill -f org.swarmarchy.screensaver
+
+if [[ ${SWARMARCHY_LOCK_ONLY:-false} != "true" ]]; then
+  (
+    sleep 3
+    pidof swaylock >/dev/null || exit 0
+    swarmarchy-brightness-keyboard off
+    swarmarchy-brightness-display off
+  ) &
+fi

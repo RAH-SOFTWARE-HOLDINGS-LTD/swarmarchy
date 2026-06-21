@@ -1,0 +1,139 @@
+# Swarmarchy core package list — installed via install/packaging/base.sh and baked
+# into the ISO's offline mirror. One package per line; everything after '#' is a
+# human note (the installer parses only the first token). Sway on aarch64.
+
+# ─── Sway desktop & Wayland session ───
+sway                       # the Wayland tiling compositor (the desktop itself)
+swaybg                     # sets the desktop wallpaper
+swayidle                   # idle watcher → triggers lock / sleep (see swarmarchy-swayidle)
+swaylock                   # the screen locker
+swayosd                    # on-screen popup for volume / brightness / caps-lock
+foot                       # default terminal emulator (fast, Wayland-native)
+waybar                     # the top status bar
+mako                       # desktop notification daemon
+libnotify                  # provides notify-send (used by ~21 swarmarchy-* scripts)
+grim                       # screenshot capture backend
+slurp                      # screen-region selector (pairs with grim, OCR, recorder)
+satty                      # screenshot annotation editor (arrows, blur, crop)
+wl-clipboard               # clipboard from the CLI (wl-copy / wl-paste)
+wlsunset                   # night-light (warms screen colour temperature)
+xdg-desktop-portal-wlr     # screenshare/screencast portal for wlroots compositors
+xdg-desktop-portal-gtk     # file-picker + settings portal (GTK side)
+xdg-terminal-exec          # launches your chosen default terminal per the XDG spec
+qt5-wayland                # Wayland backend for Qt5 apps
+polkit-gnome               # graphical "enter password" prompts for privileged actions
+gnome-keyring              # stores secrets (passwords, SSH keys) for the session
+libsecret                  # client library apps use to talk to the keyring
+python-gobject             # GTK/GObject Python bindings (used by waybar scripts etc.)
+
+# ─── Fonts & theming ───
+ttf-jetbrains-mono-nerd    # the Nerd Font: monospace + icon glyphs (bar, terminal)
+ttf-ia-writer              # iA Writer font for documents / markdown
+noto-fonts                 # broad Unicode text coverage
+noto-fonts-emoji           # colour emoji
+noto-fonts-cjk             # Chinese/Japanese/Korean glyph rendering (~300MB)
+woff2-font-awesome         # Font Awesome icon set (Waybar glyphs)
+fontconfig                 # system font configuration/management
+gnome-themes-extra         # provides the Adwaita-dark GTK theme (dark GTK apps)
+kvantum-qt5                # Qt theming engine (keeps Qt apps matching the dark look)
+yaru-icon-theme            # the application icon theme
+
+# ─── Audio (your Bose headphones ride on PipeWire) ───
+wireplumber                # PipeWire session/policy manager (routes audio streams)
+alsa-utils                 # low-level ALSA sound tools (alsamixer, aplay, speaker-test)
+pamixer                    # CLI volume control (driven by the media keys)
+playerctl                  # play/pause/next for media players (MPRIS)
+wiremix                    # PipeWire mixer as a TUI
+# (pipewire itself + pipewire-pulse/alsa/jack live in swarmarchy-other.packages)
+
+# ─── Networking & Wi-Fi (Qualcomm wifi) ───
+iwd                        # Wi-Fi daemon (connects/manages wireless)
+impala                     # friendly TUI front-end for iwd
+wireless-regdb             # wireless regulatory database (legal channel/power limits)
+avahi                      # mDNS / zeroconf service discovery on the LAN
+nss-mdns                   # lets the system resolve *.local names via avahi
+
+# ─── Bluetooth ───
+bluetui                    # pair/manage Bluetooth (your headphones) from a TUI
+
+# ─── Printing ───
+cups                       # the print server
+cups-browsed               # auto-discovers network printers
+cups-filters               # converts documents to printer formats
+cups-pdf                   # adds a "Print to PDF" virtual printer
+system-config-printer      # GUI to add/configure printers
+
+# ─── Files, storage & file manager ───
+nautilus                   # GNOME graphical file manager
+nautilus-python            # Python extension support for Nautilus
+sushi                      # spacebar quick-preview inside Nautilus
+ffmpegthumbnailer          # generates video thumbnails in the file manager
+gnome-disk-utility         # GUI for disks/partitions/format
+gvfs-mtp                   # mount phones/cameras (MTP) in the file manager
+gvfs-nfs                   # mount NFS network shares
+gvfs-smb                   # mount Windows / Samba shares
+dosfstools                 # FAT/EFI filesystem tools (needed for the EFI partition)
+exfatprogs                 # exFAT tools (large USB drives, SD cards)
+localsend                  # AirDrop-style file transfer between your devices
+
+# ─── Browser & media ───
+chromium                   # web browser (also hosts the web-apps via swarmarchy-launch-webapp)
+mpv                        # video/audio player
+imv                        # lightweight image viewer
+obsidian                   # markdown notes / knowledge base (vanilla — no Swarmarchy theming)
+
+# ─── Capture & OCR ───
+tesseract                  # OCR engine (screen region → text)
+tesseract-data-eng         # English training data for tesseract
+
+# ─── Editor / dev tools / TUIs ───
+neovim                     # Neovim text editor (generic Arch package; bring your own config)
+tmux                       # terminal multiplexer
+lazygit                    # git terminal UI
+btop                       # system resource monitor (TUI)
+tree-sitter-cli            # builds Neovim syntax parsers on demand
+clang                      # C/C++ compiler (LLVM) — needed by some builds
+llvm                       # LLVM toolchain (pairs with clang)
+rust                       # Rust toolchain (also builds some AUR packages)
+mise                       # runtime version manager (add node/python/ruby on demand)
+usage                      # CLI-spec parser that mise relies on
+github-cli                 # the `gh` GitHub command-line tool
+docker                     # containers
+docker-buildx              # extended `docker build` engine
+docker-compose             # multi-container orchestration
+
+# ─── Security & firewall ───
+ufw                        # simple firewall front-end
+ufw-docker                 # makes UFW rules actually apply to Docker containers
+
+# ─── Shell & command-line basics ───
+bash-completion            # tab-completion for bash
+starship                   # the shell prompt
+bat                        # `cat` with syntax highlighting + paging
+fzf                        # fuzzy finder (Ctrl-R history, file pickers)
+fd                         # fast, friendly `find`
+ripgrep                    # very fast recursive grep (`rg`)
+dust                       # disk-usage as a visual tree (`du` replacement)
+jq                         # JSON processor — used heavily by the sway/* scripts
+less                       # the pager
+man-db                     # man pages
+tldr                       # short, example-first man pages
+unzip                      # extract .zip archives
+whois                      # domain / IP lookups
+inetutils                  # hostname, ping, telnet, etc.
+inxi                       # one-shot hardware/system info report
+fastfetch                  # the system-info banner (handy to confirm kernel/GPU)
+expac                      # query the pacman package database
+plocate                    # fast file-name search (`locate`)
+socat                      # socket relay/bridge (used for IPC in a few scripts)
+xmlstarlet                 # edit XML from scripts (e.g. fontconfig changes)
+gum                        # pretty TUI prompts — powers swarmarchy's menu/setup scripts
+libyaml                    # YAML parsing library (dependency)
+libqalculate               # calculator engine (the launcher's calc uses it)
+
+# ─── Power, hardware & system glue ───
+brightnessctl              # screen backlight control (media keys)
+power-profiles-daemon      # balanced/performance/power-saver profiles
+bolt                       # authorize Thunderbolt / USB4 devices
+kernel-modules-hook        # keeps current modules during kernel upgrades (no mid-upgrade breakage)
+tzupdate                   # set the timezone automatically from your network location

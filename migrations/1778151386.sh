@@ -1,4 +1,4 @@
-echo "Add Omarchy pi system theme extension"
+echo "Add Swarmarchy pi system theme extension"
 
 mkdir -p "$HOME/.pi/agent/extensions"
-cp "$OMARCHY_PATH/default/pi/agent/extensions/omarchy-system-theme.ts" "$HOME/.pi/agent/extensions/"
+cp "$SWARMARCHY_PATH/default/pi/agent/extensions/swarmarchy-system-theme.ts" "$HOME/.pi/agent/extensions/"

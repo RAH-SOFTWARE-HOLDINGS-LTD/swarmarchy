@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# swarmarchy:summary=Set the correct power profile on boot based on current AC/battery state.
+
+if swarmarchy-battery-present && ! swarmarchy-ac-present; then
+  swarmarchy-powerprofiles-set battery
+else
+  swarmarchy-powerprofiles-set ac
+fi

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# swarmarchy:summary=Apply the current theme keyboard color to ASUS ROG keyboards
+# swarmarchy:hidden=true
+
+ASUSCTL_THEME=~/.config/swarmarchy/current/theme/keyboard.rgb
+
+if swarmarchy-cmd-present asusctl; then
+  asusctl aura effect static -c $(sed 's/^#//' $ASUSCTL_THEME)
+fi

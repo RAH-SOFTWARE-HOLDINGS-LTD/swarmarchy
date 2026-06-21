@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# swarmarchy:summary=Apply an Swarmarchy theme
+# swarmarchy:args=<theme-name>
+# swarmarchy:examples=swarmarchy theme list | swarmarchy theme set "Tokyo Night"
+
+if [[ -z $1 ]]; then
+  echo "Usage: swarmarchy-theme-set <theme-name>"
+  exit 1
+fi
+
+CURRENT_THEME_PATH="$HOME/.config/swarmarchy/current/theme"
+NEXT_THEME_PATH="$HOME/.config/swarmarchy/current/next-theme"
+USER_THEMES_PATH="$HOME/.config/swarmarchy/themes"
+SWARMARCHY_THEMES_PATH="$SWARMARCHY_PATH/themes"
+
+THEME_NAME=$(echo "$1" | sed -E 's/<[^>]+>//g' | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+
+if [[ ! -d $SWARMARCHY_THEMES_PATH/$THEME_NAME ]] && [[ ! -d $USER_THEMES_PATH/$THEME_NAME ]]; then
+  echo "Theme '$THEME_NAME' does not exist"
+  exit 1
+fi
+
+# Setup clean next theme directory (for atomic theme config swapping)
+rm -rf "$NEXT_THEME_PATH"
+mkdir -p "$NEXT_THEME_PATH"
+
+# Copy official theme first, then overlay user customizations on top
+cp -r "$SWARMARCHY_THEMES_PATH/$THEME_NAME/"* "$NEXT_THEME_PATH/" 2>/dev/null
+cp -r "$USER_THEMES_PATH/$THEME_NAME/"* "$NEXT_THEME_PATH/" 2>/dev/null
+
+# Generate colors.toml from alacritty.toml if theme is missing colors.toml
+if [[ ! -f $NEXT_THEME_PATH/colors.toml && -f $NEXT_THEME_PATH/alacritty.toml ]]; then
+  swarmarchy-theme-colors-from-alacritty "$NEXT_THEME_PATH"
+fi
+
+# Generate dynamic configs
+swarmarchy-theme-set-templates
+
+# Swap next theme in as current
+rm -rf "$CURRENT_THEME_PATH"
+mv "$NEXT_THEME_PATH" "$CURRENT_THEME_PATH"
+
+# Store theme name for reference
+echo "$THEME_NAME" >"$HOME/.config/swarmarchy/current/theme.name"
+
+# Change background with theme
+if [[ $SWARMARCHY_THEME_SKIP_BACKGROUND != "1" ]]; then
+  swarmarchy-theme-bg-next
+fi
+
+# Restart components to apply new theme
+if pgrep -x waybar >/dev/null; then
+  swarmarchy-restart-waybar
+fi
+swarmarchy-restart-swayosd
+swarmarchy-restart-terminal
+swarmarchy-restart-hyprctl
+swarmarchy-restart-btop
+swarmarchy-restart-opencode
+swarmarchy-restart-mako
+swarmarchy-restart-helix
+
+# Change app-specific themes
+swarmarchy-theme-set-foot
+swarmarchy-theme-set-gnome
+swarmarchy-theme-set-browser
+swarmarchy-theme-set-vscode
+swarmarchy-theme-set-obsidian
+swarmarchy-theme-set-keyboard
+
+# Call hook on theme set
+swarmarchy-hook theme-set "$THEME_NAME" >/dev/null

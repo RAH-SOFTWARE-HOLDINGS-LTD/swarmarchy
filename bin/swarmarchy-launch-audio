@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# swarmarchy:summary=Launch the Swarmarchy audio controls TUI (provided by wiremix).
+
+swarmarchy-launch-or-focus-tui wiremix

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# swarmarchy:summary=Launch an app or focus an existing window matching a pattern
+# swarmarchy:args=<window-pattern> <launch-command>
+
+if (($# == 0)); then
+  echo "Usage: swarmarchy-launch-or-focus [window-pattern] [launch-command]"
+  exit 1
+fi
+
+WINDOW_PATTERN="$1"
+LAUNCH_COMMAND="${2:-$WINDOW_PATTERN}"
+
+# Match focused-or-not windows by Wayland app_id, XWayland class, or title.
+con_id=$(swaymsg -t get_tree | jq -r --arg p "$WINDOW_PATTERN" '
+  recurse(.nodes[]?, .floating_nodes[]?)
+  | select(.pid? != null)
+  | select(
+      ((.app_id // "") | test("\\b" + $p + "\\b"; "i")) or
+      ((.window_properties.class // "") | test("\\b" + $p + "\\b"; "i")) or
+      ((.name // "") | test("\\b" + $p + "\\b"; "i"))
+    )
+  | .id' | head -n1)
+
+if [[ -n $con_id ]]; then
+  swaymsg "[con_id=$con_id] focus" >/dev/null
+else
+  # shellcheck disable=SC2086  # $LAUNCH_COMMAND must word-split into separate args
+  eval exec setsid $LAUNCH_COMMAND
+fi

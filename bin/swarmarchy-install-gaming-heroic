@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# swarmarchy:summary=Install Heroic Games Launcher (Epic, GOG, Amazon Prime Gaming) with graphics drivers.
+# swarmarchy:requires-sudo=true
+
+set -e
+
+echo "Installing Heroic Games Launcher..."
+swarmarchy-pkg-add heroic-games-launcher-bin
+swarmarchy-install-gaming-gpu-lib32
+
+setsid gtk-launch heroic >/dev/null 2>&1 &

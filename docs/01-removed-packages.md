@@ -1,16 +1,16 @@
 # Swarmarchy — Removed / Changed Packages
 
 **Target machine:** Lenovo Yoga Slim 7x — Snapdragon X Elite **X1E78100** (ARM64 / aarch64), Qualcomm **Adreno X1-85** GPU
-**Base:** Omarchy 3.8.2 (x86_64) → re-targeted to **aarch64 + Sway** (Hyprland removed)
+**Base:** Swarmarchy 3.8.2 (x86_64) → re-targeted to **aarch64 + Sway** (Hyprland removed)
 **Strip level:** Balanced — drop architecture-wrong drivers, Hyprland, and heavy/optional apps; keep dev toolchains and quality-of-life.
-**Scope of this file:** the `install/omarchy-base.packages` and `install/omarchy-other.packages` manifests (these feed both the post-install and the `swarmarchy-iso` builder).
+**Scope of this file:** the `install/swarmarchy-base.packages` and `install/swarmarchy-other.packages` manifests (these feed both the post-install and the `swarmarchy-iso` builder).
 **Last updated:** 2026-06-14
 
 > Legend: **REMOVE** = pulled from the ISO (install later via `pacman`/AUR if wanted) · **REPLACE** = swapped for an ARM/Sway equivalent · **ADD** = new package required by this hardware/compositor.
 
 ---
 
-## 1. Architecture-wrong — wrong CPU/GPU/laptop (the bulk of `omarchy-other.packages`)
+## 1. Architecture-wrong — wrong CPU/GPU/laptop (the bulk of `swarmarchy-other.packages`)
 
 These exist for x86 desktops/laptops that are not this machine. Most will not even build on aarch64.
 
@@ -65,7 +65,7 @@ These exist for x86 desktops/laptops that are not this machine. Most will not ev
 |---|---|---|
 | `hyprland`, `hypridle`, `hyprlock`, `hyprpicker`, `hyprsunset`, `hyprland-guiutils`, `hyprland-preview-share-picker` | REMOVE *(already removed in working tree)* | `sway`, `swayidle`, `swaylock`, `swaybg`*(kept)*, `swayosd`*(kept)* |
 | `xdg-desktop-portal-hyprland` | **REPLACE** | **`xdg-desktop-portal-wlr`** (wlroots screencast/screenshot portal) |
-| `uwsm`, `alacritty`, `omarchy-walker`, `omarchy-nvim` | REMOVE *(already removed)* | terminal → **`foot`** (ADD); launcher → **`walker`** (re-ADD, wlroots-native); nvim → your own config |
+| `uwsm`, `alacritty`, `swarmarchy-walker`, `swarmarchy-nvim` | REMOVE *(already removed)* | terminal → **`foot`** (ADD); launcher → **`walker`** (re-ADD, wlroots-native); nvim → your own config |
 
 > Sway-native pieces **already in the list and kept**: `waybar`, `mako`, `grim`, `slurp`, `satty`, `wl-clipboard`, `swaybg`, `swayosd`, `gtk4-layer-shell`, `polkit-gnome`, `xdg-desktop-portal-gtk`, `qt5-wayland`, `qt6-wayland`.
 
@@ -73,7 +73,7 @@ These exist for x86 desktops/laptops that are not this machine. Most will not ev
 
 ## 3. Heavy / optional apps (balanced strip)
 
-Matches Omarchy's own `omarchy-remove-preinstalls` list and your keep-list. Re-install any of these any time.
+Matches Swarmarchy's own `swarmarchy-remove-preinstalls` list and your keep-list. Re-install any of these any time.
 
 | Package | Why removed |
 |---|---|
@@ -88,7 +88,7 @@ Matches Omarchy's own `omarchy-remove-preinstalls` list and your keep-list. Re-i
 | `pinta` | Simple image editor — `satty` covers annotation |
 | `xournalpp` | Pen/PDF annotation — Slim 7x has no stylus |
 | `evince` | PDF viewer — Chromium has a built-in viewer |
-| `cliamp` | CLI music visualizer — cosmetic (on Omarchy's removal list) |
+| `cliamp` | CLI music visualizer — cosmetic (on Swarmarchy's removal list) |
 | `tobi-try` | Standalone optional preinstall app — unreferenced by any script |
 | `python-terminaltexteffects` | Terminal eye-candy — "no fancy UI" |
 | `lazydocker` | Docker TUI — not on your keep-list |
@@ -96,7 +96,7 @@ Matches Omarchy's own `omarchy-remove-preinstalls` list and your keep-list. Re-i
 | `gnome-calculator` | Walker has a calculator module — redundant |
 | `eza` | Not wanted. Only used by guarded `ls`/`lt` aliases in `default/bash/aliases` → falls back to plain `ls`. **Strip those alias lines during config conversion.** |
 | `fcitx5`, `fcitx5-gtk`, `fcitx5-qt` | CJK/international input method — not needed (no non-Latin typing) |
-| `ruby` | Only used by optional `omarchy-install-dev-env`; add via `mise` later |
+| `ruby` | Only used by optional `swarmarchy-install-dev-env`; add via `mise` later |
 | `luarocks` | Not needed by base Neovim; only certain plugins pull rocks — `pacman -S` on demand |
 | `plymouth` | Boot splash — "no fancy UI" + complicates a custom ARM initramfs |
 | `dotnet`/`asdcontrol` | `asdcontrol` = Apple Studio Display brightness — not your hardware |

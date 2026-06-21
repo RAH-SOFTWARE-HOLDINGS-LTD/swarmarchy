@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# swarmarchy:summary=Overwrite the user config for the lock screen (swaylock) with the Swarmarchy default.
+# (Ported to Sway: hyprlock -> swaylock. Filename retained for compatibility.)
+
+swarmarchy-refresh-config swaylock/config

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# swarmarchy:summary=Refresh the SDDM theme from default
+# swarmarchy:requires-sudo=true
+
+sudo rm -rf /usr/share/sddm/themes/swarmarchy
+sudo cp -r $SWARMARCHY_PATH/default/sddm/swarmarchy /usr/share/sddm/themes/swarmarchy

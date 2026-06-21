@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# swarmarchy:summary=Detect ASUS ExpertBook B9406 series laptops on Intel Panther Lake.
+
+swarmarchy-hw-match "B9406" && swarmarchy-hw-intel-ptl

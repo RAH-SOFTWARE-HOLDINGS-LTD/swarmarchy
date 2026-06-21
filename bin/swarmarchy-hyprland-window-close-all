@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# swarmarchy:summary=Close all open windows
+# (Ported to Sway; filename retained for binding/reference compatibility.)
+
+swaymsg -t get_tree |
+  jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.pid? != null) | .id' |
+  xargs -r -I{} swaymsg "[con_id={}] kill"
+
+# Move to first workspace
+swaymsg workspace number 1

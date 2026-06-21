@@ -21,7 +21,7 @@ PACKAGES=(
 )
 
 for pkg in "${PACKAGES[@]}"; do
-  if ! omarchy-pkg-present "$pkg"; then
+  if ! swarmarchy-pkg-present "$pkg"; then
     NEEDS_MIGRATION=true
     break
   fi
@@ -34,22 +34,22 @@ fi
 
 # Ensure basic config is present
 mkdir -p ~/.config/walker
-cp -r ~/.local/share/omarchy/config/walker/* ~/.config/walker/
+cp -r ~/.local/share/swarmarchy/config/walker/* ~/.config/walker/
 
 if $NEEDS_MIGRATION; then
   kill -9 $(pgrep -x walker) 2>/dev/null || true
 
-  omarchy-pkg-drop walker-bin walker-bin-debug
+  swarmarchy-pkg-drop walker-bin walker-bin-debug
 
-  omarchy-pkg-add "${PACKAGES[@]}"
+  swarmarchy-pkg-add "${PACKAGES[@]}"
 
-  source $OMARCHY_PATH/install/config/walker-elephant.sh
+  source $SWARMARCHY_PATH/install/config/walker-elephant.sh
 
   rm -rf ~/.config/walker/themes
 
-  omarchy-refresh-config walker/config.toml
-  omarchy-refresh-config elephant/calc.toml
-  omarchy-refresh-config elephant/desktopapplications.toml
+  swarmarchy-refresh-config walker/config.toml
+  swarmarchy-refresh-config elephant/calc.toml
+  swarmarchy-refresh-config elephant/desktopapplications.toml
 fi
 
 echo # Assure final success

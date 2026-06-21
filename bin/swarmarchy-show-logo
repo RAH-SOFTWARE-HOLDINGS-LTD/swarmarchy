@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# swarmarchy:summary=Display the Swarmarchy logo in the terminal using green color.
+
+clear
+echo -e "\033[32m"
+cat <~/.local/share/swarmarchy/logo.txt
+echo -e "\033[0m"
+echo

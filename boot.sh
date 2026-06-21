@@ -3,7 +3,7 @@
 set -e
 
 # Set install mode to online since boot.sh is used for curl installations
-export OMARCHY_ONLINE_INSTALL=true
+export SWARMARCHY_ONLINE_INSTALL=true
 
 ansi_art='                 ▄▄▄
  ▄█████▄    ▄███████████▄    ▄███████   ▄███████   ▄███████   ▄█   █▄    ▄█   █▄
@@ -20,29 +20,29 @@ clear
 echo -e "\n$ansi_art\n"
 
 # Use custom branch if instructed, otherwise default to master
-OMARCHY_REF="${OMARCHY_REF:-master}"
+SWARMARCHY_REF="${SWARMARCHY_REF:-master}"
 
 # Set mirror based on branch
-if [[ $OMARCHY_REF == "dev" ]]; then
-  export OMARCHY_MIRROR=edge
+if [[ $SWARMARCHY_REF == "dev" ]]; then
+  export SWARMARCHY_MIRROR=edge
   echo 'Server = https://mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null
-elif [[ $OMARCHY_REF == "rc" ]]; then
-  export OMARCHY_MIRROR=rc
+elif [[ $SWARMARCHY_REF == "rc" ]]; then
+  export SWARMARCHY_MIRROR=rc
   echo 'Server = https://rc-mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null
 else
-  export OMARCHY_MIRROR=stable
+  export SWARMARCHY_MIRROR=stable
   echo 'Server = https://stable-mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null
 fi
 
 sudo pacman -Syu --noconfirm --needed git
 
 # Use custom repo if specified, otherwise default to basecamp/omarchy
-OMARCHY_REPO="${OMARCHY_REPO:-basecamp/omarchy}"
+SWARMARCHY_REPO="${SWARMARCHY_REPO:-basecamp/omarchy}"
 
-echo -e "\nCloning Omarchy from: https://github.com/${OMARCHY_REPO}.git"
-echo -e "\e[32mUsing branch: $OMARCHY_REF\e[0m"
-rm -rf ~/.local/share/omarchy/
-git clone --branch "$OMARCHY_REF" "https://github.com/${OMARCHY_REPO}.git" ~/.local/share/omarchy >/dev/null
+echo -e "\nCloning Swarmarchy from: https://github.com/${SWARMARCHY_REPO}.git"
+echo -e "\e[32mUsing branch: $SWARMARCHY_REF\e[0m"
+rm -rf ~/.local/share/swarmarchy/
+git clone --branch "$SWARMARCHY_REF" "https://github.com/${SWARMARCHY_REPO}.git" ~/.local/share/swarmarchy >/dev/null
 
 echo -e "\nInstallation starting..."
-source ~/.local/share/omarchy/install.sh
+source ~/.local/share/swarmarchy/install.sh
