@@ -11,6 +11,7 @@ swayosd                    # on-screen popup for volume / brightness / caps-lock
 foot                       # default terminal emulator (fast, Wayland-native)
 waybar                     # the top status bar
 mako                       # desktop notification daemon
+libnotify                  # provides notify-send (used by ~21 omarchy-* scripts)
 grim                       # screenshot capture backend
 slurp                      # screen-region selector (pairs with grim, OCR, recorder)
 satty                      # screenshot annotation editor (arrows, blur, crop)
