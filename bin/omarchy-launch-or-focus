@@ -25,5 +25,6 @@ con_id=$(swaymsg -t get_tree | jq -r --arg p "$WINDOW_PATTERN" '
 if [[ -n $con_id ]]; then
   swaymsg "[con_id=$con_id] focus" >/dev/null
 else
+  # shellcheck disable=SC2086  # $LAUNCH_COMMAND must word-split into separate args
   eval exec setsid $LAUNCH_COMMAND
 fi

@@ -4,8 +4,12 @@ Validate the Sway config + ported `bin/` scripts. **This is architecture-indepen
 `swaymsg`/`grim`/`slurp`/`jq` behave identically on x86_64, so run it on **any**
 Arch (or Arch-like) machine/VM with Sway. No aarch64 work required.
 
-Recommended env: a throwaway **x86_64 Arch VM** with a Sway session. (A bare Arch +
-this checklist is faster to iterate than building ISOs.)
+> **Which doc, when:** This (04) is the test *checklist*. **§1 (static) runs on any
+> machine right now.** §2–§6 need a running Sway session — if you don't have a
+> Linux/Sway box, build one with **`05-step3-vm-testing.md`** first; 05 is
+> self-contained and includes these same tests inline. Order: **§1 here → set up the
+> VM (05) → run §3–§6 there**, or just follow 05 end-to-end. (04 and 05 overlap on
+> purpose — 05 is "how to run it in a VM", 04 is the canonical checklist.)
 
 Legend: `[ ]` to do · note PASS/FAIL + anything weird next to each line.
 
