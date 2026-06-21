@@ -48,10 +48,11 @@ mkdir -p ~/.local/share/omarchy ~/.config/omarchy/current ~/.config
 ln -sfn "$OMARCHY_PATH/default" ~/.local/share/omarchy/default
 ln -sfn "$OMARCHY_PATH/bin"     ~/.local/share/omarchy/bin
 cp -r "$OMARCHY_PATH/config/"* ~/.config/             # ALL user configs (matches the installer)
-ln -sfn "$OMARCHY_PATH/themes/tokyo-night" ~/.config/omarchy/current/theme
-# a wallpaper so swaybg has something to show
-ln -sfn "$(find /usr/share/backgrounds -type f 2>/dev/null | head -1)" \
-  ~/.config/omarchy/current/background 2>/dev/null || true
+# Render the theme. This GENERATES current/theme/{waybar.css,mako.ini,foot.ini,
+# swayosd.css,walker.css,...} from default/themed/*.tpl + the theme's colors.toml,
+# and sets the wallpaper. (Symlinking the raw theme dir does NOT create these — they
+# don't exist until rendered, which is why waybar/foot complain they're missing.)
+omarchy-theme-set "Tokyo Night"
 ```
 > **Launch Sway from this same shell** (`sway`) so it inherits `OMARCHY_PATH`/`PATH` —
 > otherwise the scripts the keybindings call (`omarchy-cmd-terminal-cwd`, …) aren't found.

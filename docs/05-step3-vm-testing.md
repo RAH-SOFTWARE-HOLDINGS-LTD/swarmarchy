@@ -260,7 +260,7 @@ mkdir -p ~/.local/share/omarchy ~/.config/omarchy/current
 ln -sfn "$OMARCHY_PATH/default" ~/.local/share/omarchy/default
 ln -sfn "$OMARCHY_PATH/bin"     ~/.local/share/omarchy/bin
 cp -r "$OMARCHY_PATH/config/"* ~/.config/         # ALL configs (incl. xdg-terminals.list) — matches the installer
-ln -sfn "$OMARCHY_PATH/themes/tokyo-night" ~/.config/omarchy/current/theme
+omarchy-theme-set "Tokyo Night"                   # GENERATES current/theme/{waybar.css,mako.ini,foot.ini,...} from templates
 
 # Ubuntu only: the Super+Return binding needs xdg-terminal-exec
 sudo apt install -y xdg-terminal-exec 2>/dev/null || true
