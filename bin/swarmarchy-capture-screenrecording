@@ -8,7 +8,7 @@
 #
 # Ported to Sway/aarch64: uses wf-recorder (wlroots recorder) instead of
 # gpu-screen-recorder. wf-recorder is NOT preinstalled — it is offered for
-# install on first use. The Hyprland version's webcam-overlay / portal / HDR
+# install on first use. The upstream webcam-overlay / portal / HDR
 # paths are intentionally dropped.
 
 RECORDER=wf-recorder

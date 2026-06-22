@@ -1,1 +1,3 @@
-command = 'wl-copy && hyprctl dispatch sendshortcut "SHIFT,Insert,activewindow"'
+# Copy the picked symbol to the clipboard. (Auto-paste into the focused window
+# would need `wtype`, which isn't installed by default — paste manually.)
+command = 'wl-copy'

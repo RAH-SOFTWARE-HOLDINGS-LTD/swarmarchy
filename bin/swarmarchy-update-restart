@@ -24,9 +24,9 @@ elif [[ -f $HOME/.local/state/swarmarchy/reboot-required ]]; then
   gum confirm "Updates require reboot. Ready?" && swarmarchy-system-reboot
 fi
 
-running_hyprland=$(readlink /proc/$(pgrep -x Hyprland)/exe 2>/dev/null)
-if [[ $running_hyprland == *"(deleted)"* ]]; then
-  gum confirm "Hyprland has been updated. Reboot?" && swarmarchy-system-reboot
+running_sway=$(readlink /proc/$(pgrep -x sway)/exe 2>/dev/null)
+if [[ $running_sway == *"(deleted)"* ]]; then
+  gum confirm "Sway has been updated. Reboot?" && swarmarchy-system-reboot
 fi
 
 for file in "$HOME"/.local/state/swarmarchy/restart-*-required; do

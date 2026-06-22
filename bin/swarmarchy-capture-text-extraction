@@ -3,7 +3,7 @@
 # swarmarchy:summary=Extract text from a screenshot region with OCR
 # swarmarchy:group=capture
 # swarmarchy:examples=swarmarchy capture ocr
-# (Ported to Sway: dropped the Hyprland-only hyprpicker freeze; grim+slurp+tesseract.)
+# (grim + slurp + tesseract; no freeze-overlay step.)
 
 SELECTION=$(slurp 2>/dev/null)
 

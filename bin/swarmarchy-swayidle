@@ -3,7 +3,7 @@
 # swarmarchy:summary=Start swayidle with Swarmarchy's idle/lock/sleep timeouts
 # swarmarchy:hidden=true
 # Single source of truth for the idle daemon, shared by Sway autostart and
-# swarmarchy-toggle-idle (replaces hypridle + config/hypr/hypridle.conf).
+# swarmarchy-toggle-idle.
 
 exec swayidle -w \
   timeout 152 'swarmarchy-system-lock' resume 'swarmarchy-system-wake' \

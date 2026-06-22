@@ -2,7 +2,7 @@
 
 # swarmarchy:summary=Display Sway keybindings from your config using walker for an interactive search menu.
 #
-# Sway has no equivalent of `hyprctl -j binds`, so we parse the bindings config
+# Sway has no machine-readable binding dump, so we parse the bindings config
 # files directly. Each `bindsym`/`bindswitch` is labelled by the `## Description`
 # comment written above it (see default/sway/bindings.conf); when a bind has no
 # such comment, the command itself is shown.
@@ -19,7 +19,6 @@ output_keybindings() {
     /^[[:space:]]*## / {                        # description comment for the next bind
       d = $0
       sub(/^[[:space:]]*## /, "", d)
-      sub(/[[:space:]]*\(hypr[^)]*\)/, "", d)   # drop "(hypr ...)" porting notes
       sub(/[[:space:]]+$/, "", d)
       desc = d
       next

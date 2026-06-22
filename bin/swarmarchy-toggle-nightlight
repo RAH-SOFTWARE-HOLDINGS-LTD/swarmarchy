@@ -2,7 +2,7 @@
 
 # swarmarchy:summary=Toggle nightlight screen temperature
 # swarmarchy:examples=swarmarchy toggle nightlight
-# Uses wlsunset (replaces hyprsunset). Nightlight = wlsunset running at a fixed
+# Uses wlsunset. Nightlight = wlsunset running at a fixed
 # low temperature; daylight = wlsunset stopped (normal gamma).
 
 ON_TEMP=4000

@@ -1,5 +1,5 @@
 # Swarmarchy — Sway entry config (Sway reads ~/.config/sway/config)
-# Mirrors the structure of the old config/hypr/hyprland.conf.
+# Includes the shipped defaults, the theme, then your override files.
 # Learn Sway config: man 5 sway
 
 ### Variables
@@ -15,9 +15,9 @@ include ~/.local/share/swarmarchy/default/sway/windows.conf
 include ~/.local/share/swarmarchy/default/sway/bindings.conf
 include ~/.local/share/swarmarchy/default/sway/autostart.conf
 
-### Theme (colors + border) — TODO: themes/ need a `sway.conf` variant
-### (currently only hyprland.conf/hyprlock.conf exist per theme). Sway logs a
-### warning if this file is missing but continues.
+### Theme (colors + border) — TODO: add a themes `sway.conf` template so
+### swarmarchy-theme-set generates this per theme. Until then it may be absent;
+### Sway logs a warning if this file is missing but continues.
 include ~/.config/swarmarchy/current/theme/sway.conf
 
 ### Your own overrides (override anything from the defaults above)

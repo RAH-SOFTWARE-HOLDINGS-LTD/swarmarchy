@@ -81,10 +81,10 @@ aur_install_and_launch() {
 }
 
 show_learn_menu() {
-  case $(menu "Learn" "  Keybindings\n  Swarmarchy\n  Hyprland\n󰣇  Arch\n  Neovim\n󱆃  Bash") in
+  case $(menu "Learn" "  Keybindings\n  Swarmarchy\n  Sway\n󰣇  Arch\n  Neovim\n󱆃  Bash") in
   *Keybindings*) swarmarchy-menu-keybindings ;;
   *Swarmarchy*) swarmarchy-launch-webapp "https://learn.omacom.io/2/the-swarmarchy-manual" ;;
-  *Hyprland*) swarmarchy-launch-webapp "https://wiki.hypr.land/" ;;
+  *Sway*) swarmarchy-launch-webapp "https://github.com/swaywm/sway/wiki" ;;
   *Arch*) swarmarchy-launch-webapp "https://wiki.archlinux.org/title/Main_page" ;;
   *Bash*) swarmarchy-launch-webapp "https://devhints.io/bash" ;;
   *Neovim*) swarmarchy-launch-webapp "https://www.lazyvim.org/keymaps" ;;
@@ -140,11 +140,10 @@ show_reminder_message_input() {
 }
 
 show_capture_menu() {
-  case $(menu "Capture" "  Screenshot\n  Screenrecord\n󰴑  Text Extraction\n󰃉  Color") in
+  case $(menu "Capture" "  Screenshot\n  Screenrecord\n󰴑  Text Extraction") in
   *Screenshot*) swarmarchy-capture-screenshot ;;
   *Screenrecord*) show_screenrecord_menu ;;
   *Text*) swarmarchy-capture-text-extraction ;;
-  *Color*) pkill hyprpicker || hyprpicker -a ;;
   *) back_to show_trigger_menu ;;
   esac
 }
@@ -454,7 +453,7 @@ show_setup_default_editor_menu() {
 }
 
 show_setup_config_menu() {
-  case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprlock\n  Hyprsunset\n  Swayosd\n󰌧  Walker\n󰍜  Waybar\n󰞅  XCompose") in
+  case $(menu "Setup" "  Sway\n  Swaylock\n  Swayosd\n󰌧  Walker\n󰍜  Waybar\n󰞅  XCompose") in
   *Swaylock*) open_in_editor ~/.config/swaylock/config ;;
   *Swayosd*) open_in_editor ~/.config/swayosd/config.toml && swarmarchy-restart-swayosd ;;
   *Sway*) open_in_editor ~/.config/sway/config && swarmarchy-restart-sway ;;

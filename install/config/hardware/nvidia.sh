@@ -28,22 +28,24 @@ MODULES+=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)
 EOF
 
   # Add NVIDIA environment variables based on GPU architecture
+  # (systemd user environment, read at login — same place as the Sway env block)
+  mkdir -p "$HOME/.config/environment.d"
   if [[ $GPU_ARCH = "turing_plus" ]]; then
     # Turing+ (RTX 20xx, GTX 16xx, and newer) with GSP firmware support
-    cat >>"$HOME/.config/hypr/envs.conf" <<'EOF'
+    cat >>"$HOME/.config/environment.d/nvidia.conf" <<'EOF'
 
 # NVIDIA (Turing+ with GSP firmware)
-env = NVD_BACKEND,direct
-env = LIBVA_DRIVER_NAME,nvidia
-env = __GLX_VENDOR_LIBRARY_NAME,nvidia
+NVD_BACKEND=direct
+LIBVA_DRIVER_NAME=nvidia
+__GLX_VENDOR_LIBRARY_NAME=nvidia
 EOF
   elif [[ $GPU_ARCH = "maxwell_pascal_volta" ]]; then
     # Maxwell/Pascal/Volta (GTX 9xx/10xx, GT 10xx, Quadro P/M/GV, MX series, Titan X/Xp/V) lack GSP firmware
-    cat >>"$HOME/.config/hypr/envs.conf" <<'EOF'
+    cat >>"$HOME/.config/environment.d/nvidia.conf" <<'EOF'
 
 # NVIDIA (Maxwell/Pascal/Volta without GSP firmware)
-env = NVD_BACKEND,egl
-env = __GLX_VENDOR_LIBRARY_NAME,nvidia
+NVD_BACKEND=egl
+__GLX_VENDOR_LIBRARY_NAME=nvidia
 EOF
   fi
 fi

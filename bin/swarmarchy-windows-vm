@@ -335,8 +335,8 @@ To stop: swarmarchy-windows-vm stop"
     "$LIFECYCLE"
 
   # Detect display scale from Sway
-  HYPR_SCALE=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused == true) | .scale')
-  SCALE_PERCENT=$(echo "$HYPR_SCALE" | awk '{print int($1 * 100)}')
+  OUTPUT_SCALE=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused == true) | .scale')
+  SCALE_PERCENT=$(echo "$OUTPUT_SCALE" | awk '{print int($1 * 100)}')
 
   RDP_SCALE=""
   if (( SCALE_PERCENT >= 170 )); then

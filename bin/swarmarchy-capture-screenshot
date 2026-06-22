@@ -5,7 +5,7 @@
 # swarmarchy:args=[smart|region|windows|fullscreen] [slurp|copy|save] [--editor=<name>]
 # swarmarchy:examples=swarmarchy screenshot | swarmarchy capture screenshot region
 # swarmarchy:aliases=swarmarchy screenshot
-# (Ported to Sway: geometry via swaymsg; dropped Hyprland-only hyprpicker freeze.)
+# (Geometry via swaymsg; grim + slurp, no freeze-overlay step.)
 
 # shellcheck source=/dev/null
 [[ -f ~/.config/user-dirs.dirs ]] && source ~/.config/user-dirs.dirs
@@ -48,7 +48,7 @@ MODE="${1:-smart}"
 PROCESSING="${2:-slurp}"
 
 # Sway's get_outputs/get_tree .rect is already in logical coordinates (slurp's
-# space), so no per-monitor scale math is needed (unlike Hyprland).
+# space), so no per-monitor scale math is needed.
 get_rectangles() {
   # Active outputs
   swaymsg -t get_outputs | jq -r '.[] | select(.active == true) | "\(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"'
