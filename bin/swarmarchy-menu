@@ -211,7 +211,7 @@ show_toggle_menu() {
   *Idle*) swarmarchy-toggle-idle ;;
   *Notifications*) swarmarchy-toggle-notification-silencing ;;
   *Bar*) swarmarchy-toggle-waybar ;;
-  *Scaling*) swarmarchy-hyprland-monitor-scaling-cycle ;;
+  *Scaling*) swarmarchy-wm-monitor-scaling-cycle ;;
   *"Direct Boot"*) present_terminal swarmarchy-config-direct-boot ;;
   *"Passwordless Sudo"*) present_terminal swarmarchy-sudo-passwordless ;;
   *) back_to show_trigger_menu ;;
@@ -238,8 +238,8 @@ show_hardware_menu() {
   fi
 
   case $(menu "Toggle" "$options") in
-  *Laptop*) swarmarchy-hyprland-monitor-internal toggle ;;
-  *Mirror*) swarmarchy-hyprland-monitor-internal-mirror toggle ;;
+  *Laptop*) swarmarchy-wm-monitor-internal toggle ;;
+  *Mirror*) swarmarchy-wm-monitor-internal-mirror toggle ;;
   *Haptics*) show_hardware_touchpad_haptics_menu ;;
   *Touchpad*) swarmarchy-toggle-touchpad ;;
   *Touchscreen*) swarmarchy-toggle-touchscreen ;;
@@ -457,7 +457,7 @@ show_setup_config_menu() {
   case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprlock\n  Hyprsunset\n  Swayosd\n󰌧  Walker\n󰍜  Waybar\n󰞅  XCompose") in
   *Swaylock*) open_in_editor ~/.config/swaylock/config ;;
   *Swayosd*) open_in_editor ~/.config/swayosd/config.toml && swarmarchy-restart-swayosd ;;
-  *Sway*) open_in_editor ~/.config/sway/config && swarmarchy-restart-hyprctl ;;
+  *Sway*) open_in_editor ~/.config/sway/config && swarmarchy-restart-sway ;;
   *Walker*) open_in_editor ~/.config/walker/config.toml && swarmarchy-restart-walker ;;
   *Waybar*) open_in_editor ~/.config/waybar/config.jsonc && swarmarchy-restart-waybar ;;
   *XCompose*) open_in_editor ~/.XCompose && swarmarchy-restart-xcompose ;;
@@ -776,8 +776,8 @@ show_update_channel_menu() {
 }
 show_update_process_menu() {
   case $(menu "Restart" "  Swayidle\n  Nightlight\n󰎟  Mako\n  Swayosd\n󰌧  Walker\n󰍜  Waybar") in
-  *Swayidle*) swarmarchy-restart-hypridle ;;
-  *Nightlight*) swarmarchy-restart-hyprsunset ;;
+  *Swayidle*) swarmarchy-restart-swayidle ;;
+  *Nightlight*) swarmarchy-restart-wlsunset ;;
   *Mako*) swarmarchy-restart-mako ;;
   *Swayosd*) swarmarchy-restart-swayosd ;;
   *Walker*) swarmarchy-restart-walker ;;
@@ -788,7 +788,7 @@ show_update_process_menu() {
 
 show_update_config_menu() {
   case $(menu "Use default config" "  Sway\n  Swaylock\n  Swayosd\n  Tmux\n󰌧  Walker\n󰍜  Waybar") in
-  *Swaylock*) present_terminal swarmarchy-refresh-hyprlock ;;
+  *Swaylock*) present_terminal swarmarchy-refresh-swaylock ;;
   *Swayosd*) present_terminal swarmarchy-refresh-swayosd ;;
   *Sway*) present_terminal swarmarchy-refresh-sway ;;
   *Tmux*) present_terminal swarmarchy-refresh-tmux ;;

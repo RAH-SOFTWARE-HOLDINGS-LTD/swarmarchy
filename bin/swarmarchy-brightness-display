@@ -23,7 +23,7 @@ elif [[ $step == "on" ]]; then
   exit 0
 fi
 
-if swarmarchy-hyprland-monitor-focused-apple; then
+if swarmarchy-wm-monitor-focused-apple; then
   swarmarchy-brightness-display-apple "$step"
   exit
 fi

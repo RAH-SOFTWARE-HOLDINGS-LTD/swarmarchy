@@ -133,7 +133,7 @@ swarmarchy-system-lock                        # swaylock appears; type your pass
 
 ## Step 6 — Optional
 - `swarmarchy-capture-screenrecording` → prompts to install `wf-recorder`, then records a region
-- `swarmarchy-toggle-nightlight` (wlsunset) · `swarmarchy-hyprland-monitor-scaling-cycle`
+- `swarmarchy-toggle-nightlight` (wlsunset) · `swarmarchy-wm-monitor-scaling-cycle`
 - **Skip `walker` / `swarmarchy-menu`** — walker isn't packaged on Ubuntu (works on the real Arch target).
 
 Exit Sway with `swaymsg exit`.

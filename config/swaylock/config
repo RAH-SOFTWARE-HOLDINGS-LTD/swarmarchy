@@ -1,20 +1,20 @@
-# Swarmarchy — swaylock config (replaces config/hypr/hyprlock.conf)
+# Swarmarchy — swaylock config
 # man 1 swaylock.  Theme should override colors via current/theme/swaylock.conf.
 #
-# NOTE: base `swaylock` has NO blur. The Hyprland lock used blur_passes=3.
-#       For blur, install `swaylock-effects` and add: effect-blur=7x5
+# NOTE: base `swaylock` has NO blur. For blur, install `swaylock-effects`
+#       and add: effect-blur=7x5
 
-# Background (hypr: path = current/background)
+# Background
 image=~/.config/swarmarchy/current/background
 scaling=fill
 
-# Behaviour (hypr: ignore_empty_input = true)
+# Behaviour
 # NOTE: no `daemonize` — swarmarchy-system-lock relies on swaylock blocking in the
 # foreground so it can run swarmarchy-system-wake after unlock.
 ignore-empty-password
 show-failed-attempts
 
-# Indicator (hypr input-field)
+# Indicator
 indicator
 indicator-radius=100
 indicator-thickness=10

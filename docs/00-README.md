@@ -55,7 +55,6 @@ Elite)**. It is **two repositories**:
 | `default/` | **shipped** defaults → `~/.local/share/swarmarchy/default/` (the read-only layer the user configs `include`) | `sway/` defaults (bindings/appearance/input/autostart), `bash/`, `limine/`, `snapper/`, `wayland-sessions/` |
 | `applications/` | `.desktop` launchers + **`icons/`** (incl. web-app icons like `X.png`) + **`hidden/`** (NoDisplay entries that hide clutter from the launcher) | app launchers + their PNG icons |
 | `themes/` | theme folders (colours + wallpapers) — only `tokyo-night` now | one folder per theme |
-| `migrations/` | dated scripts that upgrade **existing** installs (not used on a fresh install) | one timestamped script per change |
 | `boot.sh` / `install.sh` | entry points (curl-bootstrap / the installer itself) | the top-level run scripts |
 | `docs/` | this documentation, numbered in the order it was created | — |
 

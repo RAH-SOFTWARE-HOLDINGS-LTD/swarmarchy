@@ -2,18 +2,18 @@
 name: swarmarchy
 description: >
   REQUIRED for end-user customization of Linux desktop, window manager, or system config.
-  Use when editing ~/.config/hypr/, ~/.config/waybar/, ~/.config/walker/,
-  ~/.config/alacritty/, ~/.config/foot/, ~/.config/kitty/, ~/.config/ghostty/, ~/.config/mako/,
-  or ~/.config/swarmarchy/. Triggers: Hyprland, window rules, animations, keybindings,
-  monitors, gaps, borders, blur, opacity, waybar, walker, terminal config, themes,
-  wallpaper, night light, idle, lock screen, screenshots, reminders, layer rules,
+  Use when editing ~/.config/sway/, ~/.config/waybar/, ~/.config/walker/,
+  ~/.config/foot/, ~/.config/mako/, ~/.config/swaylock/,
+  or ~/.config/swarmarchy/. Triggers: Sway, window rules, keybindings,
+  monitors, gaps, borders, opacity, waybar, walker, terminal config, themes,
+  wallpaper, night light, idle, lock screen, screenshots, reminders,
   workspace settings, display config, and user-facing swarmarchy commands. Excludes Swarmarchy
   source development in ~/.local/share/swarmarchy/ and `swarmarchy dev` workflows.
 ---
 
 # Swarmarchy Skill
 
-Manage [Swarmarchy](https://omarchy.org/) Linux systems - a beautiful, modern, opinionated Arch Linux distribution with Hyprland.
+Manage Swarmarchy Linux systems - an opinionated Arch Linux (aarch64) desktop running Sway.
 
 This skill is for end-user customization on installed systems.
 It is not for contributing to Swarmarchy source code.
@@ -22,12 +22,12 @@ It is not for contributing to Swarmarchy source code.
 
 **ALWAYS invoke this skill for end-user requests involving ANY of these:**
 
-- Editing ANY file in `~/.config/hypr/` (window rules, animations, keybindings, monitors, etc.)
+- Editing ANY file in `~/.config/sway/` (window rules, keybindings, monitors, etc.)
 - Editing ANY file in `~/.config/waybar/`, `~/.config/walker/`, `~/.config/mako/`
-- Editing terminal configs (alacritty, foot, kitty, ghostty)
+- Editing the terminal config (foot)
 - Editing ANY file in `~/.config/swarmarchy/`
-- Window behavior, animations, opacity, blur, gaps, borders
-- Layer rules, workspace settings, display/monitor configuration
+- Window behavior, opacity, gaps, borders
+- Workspace settings, display/monitor configuration
 - Themes, wallpapers, fonts, appearance changes
 - User-facing `swarmarchy` commands (`swarmarchy theme ...`, `swarmarchy refresh ...`, `swarmarchy restart ...`, etc.)
 - Screenshots, screen recording, reminders, night light, idle behavior, lock screen
@@ -51,7 +51,6 @@ This directory contains Swarmarchy's source files managed by git. Any changes wi
 ├── config/                 # Default config templates
 ├── themes/                 # Stock themes
 ├── default/                # System defaults
-├── migrations/             # Update migrations
 └── install/                # Installation scripts
 ```
 
@@ -59,7 +58,7 @@ This directory contains Swarmarchy's source files managed by git. Any changes wi
 - Understand how swarmarchy commands work: `swarmarchy theme set --help` or `cat $(which swarmarchy-theme-set)`
 - See default configs before customizing: `cat ~/.local/share/swarmarchy/config/waybar/config.jsonc`
 - Check stock theme files to copy for customization
-- Reference default hyprland settings: `cat ~/.local/share/swarmarchy/default/hypr/*`
+- Reference default Sway settings: `cat ~/.local/share/swarmarchy/default/sway/*`
 
 **Always use these safe locations instead:**
 - `~/.config/` - User configuration (safe to edit)
@@ -75,10 +74,10 @@ Swarmarchy is built on:
 | Component | Purpose | Config Location |
 |-----------|---------|-----------------|
 | **Arch Linux** | Base OS | `/etc/`, `~/.config/` |
-| **Hyprland** | Wayland compositor/WM | `~/.config/hypr/` |
+| **Sway** | Wayland compositor/WM | `~/.config/sway/` |
 | **Waybar** | Status bar | `~/.config/waybar/` |
 | **Walker** | App launcher | `~/.config/walker/` |
-| **Alacritty/Foot/Kitty/Ghostty** | Terminals | `~/.config/<terminal>/` |
+| **Foot** | Terminal | `~/.config/foot/` |
 | **Mako** | Notifications | `~/.config/mako/` |
 | **SwayOSD** | On-screen display | `~/.config/swayosd/` |
 
@@ -125,28 +124,27 @@ Run `swarmarchy --help` for the full list. The most common groups:
 
 ## Configuration Locations
 
-### Hyprland (Window Manager)
+### Sway (Window Manager)
 
 ```
-~/.config/hypr/
-├── hyprland.conf      # Main config (sources others)
+~/.config/sway/
+├── config             # Main config (includes the others + defaults)
 ├── bindings.conf      # Keybindings
-├── monitors.conf      # Display configuration
-├── input.conf         # Keyboard/mouse settings
-├── looknfeel.conf     # Appearance (gaps, borders, animations)
-├── envs.conf          # Environment variables
-├── autostart.conf     # Startup applications
-├── hypridle.conf      # Idle behavior (screen off, lock, suspend)
-├── hyprlock.conf      # Lock screen appearance
-└── hyprsunset.conf    # Night light / blue light filter
+├── monitors.conf      # Display/output configuration
+├── input.conf         # Keyboard/mouse/touchpad settings
+├── looknfeel.conf     # Appearance (gaps, borders)
+└── autostart.conf     # Startup applications
 ```
+
+Idle, lock, and night light live outside the Sway config: idle via `swayidle`
+(`swarmarchy-swayidle`), lock via `~/.config/swaylock/config`, night light via
+`wlsunset` (`swarmarchy toggle nightlight`).
 
 **Key behaviors:**
-- Hyprland auto-reloads on config save (no restart needed for most changes)
-- Use `hyprctl reload` to force reload
-- After ANY Hyprland config change, validate with `hyprctl reload` followed by `hyprctl configerrors`
-- If `hyprctl configerrors` reports errors, address them and rerun validation until clean or until a real blocker is identified
-- Use `swarmarchy refresh hyprland` to reset to defaults
+- Sway does NOT auto-reload on save — run `swaymsg reload` after editing.
+- Validate a config with `sway --validate`; Sway reports config errors in its
+  log (and as a notification) on reload.
+- Use `swarmarchy refresh sway` to reset the Sway config to defaults.
 
 ### Waybar (Status Bar)
 
@@ -160,13 +158,10 @@ Run `swarmarchy --help` for the full list. The most common groups:
 
 **Commands:** `swarmarchy restart waybar`, `swarmarchy refresh waybar`, `swarmarchy toggle waybar`
 
-### Terminals
+### Terminal
 
 ```
-~/.config/alacritty/alacritty.toml
 ~/.config/foot/foot.ini
-~/.config/kitty/kitty.conf
-~/.config/ghostty/config
 ```
 
 **Command:** `swarmarchy restart terminal`
@@ -190,24 +185,24 @@ For simple changes, edit files in `~/.config/`:
 
 ```bash
 # 1. Read current config
-cat ~/.config/hypr/bindings.conf
+cat ~/.config/sway/bindings.conf
 
 # 2. Backup before changes
-cp ~/.config/hypr/bindings.conf ~/.config/hypr/bindings.conf.bak.$(date +%s)
+cp ~/.config/sway/bindings.conf ~/.config/sway/bindings.conf.bak.$(date +%s)
 
 # 3. Make changes with Edit tool
 
 # 4. Apply changes
-# - Hyprland: auto-reloads on save, but MUST validate with `hyprctl reload` and `hyprctl configerrors`
+# - Sway: does NOT auto-reload — run `swaymsg reload` (validate first with `sway --validate`)
 # - Waybar: MUST restart with `swarmarchy restart waybar`
 # - Walker: MUST restart with `swarmarchy restart walker`
-# - Terminals: MUST restart with `swarmarchy restart terminal`
+# - Terminal: MUST restart with `swarmarchy restart terminal`
 ```
 
 ### Pattern 2: Make a new theme
 
 1. Create a directory under ~/.config/swarmarchy/themes.
-2. See how an existing theme is done via ~/.local/share/swarmarchy/themes/catppuccin.
+2. See how an existing theme is done via ~/.local/share/swarmarchy/themes/tokyo-night.
 3. Download a matching background (or several) from the internet and put them in ~/.config/swarmarchy/themes/[name-of-new-theme]
 4. When done with the theme, run `swarmarchy theme set "Name of new theme"`
 
@@ -238,7 +233,7 @@ When customizations go wrong:
 ```bash
 # Reset specific config (creates backup automatically)
 swarmarchy refresh waybar
-swarmarchy refresh hyprland
+swarmarchy refresh sway
 
 # The refresh command:
 # 1. Backs up current config with timestamp
@@ -260,51 +255,53 @@ swarmarchy theme install <url>     # Install from git repo
 
 ### Keybindings
 
-Edit `~/.config/hypr/bindings.conf`. Format:
+Edit `~/.config/sway/bindings.conf`. Format:
 ```
-bind = SUPER, Return, exec, xdg-terminal-exec
-bind = SUPER, Q, killactive
-bind = SUPER SHIFT, E, exit
+bindsym $mod+Return exec foot
+bindsym $mod+w kill
+bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit sway?' -B 'Yes' 'swaymsg exit'
 ```
 
 View current bindings: `swarmarchy menu keybindings --print`
 
-**IMPORTANT: When re-binding an existing key:**
+**When re-binding an existing key:** in Sway the last matching `bindsym` wins, so
+you simply add your `bindsym` after the defaults are included — there is no
+`unbind` directive (or need for one).
 
 1. First check existing bindings: `swarmarchy menu keybindings --print`
-2. If the key is already bound, you MUST add an `unbind` directive BEFORE your new `bind`
+2. Add/override with your `bindsym` below the default includes
 3. Inform the user what the key was previously bound to
 
-Example - rebinding SUPER+F (which is bound to fullscreen by default):
+Example - rebinding $mod+f (bound to fullscreen by default):
 ```
-# Unbind existing SUPER+F (was: fullscreen)
-unbind = SUPER, F
-# New binding for file manager
-bind = SUPER, F, exec, nautilus
+# Override $mod+f (was: fullscreen toggle)
+bindsym $mod+f exec nautilus
 ```
 
-Always tell the user: "Note: SUPER+F was previously bound to fullscreen. I've added an unbind directive to override it."
+Always tell the user: "Note: $mod+F was previously bound to fullscreen; this overrides it."
 
 ### Display/Monitors
 
-Edit `~/.config/hypr/monitors.conf`. Format:
+Edit `~/.config/sway/monitors.conf`. Format:
 ```
-monitor = eDP-1, 1920x1080@60, 0x0, 1
-monitor = HDMI-A-1, 2560x1440@144, 1920x0, 1
+output eDP-1 mode 1920x1080@60Hz position 0,0 scale 1
+output HDMI-A-1 mode 2560x1440@144Hz position 1920,0 scale 1
 ```
 
-List monitors: `hyprctl monitors`
+List outputs: `swaymsg -t get_outputs`
 
 ### Window Rules
 
-**CRITICAL: Hyprland window rules syntax changes frequently between versions.**
+Sway uses `for_window [criteria] command`. Criteria match on `app_id` for native
+Wayland apps and `class` for XWayland apps; find them with `swaymsg -t get_tree`.
+Format:
+```
+for_window [app_id="pavucontrol"] floating enable
+for_window [title="^Picture-in-Picture$"] floating enable, sticky enable
+```
 
-Before writing ANY window rules, you MUST fetch the current documentation from the official Hyprland wiki:
-- https://github.com/hyprwm/hyprland-wiki/blob/main/content/Configuring/Window-Rules.md
-
-DO NOT rely on cached or memorized window rule syntax. The format has changed multiple times and using outdated syntax will cause errors or unexpected behavior.
-
-Window rules go in `~/.config/hypr/hyprland.conf` or a sourced file. Always verify the current syntax from the wiki first.
+Window rules go in `~/.config/sway/` (e.g. a `windows.conf` you include). Sway's
+criteria syntax is stable — see `man 5 sway` for the full list.
 
 ### Fonts
 
@@ -341,7 +338,7 @@ swarmarchy refresh <app>
 
 # Refresh specific config file
 # config-file path is relative to ~/.config/
-# eg. `swarmarchy refresh config hypr/hyprlock.conf` will refresh ~/.config/hypr/hyprlock.conf
+# eg. `swarmarchy refresh config swaylock/config` will refresh ~/.config/swaylock/config
 swarmarchy refresh config <config-file>
 
 # Full reinstall of configs (nuclear option)
@@ -379,14 +376,14 @@ This skill intentionally does not cover Swarmarchy source development. Do not us
 
 ## Example Requests
 
-- "Change my theme to catppuccin" -> `swarmarchy theme set catppuccin`
-- "Add a keybinding for Super+E to open file manager" -> Check existing bindings first, add `unbind` if needed, then add `bind` in `~/.config/hypr/bindings.conf`
-- "Configure my external monitor" -> Edit `~/.config/hypr/monitors.conf`
-- "Make the window gaps smaller" -> Edit `~/.config/hypr/looknfeel.conf`
-- "Set up night light to turn on at sunset" -> `swarmarchy toggle nightlight` or edit `~/.config/hypr/hyprsunset.conf`
+- "Change my theme to Tokyo Night" -> `swarmarchy theme set "Tokyo Night"`
+- "Add a keybinding for Super+E to open file manager" -> Check existing bindings first, then add a `bindsym` in `~/.config/sway/bindings.conf` (last binding wins)
+- "Configure my external monitor" -> Edit `~/.config/sway/monitors.conf`
+- "Make the window gaps smaller" -> Edit `~/.config/sway/looknfeel.conf`
+- "Set up night light" -> `swarmarchy toggle nightlight`
 - "Set a reminder to pickup jack in 15 minutes" -> `swarmarchy reminder 15 "Pickup Jack"`
 - "Show my reminders" -> `swarmarchy reminder show`
 - "Clear all reminders" -> `swarmarchy reminder clear`
-- "Customize the catppuccin theme colors" -> Create `~/.config/swarmarchy/themes/catppuccin-custom/` by copying from stock, then edit
+- "Customize the Tokyo Night theme colors" -> Create `~/.config/swarmarchy/themes/tokyo-night-custom/` by copying from stock, then edit
 - "Run a script every time I change themes" -> Create `~/.config/swarmarchy/hooks/theme-set`
 - "Reset waybar to defaults" -> `swarmarchy refresh waybar`

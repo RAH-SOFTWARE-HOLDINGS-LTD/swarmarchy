@@ -12,8 +12,8 @@ MIRROR_TOGGLE="internal-monitor-mirror"
 INTERNAL=$(swaymsg -t get_outputs | jq -r '.[] | select(.name | contains("eDP")).name' | head -n 1)
 
 enable() {
-  if swarmarchy-hyprland-toggle-enabled "$TOGGLE"; then
-    swarmarchy-hyprland-toggle --disabled-notification "󰍹    Laptop display enabled" "$TOGGLE"
+  if swarmarchy-wm-toggle-enabled "$TOGGLE"; then
+    swarmarchy-wm-toggle --disabled-notification "󰍹    Laptop display enabled" "$TOGGLE"
   fi
   # Sway reload won't re-enable an output on its own, so do it explicitly.
   [[ -n $INTERNAL ]] && swaymsg output "$INTERNAL" enable
@@ -24,7 +24,7 @@ disable() {
     notify-send -u low "󰍹    Can't disable the only active display"
     exit 1
   fi
-  if swarmarchy-hyprland-toggle-disabled "$TOGGLE" && swarmarchy-hyprland-toggle-disabled "$MIRROR_TOGGLE"; then
+  if swarmarchy-wm-toggle-disabled "$TOGGLE" && swarmarchy-wm-toggle-disabled "$MIRROR_TOGGLE"; then
     echo "output $INTERNAL disable" >"$TOGGLE_FLAG"
     notify-send -u low "󰍹    Laptop display disabled"
     swaymsg reload
@@ -32,8 +32,8 @@ disable() {
 }
 
 recover() {
-  if ! swarmarchy-hw-external-monitors && swarmarchy-hyprland-toggle-enabled "$TOGGLE"; then
-    swarmarchy-hyprland-toggle "$TOGGLE"
+  if ! swarmarchy-hw-external-monitors && swarmarchy-wm-toggle-enabled "$TOGGLE"; then
+    swarmarchy-wm-toggle "$TOGGLE"
     [[ -n $INTERNAL ]] && swaymsg output "$INTERNAL" enable
   fi
 }
@@ -41,7 +41,7 @@ recover() {
 case "$1" in
   on) enable ;;
   off) disable ;;
-  toggle) if swarmarchy-hyprland-toggle-enabled "$TOGGLE"; then enable; else disable; fi ;;
+  toggle) if swarmarchy-wm-toggle-enabled "$TOGGLE"; then enable; else disable; fi ;;
   recover) recover ;;
   *)
     echo "Usage: $(basename "$0") {on|off|toggle|recover}" >&2
