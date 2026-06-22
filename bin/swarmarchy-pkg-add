@@ -1,12 +1,37 @@
 #!/bin/bash
 
-# swarmarchy:summary=Install Arch packages if they are missing
+# swarmarchy:summary=Install Arch (repo) and AUR packages if they are missing
 # swarmarchy:args=<packages...>
 # swarmarchy:examples=swarmarchy pkg add jq ripgrep
 # swarmarchy:requires-sudo=true
 
 if swarmarchy-pkg-missing "$@"; then
-  sudo pacman -S --noconfirm --needed "$@" || exit 1
+  # Split into repo packages (pacman) and AUR packages (yay). Going generic means
+  # walker/bluetui/impala/etc. come from the AUR, and `pacman -S` aborts the whole
+  # batch if any target isn't in a sync repo — so classify and install separately.
+  repo=()
+  aur=()
+  for pkg in "$@"; do
+    pacman -Q "$pkg" &>/dev/null && continue # already installed
+    if pacman -Si "$pkg" &>/dev/null; then
+      repo+=("$pkg")
+    else
+      aur+=("$pkg")
+    fi
+  done
+
+  if ((${#repo[@]})); then
+    sudo pacman -S --noconfirm --needed "${repo[@]}" || exit 1
+  fi
+
+  if ((${#aur[@]})); then
+    if command -v yay &>/dev/null; then
+      yay -S --noconfirm --needed "${aur[@]}" || exit 1
+    else
+      echo -e "\033[31mError: AUR packages need yay (run install/packaging/aur-helper.sh): ${aur[*]}\033[0m" >&2
+      exit 1
+    fi
+  fi
 fi
 
 for pkg in "$@"; do

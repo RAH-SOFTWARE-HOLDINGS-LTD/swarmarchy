@@ -1,3 +1,4 @@
+run_logged $SWARMARCHY_INSTALL/packaging/aur-helper.sh
 run_logged $SWARMARCHY_INSTALL/packaging/base.sh
 run_logged $SWARMARCHY_INSTALL/packaging/fonts.sh
 run_logged $SWARMARCHY_INSTALL/packaging/nvim.sh

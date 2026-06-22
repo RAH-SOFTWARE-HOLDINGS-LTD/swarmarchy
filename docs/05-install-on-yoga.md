@@ -48,12 +48,15 @@ source ~/.local/share/swarmarchy/install.sh
 This runs the install phases — packages (`swarmarchy-base/other.packages`), config copy,
 theme render, login, hardware fixes — and ends at a Sway desktop.
 
-## 3. Gotchas specific to this path (known TODOs)
-- **AUR packages:** `walker`, `yay`, `displaylink`/`evdi` aren't in ALARM — they build
-  from the AUR (`base-devel` + a `yay` bootstrap). If `walker` isn't built, the launcher
-  and `swarmarchy-menu` won't run until it is.
-- **Login manager gap:** `sddm` was removed and not yet replaced. Set up `greetd` +
-  `tuigreet`, or autologin into Sway — otherwise you land at a TTY (then run `sway`).
+## 3. Handled automatically by the installer (were gotchas)
+- **AUR packages:** `install/packaging/aur-helper.sh` bootstraps **yay** and installs
+  **walker** before `base.sh`; `swarmarchy-pkg-add` then falls back to yay for any AUR
+  package, so walker/bluetui/impala/wiremix/etc. install automatically. (`displaylink`/
+  `evdi` stay opt-in — add them if you use the adapter.)
+- **Login manager:** `install/login/greetd.sh` sets up **greetd + tuigreet** to launch
+  Sway at boot (replaced SDDM) — a graphical login, not a bare TTY.
+
+## Still-known gotchas
 - **Hardware-fix scripts:** the x86 ones (intel/nvidia/asus/apple/framework/…) are gated
   on detection and skip on Snapdragon — harmless, but prunable later.
 - **Verify on bare metal:** work through **`04-testing.md` Step 7** (media keys,
