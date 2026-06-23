@@ -9,6 +9,25 @@ this doc is the *strategy* and how the pieces fit.
 
 ---
 
+## Where this fits — Path A is a prerequisite, not just "easier"
+
+You **cannot** build a correct auto-installer until Path A has told you *which kernel +
+firmware + DTB actually boot the Yoga*. Path A answers that (and proves the layer runs on
+real ARM hardware); Path B then just bundles that known-good set into a USB. So Path B work
+does not begin until Path A is on your machine and validated.
+
+```
+[Path A — docs/05]                          [Path B — starts after A is done]
+ 0  Windows prep                             B1  feed the known-good kernel +
+ 1  joske → bare Arch ARM boots  ← hard part     firmware + DTB into swarmarchy-iso
+ 2  run swarmarchy layer → Sway              B2  fix the ISO builder for aarch64
+ 3  verify HW; note the exact   ───────────▶     (archiso `releng` is x86-only →
+    kernel/firmware/DTB that worked               likely switch to `archboot`)
+                                             B3  build → test in VM → write USB → done
+```
+
+**Do Path A first.** Everything below is parked until then.
+
 ## The core problem
 `mkarchiso` / archiso's `releng` profile is **x86_64-only** — there is no upstream
 aarch64 profile, so you can't just point the existing build at aarch64. Two routes:
