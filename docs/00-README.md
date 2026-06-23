@@ -118,7 +118,7 @@ To build an ISO that installs Arch on a Snapdragon X Elite and boots into Sway:
 | 01 | `01-removed-packages.md` | every package cut from upstream Omarchy, and why |
 | 02 | `02-summary-of-changes.md` | high-level "what changed" (Sway, ARM64, strip) |
 | 03 | `03-hyprland-to-sway-conversion.md` | the compositor conversion + the `bin/` script ports |
-| 04 | `04-testing.md` | Testing — build a VM (or skip if you already have Linux/a VM), then run the tests |
-| 05 | `05-install-on-yoga.md` | **Path A** — install on the Yoga via a base Arch-ARM + the layer (recommended) |
+| 04 | `04-testing.md` | Testing **in a VM** — build a throwaway VM (or skip if you already have Linux/a VM), then run the config/script tests |
+| 05 | `05-install-on-yoga.md` | **Path A** — install on the Yoga (base Arch-ARM + the layer) **and bare-metal verification** (recommended) |
 | 06 | `06-custom-iso.md` | **Path B** — build the custom aarch64 USB installer (later/polish) |
 | — | `swarmarchy-iso/BUILD-AARCH64.md` | the aarch64 ISO-build blockers + the kernel/firmware plan |

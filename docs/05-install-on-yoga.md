@@ -1,70 +1,96 @@
-# Path A — Install swarmarchy on the Yoga (base Arch ARM + the layer)
+# Path A — Install swarmarchy on the Yoga (recommended)
 
-The fastest, lowest-risk way onto the Yoga Slim 7x (Snapdragon X Elite). swarmarchy is a
-**post-install layer**, so you don't need the custom ISO (that's Path B / `06`): get a
-working **Arch Linux ARM** base booting on the laptop, then run the installer on top.
-
-This sidesteps the hardest blockers (the archiso-aarch64 problem). The genuinely hard
-part here is step 1 (bringing up Arch ARM on the device) — and the community already
-solved it, so we lean on their guide.
+> **Read this first.** swarmarchy is a **layer, not an OS** — it's applied *on top of* an
+> existing Arch install. You are **not** building a bootable USB (that's Path B / `06`, and
+> the aarch64 installer ISO isn't buildable yet). Path A is two moves: **(1)** get plain
+> **Arch Linux ARM** booting on the Yoga, then **(2)** run one command to apply swarmarchy.
+>
+> ⚠️ **The hard, risky part is Step 1** — booting Linux on a Snapdragon X Elite. That's
+> generic device bring-up, *not* a swarmarchy thing; the community already solved it, so you
+> follow their guide. Step 2 (swarmarchy itself) is the easy part.
 
 ---
 
-## 0. Before you touch the disk (Windows side, dual-boot safe)
-- **Back up your BitLocker recovery key** (and ideally suspend BitLocker) — repartitioning
-  can otherwise lock you out of Windows.
-- **Shrink the Windows partition** from Windows Disk Management (Shrink Volume) to free
-  space for Linux. Leave the **Windows + EFI** partitions intact — this is *dual-boot*,
-  **no wipe**.
-- **Extract the Qualcomm firmware** you'll need on Linux: from
-  `C:\Windows\System32\DriverStore\FileRepository\*\*.mbn` / `*.jsn` / `dtbs.elf`. Copy
-  them to a USB (the community guides list exactly which files).
-- In **UEFI/BIOS**: disable **Secure Boot**.
+## Step 0 — Windows prep (dual-boot, no wipe)
 
-## 1. Get a base Arch Linux ARM booting (use the community guide)
-This is device-specific bring-up — follow the proven guide, don't improvise:
-- **Primary — joske's gist (Arch ARM on this exact laptop):**
+Do all of this from Windows **before** touching partitions:
+- **Back up your BitLocker recovery key** (ideally suspend BitLocker too) — repartitioning
+  can otherwise lock you out of Windows.
+- **Shrink the Windows partition** (Disk Management → *Shrink Volume*) to free space for
+  Linux. Leave the **Windows + EFI** partitions intact — this is dual-boot, no wipe.
+- **Copy out the Qualcomm firmware** Linux needs: from
+  `C:\Windows\System32\DriverStore\FileRepository\*\` grab the `*.mbn` / `*.jsn` /
+  `dtbs.elf` files onto a USB stick. (The Step 1 guide lists exactly which.)
+- In **UEFI/BIOS**, disable **Secure Boot**.
+
+## Step 1 — Get bare Arch Linux ARM booting ⚠️ (the hard part)
+
+Device-specific bring-up — **follow the proven guide, don't improvise:**
+- **Primary — joske's gist** (Arch ARM on this exact laptop):
   https://gist.github.com/joske/52be3f1e5d0239706cd5a4252606644b
 - **Reference — kuruczgy's NixOS config** (authoritative kernel/firmware/quirks list):
   https://github.com/kuruczgy/x1e-nixos-config
-- **Stepping stone:** Ubuntu's "Concept" ISO (24.10) if you want a known-good boot first.
+- **Optional warm-up:** boot Ubuntu's "Concept" arm64 ISO first to confirm the hardware
+  works before committing.
 
-What must be in place: a recent **mainline/ALARM `linux-aarch64` (6.14+)**, the upstream
-**`qcom/x1e80100-lenovo-yoga-slim7x.dtb`**, and the **Qualcomm firmware** (from step 0).
-If you want to match swarmarchy's scheme, use **LUKS + Btrfs subvolumes + Limine** — but
-any working Arch aarch64 base is fine; the layer doesn't care.
+You're done with Step 1 when you have a **plain Arch aarch64 desktop that boots and has
+networking.** What must be in place:
+- a recent **mainline/ALARM `linux-aarch64` (6.14+)**,
+- the upstream DTB **`qcom/x1e80100-lenovo-yoga-slim7x.dtb`**,
+- the **Qualcomm firmware** from Step 0.
 
-> Known rough edges (verify current state in the guide): early support had flaky
-> touchpad, internal mics (DMICs), and battery monitoring.
+To match swarmarchy's intended scheme use **LUKS + Btrfs subvolumes + Limine**, but *any*
+working Arch aarch64 base is fine — the layer doesn't care.
 
-## 2. Apply the swarmarchy layer
-Once you have a booted Arch ARM with networking and your user:
+> Rough edges (check the guide for current status): early support had flaky touchpad,
+> internal mics, and battery reporting.
+
+## Step 2 — Apply swarmarchy (the easy part)
+
+On the booted Arch ARM, logged in as your user with networking up:
 ```bash
-git clone -b convert-to-sway-arm \
+git clone -b rename-swarmarchy \
   https://github.com/RAH-SOFTWARE-HOLDINGS-LTD/swarmarchy.git ~/.local/share/swarmarchy
 source ~/.local/share/swarmarchy/install.sh
 ```
-(or use `boot.sh` once you point `SWARMARCHY_REPO`/`SWARMARCHY_REF` at your fork+branch.)
-This runs the install phases — packages (`swarmarchy-base/other.packages`), config copy,
-theme render, login, hardware fixes — and ends at a Sway desktop.
+*(Once you merge `rename-swarmarchy` → `master`, drop the `-b` flag — or use `boot.sh`.)*
 
-## 3. Handled automatically by the installer (were gotchas)
-- **AUR packages:** `install/packaging/aur-helper.sh` bootstraps **yay** and installs
-  **walker** before `base.sh`; `swarmarchy-pkg-add` then falls back to yay for any AUR
-  package, so walker/bluetui/impala/wiremix/etc. install automatically. (`displaylink`/
-  `evdi` stay opt-in — add them if you use the adapter.)
-- **Login manager:** `install/login/greetd.sh` sets up **greetd + tuigreet** to launch
-  Sway at boot (replaced SDDM) — a graphical login, not a bare TTY.
+This runs the six install phases — **packages → config → theme → login → hardware fixes →
+reboot** — and ends at a Sway desktop. Two things it now handles for you automatically:
+- **AUR packages:** bootstraps **yay** and pulls walker/bluetui/impala/etc. (no custom
+  package repo needed). `displaylink`/`evdi` stay opt-in — add them only if you use the adapter.
+- **Login screen:** sets up **greetd + tuigreet** to launch Sway at boot.
 
-## Still-known gotchas
-- **Hardware-fix scripts:** the x86 ones (intel/nvidia/asus/apple/framework/…) are gated
-  on detection and skip on Snapdragon — harmless, but prunable later.
-- **Verify on bare metal:** work through **`04-testing.md` Step 7** (media keys,
-  brightness, GPU accel, Wi-Fi/BT, DisplayLink, fingerprint) and fix-then-push anything
-  broken — the install at `~/.local/share/swarmarchy` is a git clone, so edit → commit →
-  `git -C ~/.local/share/swarmarchy pull`.
+Reboot → log in → you're in Sway.
+
+## Step 3 — Verify on bare metal & fix quirks
+
+The VM only proved the *software config*. These need **real hardware** (keys/devices), so
+run them once you're in Sway on the Yoga and tick them off:
+
+- [ ] Media keys: volume up/down/mute, mic-mute (`XF86Audio*`) → SwayOSD popup shows
+- [ ] Brightness keys (`XF86MonBrightness*`) → backlight changes + OSD
+- [ ] `Print` → screenshot · `Super+Ctrl+Print` → OCR text-grab
+- [ ] Lid close/open → display off/on · `Super+Ctrl+Delete` → laptop-display toggle
+- [ ] `Super+/` → monitor scaling · `Super+Ctrl+N` → nightlight (wlsunset)
+- [ ] GPU acceleration (Mesa **turnip** — `vulkaninfo`, or any GL/Vulkan app)
+- [ ] Wi-Fi · Bluetooth (Bose headphones) · audio in/out
+- [ ] DisplayLink adapter · fingerprint · ZMK keyboard · Razer mouse
+
+Expect a few to need tweaks — that's normal on new hardware. The **x86-only hardware-fix
+scripts (Intel/Nvidia/Apple/Asus/Framework) auto-skip on Snapdragon** — harmless.
+
+### Fixing something that's broken (the loop)
+Your install at `~/.local/share/swarmarchy` is a **git clone**, so iteration is fast — no
+reinstall needed:
+1. The `swarmarchy-*` scripts are plain shell — edit the offending one (on the machine, or
+   on your dev box).
+2. `git commit` + `git push`.
+3. Pull it back where needed: `git -C ~/.local/share/swarmarchy pull` (or `swarmarchy-update`).
+
+---
 
 ## References
-joske gist · kuruczgy NixOS · Ubuntu Concept · daily-driver writeup
-(https://varunpriolkar.com/2025/07/daily-driving-an-arm-linux-laptop/) · and the build
-blockers in `swarmarchy-iso/BUILD-AARCH64.md`.
+joske gist · kuruczgy NixOS config · Ubuntu Concept ISO · daily-driver writeup
+(https://varunpriolkar.com/2025/07/daily-driving-an-arm-linux-laptop/) · remaining
+ISO-build blockers in `swarmarchy-iso/BUILD-AARCH64.md`.

@@ -2,7 +2,7 @@
 
 You need a running **Sway session** to test the config + scripts. A VM is fine — none
 of this needs the real hardware (GPU accel, Wi-Fi, Bluetooth, DisplayLink, fingerprint
-are bare-metal only; see the bottom).
+are bare-metal only — those are checked on the real machine in `docs/05` Step 3).
 
 **Already have a Linux box or a usable VM? Skip to Step 3.** Otherwise build a throwaway
 aarch64 VM in **Steps 1–2**, then run the tests in **Steps 3+**.
@@ -84,7 +84,7 @@ sudo apt update
 sudo apt install -y sway swayidle swaylock foot waybar mako-notifier grim slurp \
   wl-clipboard jq tesseract-ocr brightnessctl playerctl pamixer git xdg-terminal-exec
 
-git clone -b convert-to-sway-arm \
+git clone -b rename-swarmarchy \
   https://github.com/RAH-SOFTWARE-HOLDINGS-LTD/swarmarchy.git ~/swarmarchy
 
 export SWARMARCHY_PATH="$HOME/swarmarchy"; export PATH="$SWARMARCHY_PATH/bin:$PATH"
@@ -140,29 +140,9 @@ Exit Sway with `swaymsg exit`.
 
 ---
 
-## Step 7 — Bare-metal checks (on the real machine, after install)
-These can't be tested in a VM (real keys/hardware only). Run them once swarmarchy is on
-the Yoga; if any break, fix the script and push (see the loop below):
-- [ ] Media keys: volume up/down/mute, mic-mute (`XF86Audio*`) → SwayOSD shows
-- [ ] Brightness keys (`XF86MonBrightness*`) → backlight changes + OSD
-- [ ] `Print` → screenshot · `Super+Ctrl+Print` → OCR
-- [ ] Lid close/open → display off/on · `Super+Ctrl+Delete` laptop-display toggle
-- [ ] `Super+/` monitor scaling · `Super+Ctrl+N` nightlight (wlsunset)
-- [ ] GPU acceleration (Mesa turnip — `vulkaninfo` / a GL app)
-- [ ] Wi-Fi · Bluetooth (Bose headphones) · audio
-- [ ] DisplayLink adapter · fingerprint · ZMK keyboard · Razer mouse
-
-### Fixing something that's broken (the iteration loop)
-The install at `~/.local/share/swarmarchy` is a **git clone of this repo**, so:
-1. The `swarmarchy-*` scripts are plain shell — edit the offending one.
-2. `git commit` + `git push`.
-3. On the machine: `git -C ~/.local/share/swarmarchy pull` (or `swarmarchy-update`).
-
-No reinstall needed. (You can also edit directly in `~/.local/share/swarmarchy` on the
-machine and push back.)
-
-If Steps 3–6 pass in the VM, the Sway conversion is sound; the remaining risk is the
-hardware-enablement above (Track B — see `swarmarchy-iso/BUILD-AARCH64.md`).
+If Steps 3–6 pass, the **Sway conversion is sound.** The only remaining risk is hardware
+enablement on the real machine — that bare-metal checklist and the fix-it loop now live in
+**`docs/05` Step 3**.
 
 ---
 
