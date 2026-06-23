@@ -53,7 +53,7 @@ Reference mapping used: `hyprctl monitors -j` → `swaymsg -t get_outputs`; `hyp
 > New packages are **optional** (install-on-first-use): `wf-recorder`, `wl-mirror`. Themes purged to `tokyo-night` only (default); the theme *system* is retained.
 
 ## ⚠️ Theme system
-**Decision:** themes are out of scope for this build. Purged 18 of 19 theme folders, keeping only `tokyo-night` (the installer default — set by `install/config/theme.sh`). Per-theme `sway.conf` border-color files are **not** created (most themes lacked even the Hyprland equivalent). `config/sway/config` still includes `current/theme/sway.conf`, which is simply absent (Sway warns-but-continues).
+**Decision:** themes are out of scope for this build. Purged 18 of 19 theme folders, keeping only `tokyo-night` (the installer default — set by `install/config/theme.sh`). Per-theme `sway.conf` border-color files **are** generated: `default/themed/sway.conf.tpl` renders to `current/theme/sway.conf` (the `client.*` window border colors) whenever a theme is applied, the same way waybar/foot/mako themes are generated. `config/sway/config` includes it after the defaults so the theme colors win.
 
 **Skipped (needs us to tackle together):** fully removing the theme *system* — 31 files read `~/.config/swarmarchy/current/theme/*` (Waybar CSS, btop, mako, backgrounds), so ripping it out means rewriting those to static colors. Kept `tokyo-night` so the desktop still renders.
 
