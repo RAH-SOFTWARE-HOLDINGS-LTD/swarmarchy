@@ -33,6 +33,79 @@ Device-specific bring-up — **follow the proven guide, don't improvise:**
 - **Optional warm-up:** boot Ubuntu's "Concept" arm64 ISO first to confirm the hardware
   works before committing.
 
+### 1.1 — Prep the installer USB (the part joske's gist hand-waves)
+
+joske boots the **Codelinaro Debian-12 installer image**, then at its initrd shell uses it
+to install *Arch* instead. Two lines in the gist are left as an exercise:
+> *"unpack the initrd and add this tarball … also add some tools like mkfs.ext4 and fdisk
+> (I downloaded debian 12 versions and unpacked the necessary libs and binaries)"*
+
+There are **no commands** for that in the gist. Here's the reproducible version. Do it on a
+**Debian 12 `arm64` box** (WSL on a Windows-on-ARM machine is perfect — the tools then
+version-match the installer's glibc).
+
+**a) Build a self-contained `fdisk` + `mkfs.ext4` bundle** (binaries + their `.so` deps +
+the dynamic loader, so they don't depend on the busybox initrd's libc):
+```bash
+mkdir -p ~/initrd-tools && cd ~/initrd-tools
+apt-get download e2fsprogs fdisk
+for d in *.deb; do dpkg-deb -x "$d" extract; done
+
+mkdir -p opt/tools/bin opt/tools/lib
+cp extract/sbin/fdisk extract/sbin/mke2fs opt/tools/bin/
+for b in opt/tools/bin/fdisk opt/tools/bin/mke2fs; do
+  ldd "$b" | grep -o '/[^ ]*\.so[^ ]*' | while read -r l; do cp -Lv "$l" opt/tools/lib/; done
+done
+cp -Lv /lib/ld-linux-aarch64.so.1 opt/tools/lib/
+
+# wrappers that pin the bundled loader/libs -> callable as-is at the initrd shell
+cat > opt/tools/bin/mkfs.ext4 <<'EOF'
+#!/bin/sh
+exec /opt/tools/lib/ld-linux-aarch64.so.1 --library-path /opt/tools/lib /opt/tools/bin/mke2fs -t ext4 "$@"
+EOF
+cat > opt/tools/bin/fdisk.sh <<'EOF'
+#!/bin/sh
+exec /opt/tools/lib/ld-linux-aarch64.so.1 --library-path /opt/tools/lib /opt/tools/bin/fdisk "$@"
+EOF
+chmod +x opt/tools/bin/mkfs.ext4 opt/tools/bin/fdisk.sh
+
+# sanity: should print no "not found"
+/lib/ld-linux-aarch64.so.1 --library-path "$PWD/opt/tools/lib" --list "$PWD/opt/tools/bin/mke2fs" | grep -i 'not found' || echo "mke2fs OK"
+/lib/ld-linux-aarch64.so.1 --library-path "$PWD/opt/tools/lib" --list "$PWD/opt/tools/bin/fdisk"  | grep -i 'not found' || echo "fdisk OK"
+```
+
+**b) Unpack the initrd, inject the tools, repack** (an initrd is a gzip'd cpio archive; do
+it as root so ownership/`/dev` nodes survive). Point `../initrd.gz` at the untouched initrd
+from the Codelinaro image:
+```bash
+mkdir -p ~/initrd-tools/initrd-work && cd ~/initrd-tools/initrd-work
+file ../initrd.gz                                   # confirm compression (gzip here)
+sudo sh -c 'zcat ../initrd.gz | cpio -idmv'         # unpack into initrd-work/
+sudo cp -a ~/initrd-tools/opt .                     # inject /opt/tools
+sudo sh -c 'find . | cpio -o -H newc | gzip > ../initrd-new.gz'   # repack
+```
+(zstd/xz/lz4 original → swap `zcat`/`gzip` for `zstd`/`xz --check=crc32`/`lz4`.)
+
+At the initrd shell on the Yoga you then run `/opt/tools/bin/fdisk.sh /dev/nvme0n1` and
+`/opt/tools/bin/mkfs.ext4 /dev/nvme0n1pN` — the wrappers handle the loader/lib path.
+
+> ⚠️ **Do NOT bundle the ~180 MB Arch rootfs tarball *inside* the initrd** (despite the
+> gist's wording). The Codelinaro image is a **raw disk image**: Rufus can only DD-clone it
+> (partition scheme is greyed out to **MBR**, no ISO-mode option), so its boot partition is
+> a fixed **~300 MB** — a tarball-stuffed initrd (~200 MB) overflows it and the copy dies
+> with `Input/output error` (= disk full). Keep the initrd **slim** (tools only, ~50–80 MB
+> so it fits), and carry the tarball **separately**:
+> - Flash the image with **Rufus** (accept DD/MBR — that's expected).
+> - In the leftover unallocated space, create a **second FAT32 partition** (label it e.g.
+>   `DATA`; **FAT32, not NTFS** — the minimal initrd has no NTFS driver, and your files are
+>   < 4 GB). Copy `ArchLinuxARM-aarch64-latest.tar.gz` onto it.
+> - Overwrite the boot partition's `initrd.gz` with your `initrd-new.gz`.
+> - At the initrd shell, mount that partition and extract:
+>   ```sh
+>   mkdir /mnt/data && mount /dev/disk/by-label/DATA /mnt/data   # or /dev/sdX2
+>   tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt/root
+>   ```
+
 You're done with Step 1 when you have a **plain Arch aarch64 desktop that boots and has
 networking.** What must be in place:
 - a recent **mainline/ALARM `linux-aarch64` (6.14+)**,
