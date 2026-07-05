@@ -20,6 +20,7 @@ run_logged $SWARMARCHY_INSTALL/config/nautilus-python.sh
 run_logged $SWARMARCHY_INSTALL/config/localdb.sh
 run_logged $SWARMARCHY_INSTALL/config/walker-elephant.sh
 run_logged $SWARMARCHY_INSTALL/config/fast-shutdown.sh
+run_logged $SWARMARCHY_INSTALL/config/zram.sh
 run_logged $SWARMARCHY_INSTALL/config/unmount-fuse.sh
 run_logged $SWARMARCHY_INSTALL/config/sudoless-asdcontrol.sh
 run_logged $SWARMARCHY_INSTALL/config/input-group.sh

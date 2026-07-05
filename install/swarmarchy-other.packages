@@ -19,7 +19,7 @@ limine-mkinitcpio-hook     # regenerates boot entries when the kernel/initramfs 
 limine-snapper-sync        # adds Btrfs snapshot entries to the boot menu (roll back a bad update)
 btrfs-progs                # Btrfs filesystem tools
 snapper                    # Btrfs snapshot manager (automatic timeline + rollback)
-zram-generator             # compressed swap in RAM (good for a laptop; aids hibernate)
+zram-generator             # compressed swap in RAM (configured by config/zram.sh; used before disk swap)
 
 # ─── Audio foundation (PipeWire stack; the front-ends are in base.packages) ───
 pipewire                   # the audio/video server

@@ -229,6 +229,31 @@ initrd's RAM fs); extract it into the mounted NVMe root as in 1.2 (`tar -xpf …
 > touch the Windows partitions. Format **only** your new Linux root. One wrong `mkfs`/`fdisk`
 > write here can destroy Windows.
 
+**Recommended layout & "best options" (dual-boot, no wipe).** You only *add* to the disk:
+
+| Partition | What | Recommendation |
+|---|---|---|
+| **ESP** | existing Windows EFI System Partition (~100–300 MB FAT) | **Reuse**, mount at `/boot`, never `mkfs`. If it's cramped, make a separate `/boot` (below). |
+| **`/boot`** | *(optional)* new ~1 GB FAT32 | Only if the Windows ESP is too small for a kernel+initrd/UKI. Otherwise skip and use the ESP. |
+| **root `/`** | your new partition in the freed space | **ext4** = simplest, boots fastest (what your 1.1a bundle formats). **Btrfs** = swarmarchy's intended scheme (Snapper rollbacks + the hibernation swapfile). |
+| **swap** | — | **None. Don't make a swap partition.** The swarmarchy layer sets up **zram** automatically (see the swap note below). |
+
+- **ext4 vs Btrfs:** start with **ext4** to prove the hardware boots (your initrd already has
+  `mkfs.ext4`). Want Snapper snapshots later? Use **Btrfs** — but add `btrfs-progs` to the
+  initrd the same way you added `e2fsprogs` in **1.1(a)**, and it pairs with the **Limine**
+  bootloader. Don't gate your first boot on it.
+- **LUKS encryption:** swarmarchy's target is LUKS+Btrfs+Limine, but LUKS adds moving parts to
+  an already-hard ARM bring-up. **Skip it for the first successful boot;** add on a reinstall
+  once the hardware is proven.
+- **No separate `/home`** for a laptop — one root keeps it simple.
+
+> 💤 **Swap is the layer's job, not this step — so make no swap partition.** After Step 2,
+> swarmarchy configures **zram** (compressed RAM swap: ½ RAM, capped 8 GB, zstd —
+> `/etc/systemd/zram-generator.conf`) which the kernel uses before any disk swap. A disk
+> swapfile is only for **hibernation**, which auto-skips where unsupported (expected on
+> Snapdragon), so zram is effectively your swap. This is the modern "zram instead of disk
+> swap" setup — you don't select it during the base install; the layer does it.
+
 **a) Identify your disks/partitions FIRST — never guess device names:**
 ```sh
 lsblk -o NAME,SIZE,FSTYPE,PARTTYPENAME,LABEL,MOUNTPOINT   # the whole picture, every disk
