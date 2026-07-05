@@ -120,7 +120,79 @@ Letter and Paths* → *Add*.)
 Finally, overwrite the boot partition's `initrd.gz` with your rebuilt `initrd-new.gz`
 (from step b — original + tools, no rootfs), and boot the Yoga from the USB (F12).
 
-### 1.2 — At the installer shell: partition → extract → chroot → boot
+### 1.1-ALT — One self-contained image (rootfs baked into the initrd) 🧪 CLAUDE-CREATED / UNVERIFIED
+
+> 🧪 **Untested — candidate approach, not a proven recipe.** This was worked out in a chat
+> session and has **not** been flashed or booted. It deliberately does the thing the ⚠️ box
+> in 1.1(b) warns against (rootfs *inside* the initrd), so read that warning first and treat
+> the RAM/size math below as the main risk.
+
+**Why you'd want it:** 1.1(c) has you flash, then hand-create a **second FAT32 partition** in
+Windows to carry the rootfs — the fiddly, error-prone part (and where a stray `diskpart clean`
+can wipe everything). This alternative bakes the tools **and** the Arch rootfs straight into
+the initrd, so the whole thing is **one flash, one partition** — nothing to resize or add on
+the Windows side afterward. The catch: a big initrd won't fit the image's fixed ~300 MB boot
+partition, so you **grow the `.img` in WSL first** (where resizing is trivial — no Windows
+partition juggling).
+
+Do it in **WSL (Debian arm64)**. Needs `losetup`, `parted`, `fatresize`, `cpio`, `gzip`.
+```bash
+# 0) Work on a COPY of the downloaded Codelinaro image
+cp /mnt/c/Users/<you>/Downloads/debian-12-installer.img ~/deb.img && cd ~
+
+# 1) Grow the image file ~1.5 GB so the boot partition can hold a fat initrd
+truncate -s +1536M ~/deb.img
+
+# 2) Attach with partition scanning -> note the /dev/loopN it prints
+LOOP=$(sudo losetup -fP --show ~/deb.img); echo "$LOOP"
+
+# 3) Extend partition 1 to fill the image, then grow its FAT filesystem
+sudo parted -s "$LOOP" resizepart 1 100%
+sudo partprobe "$LOOP"
+sudo apt-get install -y fatresize dosfstools
+sudo fatresize -s max "${LOOP}p1"
+
+# 4) Mount the now-larger boot partition
+sudo mkdir -p /mnt/boot-img && sudo mount "${LOOP}p1" /mnt/boot-img
+
+# 5) Unpack the ORIGINAL initrd into a work tree (root, preserve /dev nodes + ownership)
+mkdir -p ~/initrd-work && cd ~/initrd-work
+file /mnt/boot-img/initrd.gz                             # confirm gzip (else swap zcat below)
+sudo sh -c 'zcat /mnt/boot-img/initrd.gz | cpio -idmv'
+
+# 6) Inject the fdisk + mkfs.ext4 bundle built in 1.1(a)
+sudo cp -a ~/initrd-tools/opt .
+
+# 7) ...and the Arch rootfs tarball, carried INSIDE the initrd (~180 MB)
+cd ~ && wget http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
+sudo cp ~/ArchLinuxARM-aarch64-latest.tar.gz ~/initrd-work/
+
+# 8) Repack and overwrite the boot partition's initrd.gz (KEEP the filename)
+cd ~/initrd-work
+sudo sh -c 'find . | cpio -o -H newc | gzip > /mnt/boot-img/initrd.gz'
+sync
+
+# 9) Detach
+sudo umount /mnt/boot-img && sudo losetup -d "$LOOP"
+
+# 10) Copy the enlarged image back to Windows, then DD-flash with Rufus (accept DD/MBR)
+cp ~/deb.img /mnt/c/Users/<you>/Downloads/debian-12-installer-arch-bundled.img
+```
+At the installer shell the rootfs is then at `/ArchLinuxARM-aarch64-latest.tar.gz` (in the
+initrd's RAM fs); extract it into the mounted NVMe root as in 1.2 (`tar -xpf … -C /mnt`).
+
+> 🧪 **Unverified risk points, in order of likelihood to bite:**
+> - **RAM cost.** The initrd loads *entirely* into RAM at boot. Original (~127 MB) + the
+>   already-compressed ~180 MB tarball ≈ a **~300 MB+ initrd**, unpacking to ~1 GB in RAM.
+>   Fine on a 16 GB+ Yoga; still wasteful. **Lighter variant:** skip step 7 and instead drop
+>   the tarball as a **plain file on the enlarged boot partition** (`sudo cp …tar.gz
+>   /mnt/boot-img/`) — same single-flash benefit, no RAM hit; mount the boot partition at the
+>   shell to reach it.
+> - **FAT grow is the fragile step.** `parted resizepart` + `fatresize` on a raw image is the
+>   least-tested part; if `fatresize` misbehaves, the fallback is recreate the partition larger
+>   and `mkfs.vfat` it, then copy the original boot files back before injecting.
+> - **Installer init logic.** Whether the Codelinaro initrd's `init` leaves the tarball
+>   reachable (vs. pivoting away) is untested — you may need to grab it manually at the shell.
 
 > ⚠️ **This is an outline, not a verified transcript.** joske's gist is self-described as
 > *"from memory, may be incomplete,"* and the exact **kernel / firmware / DTB / bootloader**
@@ -235,6 +307,57 @@ reinstall needed:
 3. Pull it back where needed: `git -C ~/.local/share/swarmarchy pull` (or `swarmarchy-update`).
 
 ---
+
+## Troubleshooting
+
+### Flashed USB doesn't show up in Windows Explorer (no drive letter)
+
+After Rufus DD-clones the Codelinaro image, the boot partition often **won't appear in
+Explorer** and has **no drive letter**. This is expected — not a failed flash:
+
+- The image tags its partition with MBR type byte **`0x83` (Linux)**, even though the
+  filesystem inside is **FAT**. Windows' automount only auto-letters partitions tagged as
+  *its own* types (`0x06`/`0x0b`/`0x0c`/`0x07`…), so it deliberately skips `0x83`.
+  `Get-Volume` still lists it as a `FAT` volume — just with a blank `DriveLetter`.
+- Disk Management's **Change Drive Letter and Paths… is greyed out** for this partition
+  (Windows treats `0x83` as foreign). The CLI tools below override that.
+
+**Fix — assign a letter from an *admin* PowerShell:**
+```powershell
+Get-Disk                                              # find the Kingston/USB disk number, e.g. 2
+Get-Partition -DiskNumber 2                           # confirm the FAT partition number (usually 1)
+Set-Partition -DiskNumber 2 -PartitionNumber 1 -NewDriveLetter E
+```
+or the same thing in `diskpart` (admin):
+```
+diskpart
+select disk 2
+select partition 1
+assign letter=E
+exit
+```
+`E:` then shows in Explorer. Non-destructive — no reformat, stays bootable. (`Set-Partition`
+without admin fails with `Access denied`.)
+
+**If the stick isn't visible to Windows at all** — not even in Disk Management — check it
+isn't currently attached to WSL via **usbipd**, which removes it from Windows entirely:
+```bash
+"/mnt/c/Program Files/usbipd-win/usbipd.exe" list                  # STATE = Attached?
+"/mnt/c/Program Files/usbipd-win/usbipd.exe" detach --busid <BUSID>
+```
+
+**Make it auto-mount on every future plug-in (optional).** Flip the type byte to FAT so
+Windows automount handles it unconditionally — either `diskpart → select disk/partition →
+set id=0c`, or from WSL `sudo sfdisk --part-type /dev/sdX 1 c`. Afterward it letters itself
+like a normal stick. Revert with `set id=83` / `sfdisk … 1 83` if the Qualcomm boot flow
+objects to the changed type.
+
+> **Why it "used to just work":** Windows remembers a volume→letter mapping in
+> `HKLM\SYSTEM\MountedDevices`, keyed to the disk's 4-byte **MBR signature**. A raw DD flash
+> writes the image's own signature, and `diskpart clean` erases the signature outright — both
+> orphan the old mapping, so the letter must be (re)assigned. `clean` is also *not* how you
+> grow a partition into free space — that's `extend` (or GParted); `clean` wipes the whole
+> partition table.
 
 ## References
 joske gist · kuruczgy NixOS config · Ubuntu Concept ISO · daily-driver writeup
