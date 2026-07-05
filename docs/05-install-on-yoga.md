@@ -21,6 +21,13 @@ Do all of this from Windows **before** touching partitions:
 - **Copy out the Qualcomm firmware** Linux needs: from
   `C:\Windows\System32\DriverStore\FileRepository\*\` grab the `*.mbn` / `*.jsn` /
   `dtbs.elf` files onto a USB stick. (The Step 1 guide lists exactly which.)
+  Helper: run [`copy-qcom-firmware.ps1`](copy-qcom-firmware.ps1) from an **elevated**
+  PowerShell — `.\copy-qcom-firmware.ps1 -Destination E:\` collects all three into
+  `E:\qcom-firmware\` (preserving source folders) with a `MANIFEST.csv`.
+  Heads-up: on a real X Elite DriverStore the DSP device tree ships as **`adsp_dtbs.elf` /
+  `cdsp_dtbs.elf`**, not a literal `dtbs.elf` (the script matches `*dtbs.elf` accordingly).
+  WLAN firmware is also `.elf` (`bdwlan*.elf`, `phy_ucode*.elf`) — add `*.elf` to the script's
+  patterns if you want Wi-Fi blobs too.
 - In **UEFI/BIOS**, disable **Secure Boot**.
 
 ## Step 1 — Get bare Arch Linux ARM booting ⚠️ (the hard part)
@@ -100,12 +107,12 @@ At the initrd shell on the Yoga you then run `/opt/tools/bin/fdisk.sh /dev/nvme0
 > **Fix: keep the initrd small — original + tools only (≈ 130–140 MB, fits the 300 MB boot
 > partition) — and carry the rootfs on a *separate* partition** you mount at install time.
 
-**c) Carry the rootfs on a second FAT32 partition (not inside the initrd).** After Rufus
-DD-flashes the image (accept DD/MBR — expected), use Windows **Disk Management** to create a
-**second FAT32 partition** in the leftover unallocated space (label it `DATA`; **FAT32, not
-NTFS** — the minimal initrd has no NTFS driver, and the ~180 MB tarball is < 4 GB). Then, in
-WSL, download the tarball and copy it on (swap `F:` for the new partition's real drive
-letter from File Explorer):
+**c) Carry the rootfs *and the Qualcomm firmware* on a second FAT32 partition (not inside the
+initrd).** After Rufus DD-flashes the image (accept DD/MBR — expected), use Windows **Disk
+Management** to create a **second FAT32 partition** in the leftover unallocated space (label it
+`DATA`; **FAT32, not NTFS** — the minimal initrd has no NTFS driver, and the ~180 MB tarball is
+< 4 GB). Then, in WSL, download the tarball and copy it on (swap `F:` for the new partition's
+real drive letter from File Explorer):
 ```bash
 cd ~ && wget http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 
@@ -114,8 +121,15 @@ sudo mount -t drvfs F: /mnt/data            # F: = the DATA partition's letter
 cp ~/ArchLinuxARM-aarch64-latest.tar.gz /mnt/data/    # copy the .tar.gz AS-IS, don't unpack
 sync && ls -lah /mnt/data/
 ```
+**Stage the Qualcomm firmware on this same `DATA` partition** — *not* the boot partition,
+*not* the initrd (the installer doesn't need it to run; it's cargo for the target system).
+Easiest: point the Step 0 script straight at the DATA drive letter from an elevated
+PowerShell — `.\copy-qcom-firmware.ps1 -Destination F:\` — which drops `F:\qcom-firmware\`
+right next to the tarball. `DATA` is just the courier; **1.2 copies both onto the NVMe** at
+install time.
+
 (If the new partition has no drive letter: Disk Management → right-click it → *Change Drive
-Letter and Paths* → *Add*.)
+Letter and Paths* → *Add*. If that's greyed out, see **Troubleshooting** below.)
 
 Finally, overwrite the boot partition's `initrd.gz` with your rebuilt `initrd-new.gz`
 (from step b — original + tools, no rootfs), and boot the Yoga from the USB (F12).
@@ -255,6 +269,15 @@ mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
 tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt   # source -> target
 #   1.1-ALT instead:  tar -xpf /ArchLinuxARM-aarch64-latest.tar.gz -C /mnt
 
+# --- Qualcomm firmware -> target rootfs (staged on DATA in Step 0 / 1.1c). It loads at
+#     RUNTIME from the rootfs, so it lives in /mnt/lib/firmware, NOT the initrd. The
+#     <VENDOR>/<MODEL> leaf is whatever the DTB's firmware-name asks for -- read it with:
+#       dtc -I dtb -O dts <your.dtb> | grep firmware-name
+DEST=/mnt/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>
+mkdir -p "$DEST"
+find /mnt/data/qcom-firmware -type f \( -name '*.mbn' -o -name '*.jsn' -o -name '*dtbs.elf' \) \
+     -exec cp {} "$DEST"/ \;         # flattens into the leaf; match names to what the DTB wants
+
 # --- note UUIDs for fstab BEFORE chroot (vars don't survive the chroot) ---
 blkid "$ROOT" "$ESP"                           # copy these UUIDs down for /etc/fstab
 
@@ -276,7 +299,9 @@ useradd -mG wheel <you> && passwd <you>
 **c) Device-specific steps — DO NOT improvise; pull exact commands from the references:**
 - **Kernel:** a Snapdragon-capable kernel — the gist/comments point to the **jhovold** branch
   (`wip/x1e80100-*`); kuruczgy's config is the authoritative kernel/quirks source.
-- **Firmware:** install the **Qualcomm firmware** you copied out in Step 0.
+- **Firmware:** already copied above (from `DATA` → `/mnt/lib/firmware/qcom/x1e80100/…`). Get
+  the exact `<VENDOR>/<MODEL>` leaf + filenames from the DTB's `firmware-name`; after boot,
+  `dmesg | grep -i firmware` names the precise path of anything still missing.
 - **DTB:** `qcom/x1e80100-lenovo-yoga-slim7x.dtb`.
 - **Copy kernel + initrd + DTB from the USB installer** into the NVMe `/boot` (gist does this).
 - **Graphics:** the **zink** path the gist mentions (until Mesa **turnip** is solid).
