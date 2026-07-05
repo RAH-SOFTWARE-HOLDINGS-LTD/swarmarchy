@@ -119,6 +119,9 @@ Letter and Paths* → *Add*.)
 
 Finally, overwrite the boot partition's `initrd.gz` with your rebuilt `initrd-new.gz`
 (from step b — original + tools, no rootfs), and boot the Yoga from the USB (F12).
+**→ then continue at [1.2](#12--at-the-installer-shell-partition--extract--chroot--boot).**
+(Prefer a single flash with no Windows-side partitioning? See the **1.1-ALT** alternative
+below; otherwise skip it and go straight to 1.2.)
 
 ### 1.1-ALT — One self-contained image (rootfs baked into the initrd) 🧪 CLAUDE-CREATED / UNVERIFIED
 
@@ -194,6 +197,14 @@ initrd's RAM fs); extract it into the mounted NVMe root as in 1.2 (`tar -xpf …
 > - **Installer init logic.** Whether the Codelinaro initrd's `init` leaves the tarball
 >   reachable (vs. pivoting away) is untested — you may need to grab it manually at the shell.
 
+### 1.2 — At the installer shell: partition → extract → chroot → boot
+
+> **You arrive here after finishing EITHER 1.1 (two-partition) OR 1.1-ALT (single image).**
+> Flash the USB, boot it (F12), and you land at the Debian installer's initrd shell.
+> Everything in 1.2 is identical regardless of which prep you used — this is the actual Arch
+> install. (Only the *rootfs source* differs: 1.1(c) → the `DATA` partition; 1.1-ALT → the
+> tarball is already in the initrd at `/`.)
+
 > ⚠️ **This is an outline, not a verified transcript.** joske's gist is self-described as
 > *"from memory, may be incomplete,"* and the exact **kernel / firmware / DTB / bootloader**
 > steps are device-specific — take those from the gist **and** kuruczgy's config, and verify
@@ -202,24 +213,50 @@ initrd's RAM fs); extract it into the mounted NVMe root as in 1.2 (`tar -xpf …
 > ⚠️ **Dual-boot safety:** the Yoga already has a Windows **EFI System Partition (ESP)** and
 > Windows partitions. **Reuse** the existing ESP for `/boot` — do **NOT** `mkfs` it, and never
 > touch the Windows partitions. Format **only** your new Linux root. One wrong `mkfs`/`fdisk`
-> write here can destroy Windows. Use `lsblk`/`fdisk -l` to identify partitions before acting.
+> write here can destroy Windows.
 
-**Generic Arch-ARM steps (same for any install):**
+**a) Identify your disks/partitions FIRST — never guess device names:**
+```sh
+lsblk -o NAME,SIZE,FSTYPE,PARTTYPENAME,LABEL,MOUNTPOINT   # the whole picture, every disk
+blkid                                                     # UUID + LABEL + TYPE per partition
+fdisk -l /dev/nvme0n1 | grep -i 'EFI System'              # locate the Windows ESP (small FAT)
+ls -l /dev/disk/by-label/                                 # confirm your DATA partition is here
+ip link                                                   # wifi iface name (wlan0 / wlp...)
+```
+Read off the device names and pin them to variables so the destructive steps can't hit the
+wrong disk:
+```sh
+NVME=/dev/nvme0n1        # INTERNAL drive (big, ~1 TB). The USB is a separate /dev/sdX (~8 GB)!
+ESP=${NVME}p1            # EXISTING Windows EFI System Partition (from the `fdisk -l` line above)
+# ROOT is set below, AFTER you create the new partition.
+```
+- **NVME** = internal drive. In `lsblk` the USB is the ~8 GB `/dev/sdX` — do not confuse them.
+- **ESP** = the small (~100–300 MB) partition whose type is *EFI System*. It's Windows'; you
+  reuse it, never format it.
+- **DATA** = your rootfs carrier from 1.1(c) — reach it at `/dev/disk/by-label/DATA` (or the
+  `vfat`/`LABEL=DATA` row in `lsblk`). *(1.1-ALT: skip this — tarball is in the initrd at `/`.)*
+
+**b) Generic Arch-ARM steps (same for any install):**
 ```sh
 # --- networking (gist uses a 2nd TTY: Fn+Alt+F2, return with Fn+Alt+F1) ---
-# create /etc/wpa_supplicant.conf for your SSID, then bring up wifi + DHCP
-# (exact wpa_supplicant/dhcp invocation per the installer environment)
+# from `ip link` above, note your wifi iface (e.g. wlan0); make /etc/wpa_supplicant.conf for
+# your SSID, then bring up wifi + DHCP (exact invocation per the installer environment)
 
-# --- partition: ADD a Linux root in your free space; REUSE the Windows ESP ---
-/opt/tools/bin/fdisk.sh /dev/nvme0n1          # create ONE new root partition (note its number)
-/opt/tools/bin/mkfs.ext4 /dev/nvme0n1pROOT    # format ONLY the new root — NEVER the ESP
+# --- partition: ADD a Linux root in the free space; REUSE the Windows ESP ($ESP) ---
+/opt/tools/bin/fdisk.sh "$NVME"                # create ONE new root partition in the free space
+lsblk "$NVME"                                  # re-read the table -> note the NEW partition number
+ROOT=${NVME}p6                                 # <-- set to the partition you just created
+/opt/tools/bin/mkfs.ext4 "$ROOT"               # format ONLY the new root — NEVER $ESP
 
 # --- mount target + source, extract the rootfs INTO the target ---
-mount /dev/nvme0n1pROOT /mnt                   # new Arch root  (target)
-mkdir -p /mnt/boot
-mount /dev/nvme0n1pESP  /mnt/boot              # EXISTING Windows ESP — mount only, do NOT mkfs
+mount "$ROOT" /mnt                             # new Arch root (target)
+mkdir -p /mnt/boot && mount "$ESP" /mnt/boot   # EXISTING Windows ESP — mount only, do NOT mkfs
 mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
 tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt   # source -> target
+#   1.1-ALT instead:  tar -xpf /ArchLinuxARM-aarch64-latest.tar.gz -C /mnt
+
+# --- note UUIDs for fstab BEFORE chroot (vars don't survive the chroot) ---
+blkid "$ROOT" "$ESP"                           # copy these UUIDs down for /etc/fstab
 
 # --- chroot in ---
 for d in dev proc sys run; do mount --rbind /$d /mnt/$d; done
@@ -233,10 +270,10 @@ ln -sf /usr/share/zoneinfo/<Region>/<City> /etc/localtime && hwclock --systohc
 # uncomment your locale in /etc/locale.gen, then: locale-gen
 passwd                                          # root password
 useradd -mG wheel <you> && passwd <you>
-# write /etc/fstab (use blkid for the root + ESP UUIDs)
+# write /etc/fstab from the UUIDs you noted (root -> /, ESP -> /boot vfat)
 ```
 
-**Device-specific steps — DO NOT improvise; pull exact commands from the references:**
+**c) Device-specific steps — DO NOT improvise; pull exact commands from the references:**
 - **Kernel:** a Snapdragon-capable kernel — the gist/comments point to the **jhovold** branch
   (`wip/x1e80100-*`); kuruczgy's config is the authoritative kernel/quirks source.
 - **Firmware:** install the **Qualcomm firmware** you copied out in Step 0.
