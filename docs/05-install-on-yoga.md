@@ -18,16 +18,10 @@ Do all of this from Windows **before** touching partitions:
   can otherwise lock you out of Windows.
 - **Shrink the Windows partition** (Disk Management → *Shrink Volume*) to free space for
   Linux. Leave the **Windows + EFI** partitions intact — this is dual-boot, no wipe.
-- **Copy out the Qualcomm firmware** Linux needs: from
-  `C:\Windows\System32\DriverStore\FileRepository\*\` grab the `*.mbn` / `*.jsn` /
-  `dtbs.elf` files onto a USB stick. (The Step 1 guide lists exactly which.)
-  Helper: run [`copy-qcom-firmware.ps1`](copy-qcom-firmware.ps1) from an **elevated**
-  PowerShell — `.\copy-qcom-firmware.ps1 -Destination E:\` collects all three into
-  `E:\qcom-firmware\` (preserving source folders) with a `MANIFEST.csv`.
-  Heads-up: on a real X Elite DriverStore the DSP device tree ships as **`adsp_dtbs.elf` /
-  `cdsp_dtbs.elf`**, not a literal `dtbs.elf` (the script matches `*dtbs.elf` accordingly).
-  WLAN firmware is also `.elf` (`bdwlan*.elf`, `phy_ucode*.elf`) — add `*.elf` to the script's
-  patterns if you want Wi-Fi blobs too.
+- **Qualcomm firmware** — Linux also needs Qualcomm's firmware blobs, which live only inside
+  Windows. That's its **own step ([1.2](#12--qualcomm-firmware-windows--usb-data-partition))**,
+  not done here: it rides on the USB's `DATA` partition, which you create in 1.1. Just know
+  it's coming.
 - In **UEFI/BIOS**, disable **Secure Boot**.
 
 ## Step 1 — Get bare Arch Linux ARM booting ⚠️ (the hard part)
@@ -107,8 +101,8 @@ At the initrd shell on the Yoga you then run `/opt/tools/bin/fdisk.sh /dev/nvme0
 > **Fix: keep the initrd small — original + tools only (≈ 130–140 MB, fits the 300 MB boot
 > partition) — and carry the rootfs on a *separate* partition** you mount at install time.
 
-**c) Carry the rootfs *and the Qualcomm firmware* on a second FAT32 partition (not inside the
-initrd).** After Rufus DD-flashes the image (accept DD/MBR — expected), use Windows **Disk
+**c) Carry the rootfs on a second FAT32 partition (not inside the initrd).** After Rufus
+DD-flashes the image (accept DD/MBR — expected), use Windows **Disk
 Management** to create a **second FAT32 partition** in the leftover unallocated space (label it
 `DATA`; **FAT32, not NTFS** — the minimal initrd has no NTFS driver, and the ~180 MB tarball is
 < 4 GB). Then, in WSL, download the tarball and copy it on (swap `F:` for the new partition's
@@ -121,21 +115,16 @@ sudo mount -t drvfs F: /mnt/data            # F: = the DATA partition's letter
 cp ~/ArchLinuxARM-aarch64-latest.tar.gz /mnt/data/    # copy the .tar.gz AS-IS, don't unpack
 sync && ls -lah /mnt/data/
 ```
-**Stage the Qualcomm firmware on this same `DATA` partition** — *not* the boot partition,
-*not* the initrd (the installer doesn't need it to run; it's cargo for the target system).
-Easiest: point the Step 0 script straight at the DATA drive letter from an elevated
-PowerShell — `.\copy-qcom-firmware.ps1 -Destination F:\` — which drops `F:\qcom-firmware\`
-right next to the tarball. `DATA` is just the courier; **1.2 copies both onto the NVMe** at
-install time.
+(You'll add the Qualcomm firmware to this same `DATA` partition next, in **1.2**.)
 
 (If the new partition has no drive letter: Disk Management → right-click it → *Change Drive
 Letter and Paths* → *Add*. If that's greyed out, see **Troubleshooting** below.)
 
 Finally, overwrite the boot partition's `initrd.gz` with your rebuilt `initrd-new.gz`
-(from step b — original + tools, no rootfs), and boot the Yoga from the USB (F12).
-**→ then continue at [1.2](#12--at-the-installer-shell-partition--extract--chroot--boot).**
+(from step b — original + tools, no rootfs). *(Don't boot yet — stage the firmware in 1.2 first.)*
+**→ continue at [1.2 — Qualcomm firmware](#12--qualcomm-firmware-windows--usb-data-partition), then [1.3 — the installer shell](#13--at-the-installer-shell-partition--extract--chroot--boot).**
 (Prefer a single flash with no Windows-side partitioning? See the **1.1-ALT** alternative
-below; otherwise skip it and go straight to 1.2.)
+below; otherwise skip it and continue to 1.2.)
 
 ### 1.1-ALT — One self-contained image (rootfs baked into the initrd) 🧪 CLAUDE-CREATED / UNVERIFIED
 
@@ -196,7 +185,7 @@ sudo umount /mnt/boot-img && sudo losetup -d "$LOOP"
 cp ~/deb.img /mnt/c/Users/<you>/Downloads/debian-12-installer-arch-bundled.img
 ```
 At the installer shell the rootfs is then at `/ArchLinuxARM-aarch64-latest.tar.gz` (in the
-initrd's RAM fs); extract it into the mounted NVMe root as in 1.2 (`tar -xpf … -C /mnt`).
+initrd's RAM fs); extract it into the mounted NVMe root as in 1.3 (`tar -xpf … -C /mnt`).
 
 > 🧪 **Unverified risk points, in order of likelihood to bite:**
 > - **RAM cost.** The initrd loads *entirely* into RAM at boot. Original (~127 MB) + the
@@ -211,13 +200,50 @@ initrd's RAM fs); extract it into the mounted NVMe root as in 1.2 (`tar -xpf …
 > - **Installer init logic.** Whether the Codelinaro initrd's `init` leaves the tarball
 >   reachable (vs. pivoting away) is untested — you may need to grab it manually at the shell.
 
-### 1.2 — At the installer shell: partition → extract → chroot → boot
+### 1.2 — Qualcomm firmware (Windows → USB `DATA` partition)
 
-> **You arrive here after finishing EITHER 1.1 (two-partition) OR 1.1-ALT (single image).**
-> Flash the USB, boot it (F12), and you land at the Debian installer's initrd shell.
-> Everything in 1.2 is identical regardless of which prep you used — this is the actual Arch
-> install. (Only the *rootfs source* differs: 1.1(c) → the `DATA` partition; 1.1-ALT → the
-> tarball is already in the initrd at `/`.)
+Linux needs Qualcomm's firmware blobs (DSP, WLAN, camera, …) that ship **only inside Windows**.
+Pull them from the Windows DriverStore and stage them on the USB's `DATA` partition — the one
+you made in **1.1(c)**, right next to the rootfs tarball. `DATA` is just the **courier**: the
+files don't belong in the boot partition or the initrd (the installer doesn't need them to
+run), and **1.3 copies them onto the NVMe** at install time.
+
+**Collect + stage in one shot.** From an **elevated** PowerShell, point the helper at the
+`DATA` drive letter (`F:` here):
+```powershell
+.\copy-qcom-firmware.ps1 -Destination F:\
+```
+It recurses `C:\Windows\System32\DriverStore\FileRepository\` for `*.mbn`, `*.jsn`, and
+`*dtbs.elf`, copies them to `F:\qcom-firmware\` (preserving source subfolders so same-named
+blobs don't collide), and writes a `MANIFEST.csv`. Prefer to do it by hand? Grab those three
+patterns from `…\FileRepository\*\` yourself — same files.
+
+After it runs, `DATA` carries both halves the installer needs:
+```
+F:\
+├── ArchLinuxARM-aarch64-latest.tar.gz     (rootfs, from 1.1c)
+└── qcom-firmware\   (+ MANIFEST.csv)       (firmware, this step)
+```
+
+**Gotchas worth knowing:**
+- **DSP device-tree naming:** it ships as **`adsp_dtbs.elf` / `cdsp_dtbs.elf`**, *not* a literal
+  `dtbs.elf` — the script matches `*dtbs.elf` for exactly this reason.
+- **Wi-Fi firmware is also `.elf`** (`bdwlan*.elf`, `phy_ucode*.elf`). Add `*.elf` to the
+  script's patterns if you want the WLAN/camera blobs too.
+- **Run elevated** — some DriverStore subtrees are ACL'd and get skipped otherwise.
+- **1.1-ALT path (no `DATA` partition):** bake `qcom-firmware/` into the initrd next to the
+  rootfs, or drop it on the enlarged boot partition — then copy it onto the NVMe in 1.3 the
+  same way.
+
+The *final* placement into `/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>/` happens in **1.3**:
+the exact `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alongside the DTB.
+
+### 1.3 — At the installer shell: partition → extract → chroot → boot
+
+> **You arrive here after 1.1 + 1.2** (or 1.1-ALT + 1.2). Flash the USB, boot it (F12), and you
+> land at the Debian installer's initrd shell. Everything in 1.3 is identical regardless of
+> which prep you used — this is the actual Arch install. (Only the *rootfs source* differs:
+> 1.1(c) → the `DATA` partition; 1.1-ALT → the tarball is already in the initrd at `/`.)
 
 > ⚠️ **This is an outline, not a verified transcript.** joske's gist is self-described as
 > *"from memory, may be incomplete,"* and the exact **kernel / firmware / DTB / bootloader**
@@ -294,7 +320,7 @@ mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
 tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt   # source -> target
 #   1.1-ALT instead:  tar -xpf /ArchLinuxARM-aarch64-latest.tar.gz -C /mnt
 
-# --- Qualcomm firmware -> target rootfs (staged on DATA in Step 0 / 1.1c). It loads at
+# --- Qualcomm firmware -> target rootfs (staged on DATA in 1.2). It loads at
 #     RUNTIME from the rootfs, so it lives in /mnt/lib/firmware, NOT the initrd. The
 #     <VENDOR>/<MODEL> leaf is whatever the DTB's firmware-name asks for -- read it with:
 #       dtc -I dtb -O dts <your.dtb> | grep firmware-name
@@ -342,7 +368,7 @@ You're done with Step 1 when you have a **plain Arch aarch64 desktop that boots 
 networking.** What must be in place:
 - a recent **mainline/ALARM `linux-aarch64` (6.14+)**,
 - the upstream DTB **`qcom/x1e80100-lenovo-yoga-slim7x.dtb`**,
-- the **Qualcomm firmware** from Step 0.
+- the **Qualcomm firmware** from 1.2.
 
 To match swarmarchy's intended scheme use **LUKS + Btrfs subvolumes + Limine**, but *any*
 working Arch aarch64 base is fine — the layer doesn't care.
