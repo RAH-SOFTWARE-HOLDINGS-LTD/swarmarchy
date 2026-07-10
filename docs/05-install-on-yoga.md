@@ -126,79 +126,96 @@ Finally, overwrite the boot partition's `initrd.gz` with your rebuilt `initrd-ne
 (Prefer a single flash with no Windows-side partitioning? See the **1.1-ALT** alternative
 below; otherwise skip it and continue to 1.2.)
 
-### 1.1-ALT — One self-contained image (rootfs baked into the initrd) 🧪 CLAUDE-CREATED / UNVERIFIED
+### 1.1-ALT — Build the whole 2-partition image in WSL (one flash, no Windows partitioning) 🧪 WSL BUILD VERIFIED / BOOT PENDING
 
-> 🧪 **Untested — candidate approach, not a proven recipe.** This was worked out in a chat
-> session and has **not** been flashed or booted. It deliberately does the thing the ⚠️ box
-> in 1.1(b) warns against (rootfs *inside* the initrd), so read that warning first and treat
-> the RAM/size math below as the main risk.
+> 🧪 **Built and verified in WSL; not yet booted on the Yoga.** The image-assembly steps below
+> were run end-to-end and produce a valid 2-partition image (both partitions read back
+> correctly). What's still unconfirmed is the *boot* on the Yoga. Treat the flash-and-boot as
+> the remaining unknown, not the build.
 
-**Why you'd want it:** 1.1(c) has you flash, then hand-create a **second FAT32 partition** in
-Windows to carry the rootfs — the fiddly, error-prone part (and where a stray `diskpart clean`
-can wipe everything). This alternative bakes the tools **and** the Arch rootfs straight into
-the initrd, so the whole thing is **one flash, one partition** — nothing to resize or add on
-the Windows side afterward. The catch: a big initrd won't fit the image's fixed ~300 MB boot
-partition, so you **grow the `.img` in WSL first** (where resizing is trivial — no Windows
-partition juggling).
+**Why you'd want it:** 1.1(c) has you flash, then hand-create a second FAT32 partition in
+**Windows** Disk Management to carry the rootfs — fiddly, and where a stray `diskpart` can wipe
+the wrong disk. This alternative does **everything in WSL against the image *file*** and hands
+you a finished 2-partition image to flash **once** — nothing to partition or resize on the
+Windows side afterward. Same on-USB layout as 1.1(c) (slim initrd on p1, rootfs on a second
+partition p2), just assembled in one place.
 
-Do it in **WSL (Debian arm64)**. Needs `losetup`, `parted`, `fatresize`, `cpio`, `gzip`.
+> ⚠️ **The one trap this avoids — don't use loop devices in WSL.** WSL 2's kernel doesn't
+> implement the geometry ioctl (`HDIO_GETGEO`) on **loop partitions** (`/dev/loopNpX`). So
+> `mount -t vfat`, `fatresize`, and mtools' `mformat` all **fail** there (you'll see *"Could
+> not get geometry … Inappropriate ioctl for device"*, false *"Disk full"*, or *"short
+> write"*). The fix is to **never attach a loop device**: operate on the image **file** with
+> `sfdisk` (partition table), `mkfs.vfat` on a scratch file (format), `dd` (splice), and
+> `mtools`' `partition=` drives (copy) — none of those call that ioctl. Also note the Codelinaro
+> image is **MBR (msdos), not GPT** — use `sfdisk`/`fdisk`, *not* `sgdisk` (it refuses: *"Non-GPT
+> disk; not saving changes"*).
+
+Do it in **WSL (Debian arm64)**. Needs `sfdisk`/`fdisk` (util-linux), `dosfstools`
+(`mkfs.vfat`), `mtools`, `cpio`, `gzip`. Prereq: the `fdisk`+`mkfs.ext4` bundle from **1.1(a)**
+at `~/initrd-tools/opt`, and the rootfs tarball downloaded to `~`.
 ```bash
-# 0) Work on a COPY of the downloaded Codelinaro image
-cp /mnt/c/Users/<you>/Downloads/debian-12-installer.img ~/deb.img && cd ~
+# 0) Fresh COPY of the downloaded Codelinaro image, + headroom for a data partition.
+#    (Confirm the original is < 2560M first, else raise the truncate size — truncate SHRINKS
+#    if the target is smaller, which would corrupt p1.)
+cd ~
+cp /mnt/c/Users/<you>/Downloads/<codelinaro>.img ~/usb.img
+ls -l ~/usb.img
+truncate -s 2560M ~/usb.img
+sudo apt-get install -y util-linux mtools dosfstools
 
-# 1) Grow the image file ~1.5 GB so the boot partition can hold a fat initrd
-truncate -s +1536M ~/deb.img
+# 1) Append p2 after p1 on the MBR table: default start (auto-aligned), fill the rest,
+#    type c = W95 FAT32 (LBA). sfdisk places it correctly so there's no offset to guess.
+echo ',,c' | sfdisk --append ~/usb.img
 
-# 2) Attach with partition scanning -> note the /dev/loopN it prints
-LOOP=$(sudo losetup -fP --show ~/deb.img); echo "$LOOP"
+# 2) Read back p2's real start SECTOR (deterministic — used for the splice below)
+sfdisk -d ~/usb.img
+START=$(sfdisk -d ~/usb.img | awk -F'[ ,=]+' '/img2 :/{print $4}')
+echo "p2 start sector: $START"                 # sanity: non-empty, ~600000+
 
-# 3) Extend partition 1 to fill the image, then grow its FAT filesystem
-sudo parted -s "$LOOP" resizepart 1 100%
-sudo partprobe "$LOOP"
-sudo apt-get install -y fatresize dosfstools
-sudo fatresize -s max "${LOOP}p1"
+# 3) Build p2's FAT filesystem as a SEPARATE scratch file (mkfs.vfat is rock-solid on a plain
+#    file; it can't format "partition 2 inside another file", hence the standalone image).
+#    Then load the rootfs tarball into it.
+truncate -s 1024M ~/p2.img
+mkfs.vfat -F32 -n ARCHDATA ~/p2.img
+MTOOLS_SKIP_CHECK=1 mcopy -i ~/p2.img ~/ArchLinuxARM-aarch64-latest.tar.gz ::
+MTOOLS_SKIP_CHECK=1 mdir  -i ~/p2.img ::        # tarball listed
 
-# 4) Mount the now-larger boot partition
-sudo mkdir -p /mnt/boot-img && sudo mount "${LOOP}p1" /mnt/boot-img
+# 4) Splice that filesystem INTO usb.img at p2's start (conv=notrunc = don't shrink usb.img).
+#    p2.img is scratch — delete it after this.
+dd if=~/p2.img of=~/usb.img bs=512 seek=$START conv=notrunc status=progress
+rm -f ~/p2.img
 
-# 5) Unpack the ORIGINAL initrd into a work tree (root, preserve /dev nodes + ownership)
-mkdir -p ~/initrd-work && cd ~/initrd-work
-file /mnt/boot-img/initrd.gz                             # confirm gzip (else swap zcat below)
-sudo sh -c 'zcat /mnt/boot-img/initrd.gz | cpio -idmv'
-
-# 6) Inject the fdisk + mkfs.ext4 bundle built in 1.1(a)
+# 5) p1: swap in a SLIM initrd = pristine original + the tools bundle (~130-150 MB, fits the
+#    ~300 MB boot partition). mtools reads the MBR partition table from the file, no loop device.
+printf 'drive z: file="%s" partition=1\ndrive y: file="%s" partition=2\n' \
+  "$HOME/usb.img" "$HOME/usb.img" > ~/.mtoolsrc
+MTOOLS_SKIP_CHECK=1 mcopy z:initrd.gz ~/initrd.orig.gz
+rm -rf ~/initrd-slim && mkdir ~/initrd-slim && cd ~/initrd-slim
+sudo sh -c 'zcat ~/initrd.orig.gz | cpio -idmv'        # confirm gzip first if unsure: file ~/initrd.orig.gz
 sudo cp -a ~/initrd-tools/opt .
+sudo sh -c 'find . | cpio -o -H newc | gzip > ~/initrd.slim.gz'
+ls -lh ~/initrd.slim.gz                         # expect ~130-150 MB, NOT ~900
+MTOOLS_SKIP_CHECK=1 mdel  z:initrd.gz
+MTOOLS_SKIP_CHECK=1 mcopy ~/initrd.slim.gz z:initrd.gz
 
-# 7) ...and the Arch rootfs tarball, carried INSIDE the initrd (~180 MB)
-cd ~ && wget http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
-sudo cp ~/ArchLinuxARM-aarch64-latest.tar.gz ~/initrd-work/
-
-# 8) Repack and overwrite the boot partition's initrd.gz (KEEP the filename)
-cd ~/initrd-work
-sudo sh -c 'find . | cpio -o -H newc | gzip > /mnt/boot-img/initrd.gz'
-sync
-
-# 9) Detach
-sudo umount /mnt/boot-img && sudo losetup -d "$LOOP"
-
-# 10) Copy the enlarged image back to Windows, then DD-flash with Rufus (accept DD/MBR)
-cp ~/deb.img /mnt/c/Users/<you>/Downloads/debian-12-installer-arch-bundled.img
+# 6) Verify BOTH partitions read back, then copy out to flash
+MTOOLS_SKIP_CHECK=1 mdir z:                     # slim initrd on p1
+MTOOLS_SKIP_CHECK=1 mdir y:                     # tarball on p2 (proves splice + table agree)
+cp ~/usb.img /mnt/c/Users/<you>/Downloads/usb-arch-ready.img
 ```
-At the installer shell the rootfs is then at `/ArchLinuxARM-aarch64-latest.tar.gz` (in the
-initrd's RAM fs); extract it into the mounted NVMe root as in 1.3 (`tar -xpf … -C /mnt`).
+Rufus DD-flash `usb-arch-ready.img` (accept DD/MBR — expected). At the installer shell the
+rootfs is on the **second partition** (`LABEL=ARCHDATA`): mount it before extracting, i.e.
+`mount /dev/disk/by-label/ARCHDATA /mnt/data` then `tar -xpf /mnt/data/…tar.gz -C /mnt` (see 1.3).
 
-> 🧪 **Unverified risk points, in order of likelihood to bite:**
-> - **RAM cost.** The initrd loads *entirely* into RAM at boot. Original (~127 MB) + the
->   already-compressed ~180 MB tarball ≈ a **~300 MB+ initrd**, unpacking to ~1 GB in RAM.
->   Fine on a 16 GB+ Yoga; still wasteful. **Lighter variant:** skip step 7 and instead drop
->   the tarball as a **plain file on the enlarged boot partition** (`sudo cp …tar.gz
->   /mnt/boot-img/`) — same single-flash benefit, no RAM hit; mount the boot partition at the
->   shell to reach it.
-> - **FAT grow is the fragile step.** `parted resizepart` + `fatresize` on a raw image is the
->   least-tested part; if `fatresize` misbehaves, the fallback is recreate the partition larger
->   and `mkfs.vfat` it, then copy the original boot files back before injecting.
-> - **Installer init logic.** Whether the Codelinaro initrd's `init` leaves the tarball
->   reachable (vs. pivoting away) is untested — you may need to grab it manually at the shell.
+> **Notes / gotchas learned the hard way:**
+> - **Two files on purpose.** `usb.img` = the whole disk image you flash; `p2.img` = a throwaway
+>   holding only p2's filesystem, spliced in with `dd` then deleted. They are not the same file.
+> - **Don't bake the rootfs into the initrd.** A rootfs-in-initrd balloons to ~900 MB, won't fit
+>   the boot partition, and loads *entirely into RAM* at boot. Keeping it on p2 sidesteps both.
+> - **If `mdir y:` errors** (older mtools not parsing the entry), use an explicit offset instead
+>   of `partition=2`: `drive y: file="$HOME/usb.img" offset=$((START*512))`.
+> - **If `mkfs.vfat` isn't found**, install `dosfstools`. **If `sfdisk`'s `START` parses empty**,
+>   read it from `sfdisk -d ~/usb.img` by hand (the `start=` value on the `usb.img2` line).
 
 ### 1.2 — Qualcomm firmware (Windows → USB `DATA` partition)
 
@@ -231,9 +248,10 @@ F:\
 - **Wi-Fi firmware is also `.elf`** (`bdwlan*.elf`, `phy_ucode*.elf`). Add `*.elf` to the
   script's patterns if you want the WLAN/camera blobs too.
 - **Run elevated** — some DriverStore subtrees are ACL'd and get skipped otherwise.
-- **1.1-ALT path (no `DATA` partition):** bake `qcom-firmware/` into the initrd next to the
-  rootfs, or drop it on the enlarged boot partition — then copy it onto the NVMe in 1.3 the
-  same way.
+- **1.1-ALT path:** the second partition is labeled `ARCHDATA` (not `DATA`) but carries the same
+  cargo — put `qcom-firmware/` alongside the rootfs tarball on it (`mcopy -i ~/p2.img -s
+  ~/qcom-firmware ::` before the splice, or copy it on later) — then copy it onto the NVMe in 1.3
+  the same way.
 
 The *final* placement into `/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>/` happens in **1.3**:
 the exact `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alongside the DTB.
@@ -242,8 +260,8 @@ the exact `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alo
 
 > **You arrive here after 1.1 + 1.2** (or 1.1-ALT + 1.2). Flash the USB, boot it (F12), and you
 > land at the Debian installer's initrd shell. Everything in 1.3 is identical regardless of
-> which prep you used — this is the actual Arch install. (Only the *rootfs source* differs:
-> 1.1(c) → the `DATA` partition; 1.1-ALT → the tarball is already in the initrd at `/`.)
+> which prep you used — this is the actual Arch install. (The *rootfs source* is a labeled second
+> partition either way: 1.1(c) → `LABEL=DATA`; 1.1-ALT → `LABEL=ARCHDATA`. Mount it, then extract.)
 
 > ⚠️ **This is an outline, not a verified transcript.** joske's gist is self-described as
 > *"from memory, may be incomplete,"* and the exact **kernel / firmware / DTB / bootloader**
@@ -298,8 +316,8 @@ ESP=${NVME}p1            # EXISTING Windows EFI System Partition (from the `fdis
 - **NVME** = internal drive. In `lsblk` the USB is the ~8 GB `/dev/sdX` — do not confuse them.
 - **ESP** = the small (~100–300 MB) partition whose type is *EFI System*. It's Windows'; you
   reuse it, never format it.
-- **DATA** = your rootfs carrier from 1.1(c) — reach it at `/dev/disk/by-label/DATA` (or the
-  `vfat`/`LABEL=DATA` row in `lsblk`). *(1.1-ALT: skip this — tarball is in the initrd at `/`.)*
+- **DATA** = your rootfs carrier — reach it at `/dev/disk/by-label/DATA` (or the `vfat`/`LABEL=DATA`
+  row in `lsblk`). *(1.1-ALT names it `ARCHDATA` — use `/dev/disk/by-label/ARCHDATA` instead.)*
 
 **b) Generic Arch-ARM steps (same for any install):**
 ```sh
@@ -316,9 +334,8 @@ ROOT=${NVME}p6                                 # <-- set to the partition you ju
 # --- mount target + source, extract the rootfs INTO the target ---
 mount "$ROOT" /mnt                             # new Arch root (target)
 mkdir -p /mnt/boot && mount "$ESP" /mnt/boot   # EXISTING Windows ESP — mount only, do NOT mkfs
-mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
+mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data   # 1.1-ALT: LABEL=ARCHDATA
 tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt   # source -> target
-#   1.1-ALT instead:  tar -xpf /ArchLinuxARM-aarch64-latest.tar.gz -C /mnt
 
 # --- Qualcomm firmware -> target rootfs (staged on DATA in 1.2). It loads at
 #     RUNTIME from the rootfs, so it lives in /mnt/lib/firmware, NOT the initrd. The
