@@ -123,99 +123,112 @@ Letter and Paths* → *Add*. If that's greyed out, see **Troubleshooting** below
 Finally, overwrite the boot partition's `initrd.gz` with your rebuilt `initrd-new.gz`
 (from step b — original + tools, no rootfs). *(Don't boot yet — stage the firmware in 1.2 first.)*
 **→ continue at [1.2 — Qualcomm firmware](#12--qualcomm-firmware-windows--usb-data-partition), then [1.3 — the installer shell](#13--at-the-installer-shell-partition--extract--chroot--boot).**
-(Prefer a single flash with no Windows-side partitioning? See the **1.1-ALT** alternative
-below; otherwise skip it and continue to 1.2.)
+(Prefer one flash with **no Windows-side partitioning and nothing to mount at the installer
+shell**? See **1.1-ALT** below — it bakes the rootfs *and* firmware into the initrd on a single
+enlarged boot partition. Otherwise skip it and continue to 1.2.)
 
-### 1.1-ALT — Build the whole 2-partition image in WSL (one flash, no Windows partitioning) 🧪 WSL BUILD VERIFIED / BOOT PENDING
+### 1.1-ALT — Build ONE self-contained image in WSL (single partition, everything baked into the initrd) 🧪 WSL BUILD VERIFIED / BOOT PENDING
 
-> 🧪 **Built and verified in WSL; not yet booted on the Yoga.** The image-assembly steps below
-> were run end-to-end and produce a valid 2-partition image (both partitions read back
-> correctly). What's still unconfirmed is the *boot* on the Yoga. Treat the flash-and-boot as
-> the remaining unknown, not the build.
+> 🧪 **Built and verified in WSL; not yet booted on the Yoga.** The assembly below was run
+> end-to-end and produces a valid single-partition image (partition reads back, all payloads
+> present). The remaining unknown is the *boot* on the Yoga, not the build.
 
-**Why you'd want it:** 1.1(c) has you flash, then hand-create a second FAT32 partition in
-**Windows** Disk Management to carry the rootfs — fiddly, and where a stray `diskpart` can wipe
-the wrong disk. This alternative does **everything in WSL against the image *file*** and hands
-you a finished 2-partition image to flash **once** — nothing to partition or resize on the
-Windows side afterward. Same on-USB layout as 1.1(c) (slim initrd on p1, rootfs on a second
-partition p2), just assembled in one place.
+**Why you'd want it — and why single-partition.** 1.1(c) flashes, then has you hand-create a
+second partition in **Windows** Disk Management to carry the rootfs — fiddly, and the empirical
+snag is that **the installer's minimal initrd could not mount that second partition** at the
+shell. This alternative sidesteps mounting *anything*: it enlarges the Codelinaro image's own
+**single FAT boot partition** and bakes the rootfs tarball **and** the Qualcomm firmware
+**inside the initrd**. At the installer shell they're already sitting in RAM at `/root/` — no
+mount, no `LABEL=`, no second partition. The only cost is a fat (~935 MB) initrd, which is why
+the boot partition has to grow from ~300 MB to ~1.5 GB. It all loads into RAM at boot (have
+≥ 4 GB free — the Yoga does).
 
-> ⚠️ **The one trap this avoids — don't use loop devices in WSL.** WSL 2's kernel doesn't
-> implement the geometry ioctl (`HDIO_GETGEO`) on **loop partitions** (`/dev/loopNpX`). So
-> `mount -t vfat`, `fatresize`, and mtools' `mformat` all **fail** there (you'll see *"Could
-> not get geometry … Inappropriate ioctl for device"*, false *"Disk full"*, or *"short
-> write"*). The fix is to **never attach a loop device**: operate on the image **file** with
-> `sfdisk` (partition table), `mkfs.vfat` on a scratch file (format), `dd` (splice), and
-> `mtools`' `partition=` drives (copy) — none of those call that ioctl. Also note the Codelinaro
-> image is **MBR (msdos), not GPT** — use `sfdisk`/`fdisk`, *not* `sgdisk` (it refuses: *"Non-GPT
-> disk; not saving changes"*).
+> ⚠️ **The trap this avoids — don't use loop devices in WSL.** WSL 2's kernel doesn't implement
+> the geometry ioctl (`HDIO_GETGEO`) on **loop partitions** (`/dev/loopNpX`), so `mount -t vfat`,
+> `fatresize`, and mtools' `mformat` all **fail** (*"Could not get geometry … Inappropriate ioctl
+> for device"*, false *"Disk full"*, *"short write"*). Everything below works on the image **file**
+> — `sfdisk` (table), `mkfs.vfat` on a scratch file (format), `mtools` `@@offset` (read/write the
+> FAT), `dd` (splice) — none call that ioctl, and **none need `sudo`** except the one initrd repack
+> in step 1 (which does, to preserve the original initrd's `/dev` nodes). The Codelinaro image is
+> **MBR (msdos), not GPT** — use `sfdisk`/`fdisk`, *not* `sgdisk`.
 
-Do it in **WSL (Debian arm64)**. Needs `sfdisk`/`fdisk` (util-linux), `dosfstools`
-(`mkfs.vfat`), `mtools`, `cpio`, `gzip`. Prereq: the `fdisk`+`mkfs.ext4` bundle from **1.1(a)**
-at `~/initrd-tools/opt`, and the rootfs tarball downloaded to `~`.
+Do it in **WSL (Debian arm64)**. Needs `sfdisk`/`fdisk` (util-linux), `dosfstools` (`mkfs.vfat`),
+`mtools`, `cpio`, `gzip`. Prereqs: the `fdisk`+`mkfs.ext4` bundle from **1.1(a)** at
+`~/initrd-tools/opt`, the rootfs tarball at `~`, and (for the firmware) `~/qcom-firmware/` from
+**1.2** (build that first, or drop the two firmware steps to add it later).
+
 ```bash
-# 0) Fresh COPY of the downloaded Codelinaro image, + headroom for a data partition.
-#    (Confirm the original is < 2560M first, else raise the truncate size — truncate SHRINKS
-#    if the target is smaller, which would corrupt p1.)
 cd ~
-cp /mnt/c/Users/<you>/Downloads/<codelinaro>.img ~/usb.img
-ls -l ~/usb.img
-truncate -s 2560M ~/usb.img
-sudo apt-get install -y util-linux mtools dosfstools
+sudo apt-get install -y util-linux mtools dosfstools cpio gzip
+SRC=/mnt/c/Users/<you>/Downloads/<codelinaro>.img       # the DOWNLOADED image, left untouched
 
-# 1) Append p2 after p1 on the MBR table: default start (auto-aligned), fill the rest,
-#    type c = W95 FAT32 (LBA). sfdisk places it correctly so there's no offset to guess.
-echo ',,c' | sfdisk --append ~/usb.img
+# 1) BAKE the fat initrd = original initrd + tools bundle + rootfs tarball. (sudo: the original
+#    initrd has /dev nodes that only root can recreate on repack.) Point ../initrd.orig.gz at the
+#    pristine initrd — pull it out of SRC's FAT with mtools if you don't already have it:
+#      MTOOLS_SKIP_CHECK=1 mcopy -i "$SRC"@@$((2048*512)) ::/initrd.gz ~/initrd.orig.gz
+rm -rf ~/initrd-baked && mkdir ~/initrd-baked && cd ~/initrd-baked
+sudo sh -c 'zcat ~/initrd.orig.gz | cpio -idmv'         # confirm gzip first: file ~/initrd.orig.gz
+sudo cp -a ~/initrd-tools/opt .                         # -> /opt/tools/{fdisk.sh,mkfs.ext4,...}
+sudo cp ~/ArchLinuxARM-aarch64-latest.tar.gz root/      # -> /root/ArchLinuxARM-...tar.gz
+sudo sh -c 'find . | cpio -o -H newc | gzip > ~/initrd.baked.gz'
+cd ~; ls -lh ~/initrd.baked.gz                          # ~905 MB
 
-# 2) Read back p2's real start SECTOR (deterministic — used for the splice below)
-sfdisk -d ~/usb.img
-START=$(sfdisk -d ~/usb.img | awk -F'[ ,=]+' '/img2 :/{print $4}')
-echo "p2 start sector: $START"                 # sanity: non-empty, ~600000+
+# 2) APPEND the Qualcomm firmware as a SECOND gzip'd-cpio segment (the kernel's initramfs loader
+#    concatenates archives — same mechanism as CPU microcode). No sudo, base stays byte-identical.
+rm -rf ~/fwseg && mkdir -p ~/fwseg/root && cp -a ~/qcom-firmware ~/fwseg/root/
+( cd ~/fwseg && find root | cpio -o -H newc 2>/dev/null | gzip ) > ~/fw.cpio.gz
+cat ~/initrd.baked.gz ~/fw.cpio.gz > ~/initrd.final.gz   # -> ~935 MB
+# verify all three payloads survived (cpio -t stops at the 1st trailer, so grep the raw stream):
+zcat ~/initrd.final.gz | grep -a -c 'qcom-firmware/MANIFEST.csv'   # expect 1
+zcat ~/initrd.final.gz | cpio -t 2>/dev/null | grep -E 'opt/tools/bin/mkfs.ext4|root/ArchLinuxARM'
 
-# 3) Build p2's FAT filesystem as a SEPARATE scratch file (mkfs.vfat is rock-solid on a plain
-#    file; it can't format "partition 2 inside another file", hence the standalone image).
-#    Then load the rootfs tarball into it.
-truncate -s 1024M ~/p2.img
-mkfs.vfat -F32 -n ARCHDATA ~/p2.img
-MTOOLS_SKIP_CHECK=1 mcopy -i ~/p2.img ~/ArchLinuxARM-aarch64-latest.tar.gz ::
-MTOOLS_SKIP_CHECK=1 mdir  -i ~/p2.img ::        # tarball listed
+# 3) EXTRACT the Codelinaro boot tree from SRC's single FAT partition (starts at sector 2048),
+#    then swap in the fat initrd. mtools @@offset reads the FAT straight out of the file.
+O=$((2048*512))
+rm -rf ~/p1extract && mkdir ~/p1extract
+MTOOLS_SKIP_CHECK=1 mcopy -s -i "$SRC"@@$O "::/*" ~/p1extract/
+cp ~/initrd.final.gz ~/p1extract/initrd.gz              # grub loads /linux + /initrd.gz by name
 
-# 4) Splice that filesystem INTO usb.img at p2's start (conv=notrunc = don't shrink usb.img).
-#    p2.img is scratch — delete it after this.
-dd if=~/p2.img of=~/usb.img bs=512 seek=$START conv=notrunc status=progress
-rm -f ~/p2.img
+# 4) Rebuild that partition as a LARGER FAT (scratch file), copy the tree back in.
+rm -f ~/p1.img
+truncate -s 1500M ~/p1.img
+mkfs.vfat -F32 -n BOOT ~/p1.img
+( cd ~/p1extract && MTOOLS_SKIP_CHECK=1 mcopy -s -i ~/p1.img boot boot.cat dtb EFI gtk initrd.gz linux :: )
+MTOOLS_SKIP_CHECK=1 mdir -i ~/p1.img ::                 # sanity: 7 entries, ~450 MB free
 
-# 5) p1: swap in a SLIM initrd = pristine original + the tools bundle (~130-150 MB, fits the
-#    ~300 MB boot partition). mtools reads the MBR partition table from the file, no loop device.
-printf 'drive z: file="%s" partition=1\ndrive y: file="%s" partition=2\n' \
-  "$HOME/usb.img" "$HOME/usb.img" > ~/.mtoolsrc
-MTOOLS_SKIP_CHECK=1 mcopy z:initrd.gz ~/initrd.orig.gz
-rm -rf ~/initrd-slim && mkdir ~/initrd-slim && cd ~/initrd-slim
-sudo sh -c 'zcat ~/initrd.orig.gz | cpio -idmv'        # confirm gzip first if unsure: file ~/initrd.orig.gz
-sudo cp -a ~/initrd-tools/opt .
-sudo sh -c 'find . | cpio -o -H newc | gzip > ~/initrd.slim.gz'
-ls -lh ~/initrd.slim.gz                         # expect ~130-150 MB, NOT ~900
-MTOOLS_SKIP_CHECK=1 mdel  z:initrd.gz
-MTOOLS_SKIP_CHECK=1 mcopy ~/initrd.slim.gz z:initrd.gz
+# 5) ASSEMBLE the whole-disk image: one MBR partition (type 83, bootable) starting at sector 2048,
+#    then splice the FAT in. No loop device, no sudo.
+rm -f ~/usb-single.img
+SECT=$(( $(stat -c%s ~/p1.img) / 512 ))
+truncate -s $(( (2048 + SECT) * 512 )) ~/usb-single.img
+printf 'label: dos\nunit: sectors\nstart=2048, size=%s, type=83, bootable\n' "$SECT" | sfdisk ~/usb-single.img
+dd if=~/p1.img of=~/usb-single.img bs=512 seek=2048 conv=notrunc status=progress
 
-# 6) Verify BOTH partitions read back, then copy out to flash
-MTOOLS_SKIP_CHECK=1 mdir z:                     # slim initrd on p1
-MTOOLS_SKIP_CHECK=1 mdir y:                     # tarball on p2 (proves splice + table agree)
-cp ~/usb.img /mnt/c/Users/<you>/Downloads/usb-arch-ready.img
+# 6) VERIFY the partition reads back, copy out to flash, clean up scratch.
+MTOOLS_SKIP_CHECK=1 mdir -i ~/usb-single.img@@$O ::      # linux + initrd.gz (~980 MB) present
+cp ~/usb-single.img /mnt/c/Users/<you>/Downloads/usb-single.img
+rm -f ~/fw.cpio.gz; rm -rf ~/fwseg ~/initrd-baked
 ```
-Rufus DD-flash `usb-arch-ready.img` (accept DD/MBR — expected). At the installer shell the
-rootfs is on the **second partition** (`LABEL=ARCHDATA`): mount it before extracting, i.e.
-`mount /dev/disk/by-label/ARCHDATA /mnt/data` then `tar -xpf /mnt/data/…tar.gz -C /mnt` (see 1.3).
+Rufus DD-flash `usb-single.img` (accept DD/MBR — expected). At the installer shell **nothing
+needs mounting** — the rootfs and firmware are already in the initramfs at `/root/`:
+```sh
+tar -xpf /root/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt   # after you mkfs+mount the NVMe root
+cp -r /root/qcom-firmware /mnt/root/                        # firmware carrier -> onto the NVMe (see 1.3)
+```
 
 > **Notes / gotchas learned the hard way:**
-> - **Two files on purpose.** `usb.img` = the whole disk image you flash; `p2.img` = a throwaway
->   holding only p2's filesystem, spliced in with `dd` then deleted. They are not the same file.
-> - **Don't bake the rootfs into the initrd.** A rootfs-in-initrd balloons to ~900 MB, won't fit
->   the boot partition, and loads *entirely into RAM* at boot. Keeping it on p2 sidesteps both.
-> - **If `mdir y:` errors** (older mtools not parsing the entry), use an explicit offset instead
->   of `partition=2`: `drive y: file="$HOME/usb.img" offset=$((START*512))`.
-> - **If `mkfs.vfat` isn't found**, install `dosfstools`. **If `sfdisk`'s `START` parses empty**,
->   read it from `sfdisk -d ~/usb.img` by hand (the `start=` value on the `usb.img2` line).
+> - **Everything's in the initrd, nothing on a data partition.** Chose single-partition precisely
+>   because the minimal installer initrd could **not** mount a second partition at the shell. The
+>   price is a ~935 MB initrd that loads wholly into RAM — fine on a laptop with GBs free.
+> - **`cpio -t` only lists the FIRST segment.** After concatenating (step 2) it stops at the first
+>   `TRAILER!!!`, so the firmware won't show — that's normal. Verify with `zcat … | grep -a`
+>   against the decompressed stream instead; the kernel unpacks *all* segments.
+> - **The FAT must be big enough for the fat initrd.** ~935 MB initrd + 14 MB kernel + boot files
+>   ⇒ 1500 MB FAT leaves ~450 MB slack. If you skip the firmware (initrd ~905 MB) 1280 MB is plenty.
+> - **`truncate` on `~/p1.img`/`~/usb-single.img` is safe** (fresh scratch files); never `truncate`
+>   the SRC image — shrinking corrupts it. SRC is only ever *read* here.
+> - **If `mkfs.vfat` isn't found**, install `dosfstools`. **If `mcopy -s "::/*"` misses dotfiles**,
+>   the Codelinaro tree has none at root — the 7 named entries in step 4 are the whole payload.
 
 ### 1.2 — Qualcomm firmware (Windows → USB `DATA` partition)
 
@@ -248,10 +261,10 @@ F:\
 - **Wi-Fi firmware is also `.elf`** (`bdwlan*.elf`, `phy_ucode*.elf`). Add `*.elf` to the
   script's patterns if you want the WLAN/camera blobs too.
 - **Run elevated** — some DriverStore subtrees are ACL'd and get skipped otherwise.
-- **1.1-ALT path:** the second partition is labeled `ARCHDATA` (not `DATA`) but carries the same
-  cargo — put `qcom-firmware/` alongside the rootfs tarball on it (`mcopy -i ~/p2.img -s
-  ~/qcom-firmware ::` before the splice, or copy it on later) — then copy it onto the NVMe in 1.3
-  the same way.
+- **1.1-ALT path (single partition):** there's no data partition — `qcom-firmware/` is **baked
+  into the initrd** (1.1-ALT step 2, appended as a second cpio segment). Stage it at
+  `~/qcom-firmware/` in WSL *before* running 1.1-ALT so it gets folded in; at the installer shell
+  it's at `/root/qcom-firmware/`, and 1.3 copies it onto the NVMe from there.
 
 The *final* placement into `/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>/` happens in **1.3**:
 the exact `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alongside the DTB.
@@ -260,8 +273,9 @@ the exact `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alo
 
 > **You arrive here after 1.1 + 1.2** (or 1.1-ALT + 1.2). Flash the USB, boot it (F12), and you
 > land at the Debian installer's initrd shell. Everything in 1.3 is identical regardless of
-> which prep you used — this is the actual Arch install. (The *rootfs source* is a labeled second
-> partition either way: 1.1(c) → `LABEL=DATA`; 1.1-ALT → `LABEL=ARCHDATA`. Mount it, then extract.)
+> which prep you used — this is the actual Arch install. (The *rootfs source* differs by prep:
+> 1.1(c) → a labeled second partition `LABEL=DATA` you **mount, then extract**; 1.1-ALT → already
+> in the initramfs at `/root/`, **no mount** — just `tar -xpf /root/…tar.gz`.)
 
 > ⚠️ **This is an outline, not a verified transcript.** joske's gist is self-described as
 > *"from memory, may be incomplete,"* and the exact **kernel / firmware / DTB / bootloader**
@@ -303,7 +317,7 @@ the exact `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alo
 lsblk -o NAME,SIZE,FSTYPE,PARTTYPENAME,LABEL,MOUNTPOINT   # the whole picture, every disk
 blkid                                                     # UUID + LABEL + TYPE per partition
 fdisk -l /dev/nvme0n1 | grep -i 'EFI System'              # locate the Windows ESP (small FAT)
-ls -l /dev/disk/by-label/                                 # confirm your DATA partition is here
+ls -l /dev/disk/by-label/                                 # 1.1(c): confirm your DATA partition is here
 ip link                                                   # wifi iface name (wlan0 / wlp...)
 ```
 Read off the device names and pin them to variables so the destructive steps can't hit the
@@ -317,7 +331,8 @@ ESP=${NVME}p1            # EXISTING Windows EFI System Partition (from the `fdis
 - **ESP** = the small (~100–300 MB) partition whose type is *EFI System*. It's Windows'; you
   reuse it, never format it.
 - **DATA** = your rootfs carrier — reach it at `/dev/disk/by-label/DATA` (or the `vfat`/`LABEL=DATA`
-  row in `lsblk`). *(1.1-ALT names it `ARCHDATA` — use `/dev/disk/by-label/ARCHDATA` instead.)*
+  row in `lsblk`). *(**1.1-ALT users: skip this** — there's no DATA partition; the rootfs and
+  firmware are already in the initramfs at `/root/`. Ignore the DATA mount below.)*
 
 **b) Generic Arch-ARM steps (same for any install):**
 ```sh
@@ -331,19 +346,24 @@ lsblk "$NVME"                                  # re-read the table -> note the N
 ROOT=${NVME}p6                                 # <-- set to the partition you just created
 /opt/tools/bin/mkfs.ext4 "$ROOT"               # format ONLY the new root — NEVER $ESP
 
-# --- mount target + source, extract the rootfs INTO the target ---
+# --- mount target, extract the rootfs INTO it ---
 mount "$ROOT" /mnt                             # new Arch root (target)
 mkdir -p /mnt/boot && mount "$ESP" /mnt/boot   # EXISTING Windows ESP — mount only, do NOT mkfs
-mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data   # 1.1-ALT: LABEL=ARCHDATA
+# 1.1(c): mount the DATA carrier; its tarball path is /mnt/data/... :
+mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
 tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt   # source -> target
+# 1.1-ALT: NO mount — the tarball is already in the initramfs, so instead run:
+#   tar -xpf /root/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt
 
-# --- Qualcomm firmware -> target rootfs (staged on DATA in 1.2). It loads at
-#     RUNTIME from the rootfs, so it lives in /mnt/lib/firmware, NOT the initrd. The
-#     <VENDOR>/<MODEL> leaf is whatever the DTB's firmware-name asks for -- read it with:
+# --- Qualcomm firmware -> target rootfs. It loads at RUNTIME from the rootfs, so it lives in
+#     /mnt/lib/firmware, NOT the initrd. Source dir: 1.1(c) → /mnt/data/qcom-firmware ;
+#     1.1-ALT → /root/qcom-firmware (already in the initramfs). The <VENDOR>/<MODEL> leaf is
+#     whatever the DTB's firmware-name asks for -- read it with:
 #       dtc -I dtb -O dts <your.dtb> | grep firmware-name
+FW=/mnt/data/qcom-firmware                      # 1.1-ALT: FW=/root/qcom-firmware
 DEST=/mnt/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>
 mkdir -p "$DEST"
-find /mnt/data/qcom-firmware -type f \( -name '*.mbn' -o -name '*.jsn' -o -name '*dtbs.elf' \) \
+find "$FW" -type f \( -name '*.mbn' -o -name '*.jsn' -o -name '*dtbs.elf' \) \
      -exec cp {} "$DEST"/ \;         # flattens into the leaf; match names to what the DTB wants
 
 # --- note UUIDs for fstab BEFORE chroot (vars don't survive the chroot) ---
