@@ -1,4 +1,4 @@
 run_logged $SWARMARCHY_INSTALL/login/default-keyring.sh
 run_logged $SWARMARCHY_INSTALL/login/greetd.sh
 run_logged $SWARMARCHY_INSTALL/login/hibernation.sh
-run_logged $SWARMARCHY_INSTALL/login/limine-snapper.sh
+#run_logged $SWARMARCHY_INSTALL/login/limine-snapper.sh

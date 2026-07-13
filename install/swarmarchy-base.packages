@@ -74,13 +74,13 @@ gvfs-nfs                   # mount NFS network shares
 gvfs-smb                   # mount Windows / Samba shares
 dosfstools                 # FAT/EFI filesystem tools (needed for the EFI partition)
 exfatprogs                 # exFAT tools (large USB drives, SD cards)
-localsend                  # AirDrop-style file transfer between your devices
+#localsend                  # AirDrop-style file transfer between your devices
 
 # ─── Browser & media ───
 chromium                   # web browser (also hosts the web-apps via swarmarchy-launch-webapp)
 mpv                        # video/audio player
 imv                        # lightweight image viewer
-obsidian                   # markdown notes / knowledge base (vanilla — no Swarmarchy theming)
+#obsidian                   # markdown notes / knowledge base (vanilla — no Swarmarchy theming)
 
 # ─── Capture & OCR ───
 tesseract                  # OCR engine (screen region → text)
