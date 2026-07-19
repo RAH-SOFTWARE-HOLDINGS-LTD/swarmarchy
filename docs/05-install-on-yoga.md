@@ -313,6 +313,45 @@ Step 1 done = plain Arch aarch64 that boots with networking:
 
 ## Step 2 — Apply swarmarchy
 
+### Get online first
+
+- swarmarchy clones + installs over the network, so connect **before** anything else
+- **manual connect** (if NetworkManager isn't up yet) — busybox/minimal shells break `<(...)`, so write a real config file:
+
+```sh
+ip link                                                       # find iface (name varies — note P4 vs P5)
+wpa_passphrase "SSID" "PASSWORD" | sudo tee /etc/wpa_supplicant.conf
+sudo wpa_supplicant -i wlP4p1s0 -c /etc/wpa_supplicant.conf   # no -B: watch for CTRL-EVENT-CONNECTED
+# in another TTY once connected:
+sudo dhcpcd -4 wlP4p1s0
+ip addr show wlP4p1s0                                         # want an inet line
+ping -c3 1.1.1.1
+```
+
+- diagnose — check the state, then read `wpa_state`:
+
+  ```sh
+  wpa_cli -i wlP4p1s0 status
+  ```
+
+  - `wpa_state=COMPLETED` → link good; any failure after is DHCP
+  - `DISCONNECTED` / `4WAY_HANDSHAKE_FAILED` → wrong PSK
+  - `INACTIVE` → config has no valid network block
+- **make it permanent** — hand off to NetworkManager (don't run both — they fight over the iface):
+
+```sh
+sudo systemctl enable --now NetworkManager
+nmcli device wifi connect "SSID" password "PASSWORD"
+```
+
+- `ping 1.1.1.1` works but names don't? Fix DNS:
+
+```sh
+sudo rm -f /etc/resolv.conf && echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf
+```
+
+### Clone + run
+
 ```bash
 git clone -b rename-swarmarchy \
   https://github.com/RAH-SOFTWARE-HOLDINGS-LTD/swarmarchy.git ~/.local/share/swarmarchy
@@ -392,6 +431,23 @@ sudo mkinitcpio -P && sudo reboot
 
 - x86-only hardware-fix scripts auto-skip on Snapdragon
 - fix loop: edit the `swarmarchy-*` script → commit/push → `swarmarchy-update`
+
+### Login won't stick (flashes back to the greeter)
+
+- not a password problem — read the boot errors:
+
+```sh
+journalctl -b -p err
+```
+
+- usual causes: a broken login shell or the compositor failing on the GPU (fix below)
+  - reset the shell if needed:
+
+    ```sh
+    sudo chsh -s /bin/bash <you>
+    ```
+
+- test the password on a raw TTY (Ctrl+Alt+F3) to tell a greeter bug from a real auth failure
 
 ### GPU — get off software rendering
 
@@ -492,59 +548,6 @@ lsusb | grep -i 17e9
 yay -S displaylink evdi
 ```
 
-### Networking that sticks
-
-- **first-time manual connect** (if NetworkManager isn't up yet) — busybox/minimal shells break `<(...)`, so write a real config file:
-
-```sh
-ip link                                                       # find iface (name varies — note P4 vs P5)
-wpa_passphrase "SSID" "PASSWORD" | sudo tee /etc/wpa_supplicant.conf
-sudo wpa_supplicant -i wlP4p1s0 -c /etc/wpa_supplicant.conf   # no -B: watch for CTRL-EVENT-CONNECTED
-# in another TTY once connected:
-sudo dhcpcd -4 wlP4p1s0
-ip addr show wlP4p1s0                                         # want an inet line
-ping -c3 1.1.1.1
-```
-
-- diagnose — check the state, then read `wpa_state`:
-
-  ```sh
-  wpa_cli -i wlP4p1s0 status
-  ```
-
-  - `wpa_state=COMPLETED` → link good; any failure after is DHCP
-  - `DISCONNECTED` / `4WAY_HANDSHAKE_FAILED` → wrong PSK
-  - `INACTIVE` → config has no valid network block
-- **make it permanent** — hand off to NetworkManager (don't run both — they fight over the iface):
-
-```sh
-sudo systemctl enable --now NetworkManager
-nmcli device wifi connect "SSID" password "PASSWORD"
-```
-
-- `ping 1.1.1.1` works but names don't? Fix DNS:
-
-```sh
-sudo rm -f /etc/resolv.conf && echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf
-```
-
-### Login won't stick (flashes back to the greeter)
-
-- not a password problem — read the boot errors:
-
-```sh
-journalctl -b -p err
-```
-
-- usual causes: a broken login shell or the compositor failing on the GPU (fix above)
-  - reset the shell if needed:
-
-    ```sh
-    sudo chsh -s /bin/bash <you>
-    ```
-
-- test the password on a raw TTY (Ctrl+Alt+F3) to tell a greeter bug from a real auth failure
-
 ---
 
 ## Troubleshooting
@@ -558,11 +561,18 @@ journalctl -b -p err
 Set-Partition -DiskNumber <N> -PartitionNumber 1 -NewDriveLetter E
 ```
 
-- or `diskpart` → `select disk N` → `select partition 1` → `assign letter=E`
-- not visible at all? may be attached to WSL via usbipd
-  - `usbipd detach --busid <BUSID>`
-- auto-mount every plug-in: flip the type byte
-  - `sudo sfdisk --part-type /dev/sdX 1 c` (revert with `83`)
+- or in `diskpart`: `select disk N` → `select partition 1` → `assign letter=E`
+- not visible at all? it may be attached to WSL via usbipd — detach it:
+
+```sh
+usbipd detach --busid <BUSID>
+```
+
+- auto-mount on every future plug-in: flip the MBR type byte to FAT (revert with `83`):
+
+```sh
+sudo sfdisk --part-type /dev/sdX 1 c
+```
 
 ---
 
