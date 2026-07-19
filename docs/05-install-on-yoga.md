@@ -353,13 +353,7 @@ sudo pacman -S --needed base-devel fakeroot git go
 ### GPU — get off software rendering
 
 - symptom: Sway launches but laggy + characters duplicate; `fastfetch` shows `GPU: Mesa llvmpipe` (CPU rendering)
-- usable now, no accel:
-
-```sh
-WLR_RENDERER_ALLOW_SOFTWARE=1 WLR_RENDERER=pixman sway
-```
-
-- real fix = the Adreno (`msm`) firmware chain — `dmesg | grep -iE 'adreno|gpu|zap|gmu'` names each miss
+- fix = the Adreno (`msm`) firmware chain — `dmesg | grep -iE 'adreno|gpu|zap|gmu'` names each miss
 - **`gen70500_sqe.fw` / `gen70500_gmu.bin`** ship in `linux-firmware`:
 
 ```sh
@@ -374,6 +368,59 @@ sudo cp <path>/qcdxkmsuc8380.mbn /lib/firmware/qcom/x1e80100/LENOVO/83ED/
 ```
 
 - reboot → no more `-2` errors, `gpu hw init` OK, lag gone
+
+### External monitors (USB-C DP-alt) — the ADSP/CDSP firmware fix
+
+- symptom: external USB-C monitors invisible; `DP-1/DP-2` stay `disconnected`, `/sys/class/typec/` is **empty**, `dmesg | grep -i remoteproc` shows `-2` (file not found) — and onboard **audio** is dead too
+- cause: the Type-C DP-alt stack (`pmic_glink` / `charger_pd`) needs the **ADSP + CDSP** remoteproc firmware at the exact board path, which the bulk firmware copy doesn't land there
+- fix — place the four blobs (from your Step 0 `qcom-firmware/`, or re-extract from Windows), then **reboot** (the audio card only re-probes on a full reboot):
+
+```sh
+sudo mkdir -p /lib/firmware/qcom/x1e80100/LENOVO/83ED/
+sudo cp qcadsp8380.mbn adsp_dtbs.elf qccdsp8380.mbn cdsp_dtbs.elf \
+        /lib/firmware/qcom/x1e80100/LENOVO/83ED/
+```
+
+- verify after reboot: `ls /sys/class/typec/` is non-empty, and `swaymsg -t get_outputs` shows `DP-1`/`DP-2` connected at 2560x1600@120
+- no reboot? live re-trigger (monitors only; audio still needs a reboot): `sudo sh -c 'echo start > /sys/class/remoteproc/remoteproc0/state'` (adsp=0, cdsp=1)
+- use `qcsubsys_ext_{adsp,cdsp}8380.inf*` blobs — *not* the `qcnspmcdm_ext_cdsp8380` NPU variant
+
+### Monitor layout (`~/.config/sway/monitors.conf`)
+
+- two externals side by side, laptop below the left one, all scale 1, max res:
+
+```
+output DP-1  mode 2560x1600@120Hz scale 1 position 0 0
+output DP-2  mode 2560x1600@120Hz scale 1 position 2560 0
+output eDP-1 scale 1 position -384 1600     # x = 2560 - 2944 aligns its right edge under DP-1
+```
+
+- native DP outputs are safe to `swaymsg reload` live — DisplayLink outputs are **not** (hard-locks)
+
+### Launcher (walker) — GTK4 renders blank on turnip
+
+- walker's window is invisible under GTK4's GL renderer on Adreno/turnip → force the cairo renderer in `~/.config/sway/bindings.conf`:
+
+```
+unbindsym $mod+space      # unbind first, or the "overwriting binding" warning pops the red config-error bar
+bindsym $mod+space exec env GSK_RENDERER=cairo walker --width 644 --maxheight 300 --minheight 300
+```
+
+- walker needs the **elephant** data daemon; start it at login in `~/.config/sway/autostart.conf`:
+
+```
+exec systemctl --user start elephant.service
+```
+
+- also needs `en_US.UTF-8` generated (done in Step 1.2c `locale-gen`) — GTK4 falls back to C locale otherwise
+
+### DisplayLink dock — skip it
+
+- **not needed** for USB-C hubs that pass DisplayPort through (DP-alt) — those work once the ADSP firmware above is in place (the Anker hub is DP-alt)
+- only DisplayLink-**chip** docks (e.g. Plugable USBC-6950PDZ) need the proprietary driver
+  - check with `lsusb | grep -i 17e9` (DisplayLink's vendor ID); nothing → you don't need it
+- if you ever do use one: `yay -S displaylink evdi`
+  - its outputs are `DVI-I-*`, and you must **never** `swaymsg reload` a live DisplayLink mode change (hard-locks) — edit config, then reboot/replug
 
 ### Networking that sticks
 
