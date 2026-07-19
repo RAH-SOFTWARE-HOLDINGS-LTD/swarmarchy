@@ -17,17 +17,27 @@ Path A is two moves:
 
 ## Step 0 — Windows prep (dual-boot, no wipe)
 
-Do all of this **from Windows, before touching partitions:**
-
 1. Back up your **BitLocker recovery key**
    - suspend BitLocker too if you can — otherwise repartitioning can lock you out of Windows
 2. **Shrink the Windows partition** (Disk Management → *Shrink Volume*) to free space for Linux
    - leave the Windows + EFI partitions intact — this is dual-boot, no wipe
 3. In **UEFI/BIOS**, disable **Secure Boot**
-
-- **Qualcomm firmware is a later step, not here.** Linux needs Qualcomm's firmware blobs, which
-  live only inside Windows. That's its own step ([1.2](#12--qualcomm-firmware-windows--usb-data-partition));
-  it rides on the USB's `DATA` partition you create in 1.1.
+4. **Collect the Qualcomm firmware** into a local folder — Linux needs these blobs (DSP, WLAN,
+   camera, …) and they live **only inside Windows**, so grab them now while you're here. You stage
+   and place them later (1.2 → 1.3).
+   - from an **elevated** PowerShell, run the helper into a local folder:
+   ```powershell
+   .\copy-qcom-firmware.ps1 -Destination C:\qcom-firmware\
+   ```
+   - it recurses `C:\Windows\System32\DriverStore\FileRepository\` for `*.mbn`, `*.jsn`, `*dtbs.elf`,
+     copies them (preserving subfolders so same-named blobs don't collide), and writes a `MANIFEST.csv`
+   - **run elevated** — some DriverStore subtrees are ACL'd and get skipped otherwise
+   - **DSP device-tree naming:** ships as `adsp_dtbs.elf` / `cdsp_dtbs.elf`, *not* a literal
+     `dtbs.elf` — the script matches `*dtbs.elf` for exactly this reason
+   - **Wi-Fi firmware is also `.elf`** (`bdwlan*.elf`, `phy_ucode*.elf`) — add `*.elf` to the patterns
+     for the WLAN/camera blobs too
+   - by hand? grab those three patterns from `…\FileRepository\*\` yourself — same files
+   - `C:\qcom-firmware\` is reachable later from WSL at `/mnt/c/qcom-firmware`
 
 ## Step 1 — Get bare Arch Linux ARM booting ⚠️ (the hard part)
 
@@ -160,8 +170,8 @@ Prereqs (in **WSL, Debian arm64**):
 - `sfdisk`/`fdisk` (util-linux), `dosfstools` (`mkfs.vfat`), `mtools`, `cpio`, `gzip`
 - the `fdisk`+`mkfs.ext4` bundle from **1.1(a)** at `~/initrd-tools/opt`
 - the rootfs tarball at `~`
-- for the firmware: `~/qcom-firmware/` from **1.2** (build that first, or drop the two firmware
-  steps and add it later)
+- for the firmware: the `qcom-firmware/` you collected in **Step 0**, copied to `~/qcom-firmware/`
+  (see **1.2 b**) — or drop the two firmware steps and add it later
 
 ```bash
 cd ~
@@ -237,41 +247,32 @@ cp -r /root/qcom-firmware /mnt/root/                        # firmware carrier -
 > - **`mkfs.vfat` missing** → install `dosfstools`. **`mcopy -s "::/*"` misses dotfiles** → the
 >   Codelinaro tree has none at root; the 7 named entries in step 4 are the whole payload.
 
-### 1.2 — Qualcomm firmware (Windows → USB `DATA` partition)
+### 1.2 — Qualcomm firmware — stage the Step 0 collection for the installer
 
-- Linux needs Qualcomm's firmware blobs (DSP, WLAN, camera, …) that ship **only inside Windows**.
-- `DATA` is just the **courier** — the files don't belong in the boot partition or initrd (the
-  installer doesn't need them to run); **1.3 copies them onto the NVMe** at install time.
+- Use the `qcom-firmware/` folder you collected in **Step 0** (`C:\qcom-firmware\`).
+- It's just a **courier** — the blobs don't belong in the boot partition or the initrd; they only need
+  to reach the NVMe, where **1.3 places them** at `/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>/`.
+- Get it onto the target, per your prep path:
 
-**a) Collect + stage in one shot** — from an **elevated** PowerShell, point the helper at the DATA
-drive letter (`F:` here):
-```powershell
-.\copy-qcom-firmware.ps1 -Destination F:\
+**a) 1.1(c) — copy it onto the `DATA` partition, next to the rootfs.** From WSL:
+```bash
+cp -r /mnt/c/qcom-firmware /mnt/data/       # DATA at /mnt/data (see 1.1c); /mnt/c = Windows C:\
 ```
-  - it recurses `C:\Windows\System32\DriverStore\FileRepository\` for `*.mbn`, `*.jsn`, `*dtbs.elf`,
-    copies to `F:\qcom-firmware\` (preserving subfolders so same-named blobs don't collide), and
-    writes a `MANIFEST.csv`
-  - by hand? grab those three patterns from `…\FileRepository\*\` yourself — same files
-
-- After it runs, `DATA` carries both halves the installer needs:
+  - after this, `DATA` carries both halves the installer needs:
 ```
 F:\
 ├── ArchLinuxARM-aarch64-latest.tar.gz     (rootfs, from 1.1c)
-└── qcom-firmware\   (+ MANIFEST.csv)       (firmware, this step)
+└── qcom-firmware\   (+ MANIFEST.csv)       (firmware, from Step 0)
 ```
 
-Gotchas:
+**b) 1.1-ALT — bake it into the initrd instead.** Copy it to `~/qcom-firmware/` in WSL *before*
+running 1.1-ALT so it's folded in; at the installer shell it's then at `/root/qcom-firmware/`.
+```bash
+cp -r /mnt/c/qcom-firmware ~/qcom-firmware
+```
 
-- **DSP device-tree naming:** ships as `adsp_dtbs.elf` / `cdsp_dtbs.elf`, *not* literal `dtbs.elf` —
-  the script matches `*dtbs.elf` for exactly this reason
-- **Wi-Fi firmware is also `.elf`** (`bdwlan*.elf`, `phy_ucode*.elf`) — add `*.elf` to the script's
-  patterns for the WLAN/camera blobs too
-- **Run elevated** — some DriverStore subtrees are ACL'd and get skipped otherwise
-- **1.1-ALT path:** no data partition — stage the firmware at `~/qcom-firmware/` in WSL *before*
-  running 1.1-ALT so it's baked into the initrd; at the shell it's at `/root/qcom-firmware/`
-
-- Final placement into `/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>/` happens in **1.3** — the exact
-  `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alongside the DTB.
+- Final placement into `/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>/` happens in **1.3 (step b-iv)** —
+  the `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alongside the DTB.
 
 ### 1.3 — At the installer shell: partition → extract → chroot
 
