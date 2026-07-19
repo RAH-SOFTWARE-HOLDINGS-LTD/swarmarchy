@@ -169,9 +169,19 @@ ESP=${NVME}p1            # existing Windows ESP — reuse, never format
 ```
 
 - **b) Partition → extract → firmware → chroot**
-  - **i) Wi-Fi**
-    - from `ip link`, make `/etc/wpa_supplicant.conf`, bring up wifi + DHCP
-    - 2nd TTY: Fn+Alt+F2
+  - **i) Wi-Fi** — you're root here (no `sudo`); the iface name varies (note `P4` vs `P5`)
+    ```sh
+    ip link                                              # find your wifi iface, e.g. wlP4p1s0
+    wpa_passphrase "SSID" "PASSWORD" > /etc/wpa_supplicant.conf
+    wpa_supplicant -i wlP4p1s0 -c /etc/wpa_supplicant.conf   # foreground; hangs after CTRL-EVENT-CONNECTED = OK
+    ```
+    - in a 2nd TTY (Fn+Alt+F2) get a lease + verify:
+    ```sh
+    dhcpcd -4 wlP4p1s0                                    # or: dhclient wlP4p1s0
+    ip addr show wlP4p1s0                                 # want an inet line
+    ping -c3 1.1.1.1
+    ```
+    - stuck? `wpa_cli -i wlP4p1s0 status` → `COMPLETED` = link OK (fail now = DHCP) · `4WAY_HANDSHAKE_FAILED` = wrong PSK · `INACTIVE` = no valid network block
   - **ii) Partition + format the new root**
     ```sh
     /opt/tools/bin/fdisk.sh "$NVME"     # create ONE new root partition in the free space
@@ -424,7 +434,23 @@ exec systemctl --user start elephant.service
 
 ### Networking that sticks
 
-- move off manual `wpa_supplicant` to NetworkManager (don't run both — they fight over the iface):
+- **first-time manual connect** (if NetworkManager isn't up yet) — busybox/minimal shells break `<(...)`, so write a real config file:
+
+```sh
+ip link                                                       # find iface (name varies — note P4 vs P5)
+wpa_passphrase "SSID" "PASSWORD" | sudo tee /etc/wpa_supplicant.conf
+sudo wpa_supplicant -i wlP4p1s0 -c /etc/wpa_supplicant.conf   # no -B: watch for CTRL-EVENT-CONNECTED
+# in another TTY once connected:
+sudo dhcpcd -4 wlP4p1s0
+ip addr show wlP4p1s0                                         # want an inet line
+ping -c3 1.1.1.1
+```
+
+- diagnose with `wpa_cli -i <iface> status`:
+  - `wpa_state=COMPLETED` → link good; any failure after is DHCP
+  - `DISCONNECTED` / `4WAY_HANDSHAKE_FAILED` → wrong PSK
+  - `INACTIVE` → config has no valid network block
+- **make it permanent** — hand off to NetworkManager (don't run both — they fight over the iface):
 
 ```sh
 sudo systemctl enable --now NetworkManager
