@@ -35,20 +35,12 @@ References (don't improvise the device bring-up):
 
 ## Step 1 — Get bare Arch Linux ARM booting ⚠️
 
-### 1.1 — Prep the installer USB (one self-contained image)
+### 1.1 — Prep the installer USB in WSL (one self-contained image)
 
 - bakes the rootfs **and** firmware into one enlarged initrd on the image's single FAT boot partition
-  - at the installer shell everything's already in RAM at `/root/` — nothing to mount
   - ~935 MB initrd → the boot partition grows ~300 MB → ~1.5 GB (loads to RAM; needs ≥ 4 GB free)
-- 🧪 built + verified in WSL; boot on the Yoga still unverified
-- do all of 1.1 in **WSL (Debian arm64)**
 
-> ⚠️ **No loop devices in WSL.**
-> - WSL2 lacks `HDIO_GETGEO` on `/dev/loopNpX` → `mount`/`fatresize`/`mformat` fail
-> - work on the image **file**: `sfdisk`, `mkfs.vfat` on a scratch file, `mtools @@offset`, `dd`
-> - image is **MBR** — use `sfdisk`/`fdisk`, not `sgdisk`
-
-#### a) Build a self-contained `fdisk` + `mkfs.ext4` bundle
+**a) Build a self-contained `fdisk` + `mkfs.ext4` bundle**
 
 - binaries + libs + loader, so they don't need the busybox initrd's libc
 
@@ -76,9 +68,9 @@ EOF
 chmod +x opt/tools/bin/mkfs.ext4 opt/tools/bin/fdisk.sh
 ```
 
-#### b) Set up WSL + inputs
+**b) Set up WSL + inputs**
 
-- tools, rootfs tarball, Step 0 firmware, and point `SRC` at the image
+- tools, rootfs tarball, and point `SRC` at the image
 
 ```bash
 cd ~
@@ -87,7 +79,7 @@ wget http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 SRC=/mnt/c/Users/<you>/Downloads/<codelinaro>.img       # the DOWNLOADED image, left untouched
 ```
 
-#### c) Bake the fat initrd (original initrd + tools + rootfs)
+**c) Bake the fat initrd (original initrd + tools + rootfs)**
 
 - `sudo` preserves the original's `/dev` nodes
 - no `~/initrd.orig.gz`? pull it from SRC: `MTOOLS_SKIP_CHECK=1 mcopy -i "$SRC"@@$((2048*512)) ::/initrd.gz ~/initrd.orig.gz`
@@ -100,19 +92,19 @@ sudo cp ~/ArchLinuxARM-aarch64-latest.tar.gz root/      # -> /root/
 sudo sh -c 'find . | cpio -o -H newc | gzip > ~/initrd.baked.gz'    # ~905 MB
 ```
 
-#### d) Append the firmware as a second cpio segment
+**d) Append the firmware as a second cpio segment**
 
 - the kernel concatenates initramfs archives
+- `cp -r` (not `-a`) so drvfs's 777/ownership don't carry into the initramfs
 
 ```bash
-rm -rf ~/fwseg && mkdir -p ~/fwseg/root && cp -a ~/qcom-firmware ~/fwseg/root/
-rm -rf ~/fwseg && mkdir -p ~/fwseg/root && cp -r /mnt/c/qcom-firmware ~/fwseg/root/ # straight off Windows C:\
+rm -rf ~/fwseg && mkdir -p ~/fwseg/root && cp -r /mnt/c/qcom-firmware ~/fwseg/root/   # straight off Windows C:\
 ( cd ~/fwseg && find root | cpio -o -H newc 2>/dev/null | gzip ) > ~/fw.cpio.gz
 cat ~/initrd.baked.gz ~/fw.cpio.gz > ~/initrd.final.gz   # ~935 MB
 zcat ~/initrd.final.gz | grep -a -c 'qcom-firmware/MANIFEST.csv'    # expect 1
 ```
 
-#### e) Extract SRC's boot tree, swap in the fat initrd
+**e) Extract SRC's boot tree, swap in the fat initrd**
 
 - `mtools @@offset` reads the FAT (sector 2048) straight out of the file
 
@@ -123,7 +115,7 @@ MTOOLS_SKIP_CHECK=1 mcopy -s -i "$SRC"@@$O "::/*" ~/p1extract/
 cp ~/initrd.final.gz ~/p1extract/initrd.gz
 ```
 
-#### f) Rebuild that partition as a larger FAT, copy the tree back
+**f) Rebuild that partition as a larger FAT, copy the tree back**
 
 ```bash
 rm -f ~/p1.img; truncate -s 1500M ~/p1.img
@@ -131,7 +123,7 @@ mkfs.vfat -F32 -n BOOT ~/p1.img
 ( cd ~/p1extract && MTOOLS_SKIP_CHECK=1 mcopy -s -i ~/p1.img boot boot.cat dtb EFI gtk initrd.gz linux :: )
 ```
 
-#### g) Assemble the whole-disk image
+**g) Assemble the whole-disk image**
 
 - one MBR partition, type 83 bootable, at sector 2048
 
@@ -143,7 +135,7 @@ printf 'label: dos\nunit: sectors\nstart=2048, size=%s, type=83, bootable\n' "$S
 dd if=~/p1.img of=~/usb-single.img bs=512 seek=2048 conv=notrunc status=progress
 ```
 
-#### h) Verify + copy out to flash
+**h) Verify + copy out to flash**
 
 ```bash
 MTOOLS_SKIP_CHECK=1 mdir -i ~/usb-single.img@@$O ::      # linux + initrd.gz present
@@ -191,7 +183,7 @@ Layout (add-only):
 - LUKS: swarmarchy targets LUKS+Btrfs+Limine
   - skip it for the first boot; add on reinstall
 
-#### a) Identify disks — never guess
+**a) Identify disks — never guess**
 
 ```sh
 lsblk -o NAME,SIZE,FSTYPE,PARTTYPENAME,LABEL,MOUNTPOINT
@@ -205,55 +197,48 @@ ESP=${NVME}p1            # existing Windows ESP — reuse, never format
 
 - alternate (DATA) users: also note your DATA partition at `/dev/disk/by-label/DATA`
 
-#### b) Partition → extract → firmware → chroot
+**b) Partition → extract → firmware → chroot**
 
-##### i) Wi-Fi
+  **i) Wi-Fi**
+  - from `ip link`, make `/etc/wpa_supplicant.conf`, bring up wifi + DHCP
+  - 2nd TTY: Fn+Alt+F2
 
-- from `ip link`, make `/etc/wpa_supplicant.conf`, bring up wifi + DHCP
-- 2nd TTY: Fn+Alt+F2
+  **ii) Partition + format the new root**
+  ```sh
+  /opt/tools/bin/fdisk.sh "$NVME"     # create ONE new root partition in the free space
+  lsblk "$NVME"                       # note the NEW partition number
+  ROOT=${NVME}p6                      # <-- set to the partition you just created
+  /opt/tools/bin/mkfs.ext4 "$ROOT"    # format ONLY the new root — NEVER $ESP
+  ```
 
-##### ii) Partition + format the new root
+  **iii) Mount + extract**
+  ```sh
+  mount "$ROOT" /mnt
+  mkdir -p /mnt/boot/efi && mount "$ESP" /mnt/boot/efi     # ESP at /boot/efi ONLY
+  tar -xpf /root/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt      # baked method
+  # Alternate (DATA):
+  #   mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
+  #   tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt
+  ```
 
-```sh
-/opt/tools/bin/fdisk.sh "$NVME"     # create ONE new root partition in the free space
-lsblk "$NVME"                       # note the NEW partition number
-ROOT=${NVME}p6                      # <-- set to the partition you just created
-/opt/tools/bin/mkfs.ext4 "$ROOT"    # format ONLY the new root — NEVER $ESP
-```
+  **iv) Copy firmware onto the root**
+  - leaf comes from the DTB's `firmware-name` (e.g. `LENOVO/83ED`)
+  ```sh
+  FW=/root/qcom-firmware                                  # Alternate (DATA): FW=/mnt/data/qcom-firmware
+  DEST=/mnt/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>
+  mkdir -p "$DEST"
+  find "$FW" -type f \( -name '*.mbn' -o -name '*.jsn' -o -name '*dtbs.elf' \) -exec cp {} "$DEST"/ \;
+  ```
 
-##### iii) Mount + extract
+  **v) Note UUIDs, then chroot**
+  - vars don't survive the chroot
+  ```sh
+  blkid "$ROOT" "$ESP"
+  for d in dev proc sys run; do mount --rbind /$d /mnt/$d; done
+  chroot /mnt /bin/bash
+  ```
 
-```sh
-mount "$ROOT" /mnt
-mkdir -p /mnt/boot/efi && mount "$ESP" /mnt/boot/efi     # ESP at /boot/efi ONLY
-tar -xpf /root/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt      # baked method
-# Alternate (DATA):
-#   mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
-#   tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt
-```
-
-##### iv) Copy firmware onto the root
-
-- leaf comes from the DTB's `firmware-name` (e.g. `LENOVO/83ED`)
-
-```sh
-FW=/root/qcom-firmware                                  # Alternate (DATA): FW=/mnt/data/qcom-firmware
-DEST=/mnt/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>
-mkdir -p "$DEST"
-find "$FW" -type f \( -name '*.mbn' -o -name '*.jsn' -o -name '*dtbs.elf' \) -exec cp {} "$DEST"/ \;
-```
-
-##### v) Note UUIDs, then chroot
-
-- vars don't survive the chroot
-
-```sh
-blkid "$ROOT" "$ESP"
-for d in dev proc sys run; do mount --rbind /$d /mnt/$d; done
-chroot /mnt /bin/bash
-```
-
-#### c) Base config (in chroot)
+**c) Base config (in chroot)**
 
 ```sh
 date -s "YYYY-MM-DD HH:MM:SS"                            # or pacman-key fails
@@ -277,7 +262,7 @@ UUID=<root-uuid>  /          ext4  defaults          0 1
 UUID=<esp-uuid>   /boot/efi  vfat  defaults,noatime  0 2
 ```
 
-#### d) Kernel (in chroot)
+**d) Kernel (in chroot)**
 
 ```sh
 pacman -S linux-aarch64 linux-firmware mkinitcpio grub efibootmgr networkmanager sudo
@@ -299,13 +284,13 @@ Two quirks:
 2. `grub-mkconfig` omits the aarch64 `devicetree` line
    - add a custom entry
 
-#### a) Install GRUB to the ESP fallback path (in chroot)
+**a) Install GRUB to the ESP fallback path (in chroot)**
 
 ```sh
 grub-install --target=arm64-efi --efi-directory=/boot/efi --removable --no-nvram
 ```
 
-#### b) Custom entry with the DTB
+**b) Custom entry with the DTB**
 
 - paste the root UUID (`blkid -s UUID -o value "$ROOT"`) into `<ROOT-UUID>`
 
@@ -326,11 +311,11 @@ grub-mkconfig -o /boot/grub/grub.cfg
 grep -i devicetree /boot/grub/grub.cfg                  # must print the devicetree line
 ```
 
-#### c) Exit + reboot
+**c) Exit + reboot**
 
 - `exit` → `umount -R /mnt` → `reboot` (remove USB)
 
-#### d) First boot
+**d) First boot**
 
 - F12 → the removable/internal-drive entry → GRUB → pick **"Arch Linux ARM (Yoga Slim 7x)"**
   - not the auto "Arch Linux", which lacks the DTB
@@ -342,7 +327,7 @@ bcdedit /set {GUID} path \EFI\BOOT\BOOTAA64.EFI
 bcdedit /set {fwbootmgr} displayorder {GUID} /addfirst
 ```
 
-#### e) After login — clean named entry
+**e) After login — clean named entry**
 
 - efivars work now
 
@@ -414,11 +399,11 @@ install time.
 > - the image's boot partition is a fixed ~300 MB; initrd (127 MB) + rootfs = ~900 MB won't fit (`Input/output error`)
 > - keep it small; the rootfs rides on the DATA partition instead
 
-#### a) Build the `fdisk` + `mkfs.ext4` bundle
+**a) Build the `fdisk` + `mkfs.ext4` bundle**
 
 - same as **1.1(a)** (produces `~/initrd-tools/opt`)
 
-#### b) Inject the tools into the initrd, repack
+**b) Inject the tools into the initrd, repack**
 
 - as root, to keep `/dev` nodes
 - point `../initrd.gz` at the Codelinaro initrd
@@ -432,7 +417,7 @@ sudo sh -c 'find . | cpio -o -H newc | gzip > ../initrd-new.gz'  # repack (~130-
 
 - zstd/xz/lz4 original → swap `zcat`/`gzip` accordingly
 
-#### c) Create the DATA partition + copy the rootfs
+**c) Create the DATA partition + copy the rootfs**
 
 - after Rufus DD-flashes (accept DD/MBR), make a second **FAT32** partition in the free space, label `DATA`
 - FAT32 not NTFS — the minimal initrd has no NTFS driver
@@ -446,7 +431,7 @@ cp ~/ArchLinuxARM-aarch64-latest.tar.gz /mnt/data/  # copy AS-IS, don't unpack
 
 - no drive letter? Disk Management → *Change Drive Letter and Paths* → *Add* (greyed out → Troubleshooting)
 
-#### d) Copy the Step 0 firmware onto DATA
+**d) Copy the Step 0 firmware onto DATA**
 
 ```bash
 cp -r /mnt/c/qcom-firmware /mnt/data/
