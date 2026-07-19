@@ -146,9 +146,8 @@ cp ~/usb-single.img /mnt/c/Users/<you>/Downloads/usb-single.img
 
 ### 1.2 — At the installer shell: partition → extract → chroot
 
-> After 1.1. Flash, boot (F12), land at the initrd shell.
-> - baked method (1.1): rootfs + firmware already in RAM at `/root/`
-> - alternate (DATA): mount `LABEL=DATA` first
+> After 1.1: flash, boot (F12), land at the initrd shell. The rootfs + firmware are already in RAM at
+> `/root/` — nothing to mount.
 
 > ⚠️ **Outline, not a verified transcript** — take device-specific kernel/DTB bits from the gist + kuruczgy.
 
@@ -169,19 +168,17 @@ Layout (add-only):
 - LUKS: swarmarchy targets LUKS+Btrfs+Limine
   - skip it for the first boot; add on reinstall
 
-**a) Identify disks — never guess**
+**a) Identify disks — never guess** (`lsblk` is usually missing here)
 
 ```sh
-lsblk -o NAME,SIZE,FSTYPE,PARTTYPENAME,LABEL,MOUNTPOINT
-blkid
-fdisk -l /dev/nvme0n1 | grep -i 'EFI System'    # the Windows ESP
+cat /proc/partitions                             # every disk + partition
+blkid                                            # UUID / LABEL / TYPE
+/opt/tools/bin/fdisk.sh -l /dev/nvme0n1          # best overview; spot the EFI System partition
 ip link                                          # wifi iface
 
-NVME=/dev/nvme0n1        # internal drive; USB is a separate /dev/sdX
+NVME=/dev/nvme0n1        # internal drive; the USB is a separate disk
 ESP=${NVME}p1            # existing Windows ESP — reuse, never format
 ```
-
-- alternate (DATA) users: also note your DATA partition at `/dev/disk/by-label/DATA`
 
 **b) Partition → extract → firmware → chroot**
 
@@ -192,44 +189,47 @@ ESP=${NVME}p1            # existing Windows ESP — reuse, never format
   **ii) Partition + format the new root**
   ```sh
   /opt/tools/bin/fdisk.sh "$NVME"     # create ONE new root partition in the free space
-  lsblk "$NVME"                       # note the NEW partition number
+  cat /proc/partitions                # note the NEW partition number (nvme0n1pN)
   ROOT=${NVME}p6                      # <-- set to the partition you just created
   /opt/tools/bin/mkfs.ext4 "$ROOT"    # format ONLY the new root — NEVER $ESP
   ```
 
-  **iii) Mount + extract**
+  **iii) Mount + verify + extract**
+  - mount the real disk FIRST; confirm `df -h /mnt` shows the NVMe (not RAM) before extracting
+  - busybox `tar` won't auto-decompress `.gz` → pipe through `gunzip`
   ```sh
   mount "$ROOT" /mnt
+  df -h /mnt                                               # must show ~250G on the NVMe, not tmpfs
   mkdir -p /mnt/boot/efi && mount "$ESP" /mnt/boot/efi     # ESP at /boot/efi ONLY
-  tar -xpf /root/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt      # baked method
-  # Alternate (DATA):
-  #   mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
-  #   tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt
+  cd /mnt && gunzip -c /root/ArchLinuxARM-aarch64-latest.tar.gz | tar -xpf -
   ```
 
-  **iv) Copy firmware onto the root**
-  - leaf comes from the DTB's `firmware-name` (e.g. `LENOVO/83ED`)
+  **iv) Copy the firmware onto the root**
+  - it's at `/root/qcom-firmware` (baked into the initrd); copy the whole tree
+  - the driver loads only what the DTB names; `dmesg` flags any exact-path stragglers post-boot
   ```sh
-  FW=/root/qcom-firmware                                  # Alternate (DATA): FW=/mnt/data/qcom-firmware
-  DEST=/mnt/lib/firmware/qcom/x1e80100/<VENDOR>/<MODEL>
-  mkdir -p "$DEST"
-  find "$FW" -type f \( -name '*.mbn' -o -name '*.jsn' -o -name '*dtbs.elf' \) -exec cp {} "$DEST"/ \;
+  mkdir -p /mnt/lib/firmware/qcom
+  cp -a /root/qcom-firmware/* /mnt/lib/firmware/qcom/
   ```
 
-  **v) Note UUIDs, then chroot**
-  - vars don't survive the chroot
+  **v) Bind-mount + chroot**
+  - carry DNS in so pacman works inside the chroot
   ```sh
-  blkid "$ROOT" "$ESP"
+  cp /etc/resolv.conf /mnt/etc/resolv.conf
   for d in dev proc sys run; do mount --rbind /$d /mnt/$d; done
   chroot /mnt /bin/bash
   ```
 
 **c) Base config (in chroot)**
 
+- if `/etc/resolv.conf` is a dangling symlink, remake it (Arch default points at a missing stub)
+- the old installer kernel lacks Landlock → pacman needs `--disable-sandbox`
+
 ```sh
+rm -f /etc/resolv.conf && printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /etc/resolv.conf
 date -s "YYYY-MM-DD HH:MM:SS"                            # or pacman-key fails
 pacman-key --init && pacman-key --populate archlinuxarm
-pacman -Syyu
+pacman -Syyu --disable-sandbox
 ln -sf /usr/share/zoneinfo/<Region>/<City> /etc/localtime && hwclock --systohc
 # uncomment your locale in /etc/locale.gen, then:
 locale-gen && echo "LANG=en_US.UTF-8" > /etc/locale.conf
@@ -239,90 +239,82 @@ useradd -mG wheel <you> && passwd <you>
 EDITOR=nano visudo                                      # uncomment %wheel
 ```
 
-`/etc/fstab` — two lines only:
+**d) fstab — from the partition UUIDs**
 
-- `/boot` has none; ESP is **vfat**
+- capture the UUIDs into vars, then heredoc; ESP is **vfat**, and `/boot` gets no line (it's on root)
 
+```sh
+ROOT_UUID=$(blkid -s UUID -o value /dev/nvme0n1p6)   # your new root
+ESP_UUID=$(blkid -s UUID -o value /dev/nvme0n1p1)    # Windows ESP
+cat > /etc/fstab <<EOF
+UUID=$ROOT_UUID /         ext4 defaults          0 1
+UUID=$ESP_UUID  /boot/efi vfat defaults,noatime  0 2
+EOF
+cat /etc/fstab
 ```
-UUID=<root-uuid>  /          ext4  defaults          0 1
-UUID=<esp-uuid>   /boot/efi  vfat  defaults,noatime  0 2
-```
 
-**d) Kernel (in chroot)**
+**e) Kernel + NetworkManager (in chroot)**
 
 ```sh
 pacman -S linux-aarch64 linux-firmware mkinitcpio grub efibootmgr networkmanager sudo
-ls /boot && ls /boot/dtbs/qcom/ | grep yoga             # kernel Image + Yoga DTB on ext4 /boot
+ls /boot && ls /boot/dtbs/qcom/ | grep yoga             # kernel Image + Yoga DTB landed on ext4 /boot
 ln -s /usr/lib/systemd/system/NetworkManager.service \
       /etc/systemd/system/multi-user.target.wants/       # wifi next boot
 ```
 
-- firmware already at `/mnt/lib/firmware/...`
-  - after boot `dmesg | grep -i firmware` names anything missing
+- done in the chroot → `exit`, then `umount -R /mnt`
 - GPU accel = Mesa turnip later; stock `linux-aarch64` boots fine now
 
-### 1.3 — GRUB
+### 1.3 — Boot it
 
-Two quirks:
+The DTB is the catch: `grub-mkconfig` won't emit a `devicetree` line, and the installer can't write EFI
+vars. So boot **interactively** from the USB's GRUB first (proves the kernel + DTB), then save that same
+recipe once you're in — no `40_custom`, no `grub-mkconfig`.
 
-1. the installer has no efivars → `efibootmgr` can't run here
-   - install to the fallback path, register after boot
-2. `grub-mkconfig` omits the aarch64 `devicetree` line
-   - add a custom entry
+**a) First boot — from the USB's GRUB console (nothing to edit)**
 
-**a) Install GRUB to the ESP fallback path (in chroot)**
+- `reboot`, then F12 → boot the USB again → at the GRUB menu press `c` for a console
+- `ls` and `ls (hd0,gptN)/` to find the partition holding `/boot/Image`, then type (your root's gpt number + device):
 
-```sh
-grub-install --target=arm64-efi --efi-directory=/boot/efi --removable --no-nvram
+```
+set root=(hd0,gpt6)                  # your Arch root's gpt number
+insmod ext2
+linux /boot/Image root=/dev/nvme0n1p6 rw pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait loglevel=7
+initrd /boot/initramfs-linux.img
+devicetree /boot/dtbs/qcom/x1e80100-lenovo-yoga-slim7x.dtb
+boot
 ```
 
-**b) Custom entry with the DTB**
+- black screen? GPU firmware, not a broken install — retype the `linux` line with `nomodeset` to reach a console, fix graphics later
 
-- paste the root UUID (`blkid -s UUID -o value "$ROOT"`) into `<ROOT-UUID>`
+**b) Make it stick — from the now-booted Arch**
+
+- efivars work here (they didn't in the installer), so install GRUB to the ESP + register the entry:
 
 ```sh
-cat > /etc/grub.d/40_custom <<'EOF'
-#!/bin/sh
-exec tail -n +3 $0
+sudo grub-install --target=arm64-efi --efi-directory=/boot/efi --removable
+sudo efibootmgr -c -d /dev/nvme0n1 -p 1 -L "Arch Linux" -l '\EFI\BOOT\BOOTAA64.EFI'
+```
+
+- save the boot recipe as a minimal `/boot/grub/grub.cfg` — the same lines you just typed
+  - hand-writing it avoids `40_custom` + `grub-mkconfig`, which both drop the `devicetree` line
+
+```sh
+ROOT_UUID=$(blkid -s UUID -o value /dev/nvme0n1p6)
+sudo tee /boot/grub/grub.cfg >/dev/null <<EOF
+set timeout=3
 menuentry "Arch Linux ARM (Yoga Slim 7x)" {
     insmod ext2
     search --no-floppy --set=root --file /boot/Image
-    linux /boot/Image root=UUID=<ROOT-UUID> rw pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait loglevel=7
+    linux /boot/Image root=UUID=$ROOT_UUID rw pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait loglevel=7
     initrd /boot/initramfs-linux.img
     devicetree /boot/dtbs/qcom/x1e80100-lenovo-yoga-slim7x.dtb
 }
 EOF
-chmod +x /etc/grub.d/40_custom
-grub-mkconfig -o /boot/grub/grub.cfg
-grep -i devicetree /boot/grub/grub.cfg                  # must print the devicetree line
 ```
 
-**c) Exit + reboot**
-
-- `exit` → `umount -R /mnt` → `reboot` (remove USB)
-
-**d) First boot**
-
-- F12 → the removable/internal-drive entry → GRUB → pick **"Arch Linux ARM (Yoga Slim 7x)"**
-  - not the auto "Arch Linux", which lacks the DTB
-- F12 shows nothing? register from Windows (elevated `cmd`):
-
-```
-bcdedit /copy {bootmgr} /d "Arch"
-bcdedit /set {GUID} path \EFI\BOOT\BOOTAA64.EFI
-bcdedit /set {fwbootmgr} displayorder {GUID} /addfirst
-```
-
-**e) After login — clean named entry**
-
-- efivars work now
-
-```sh
-sudo efibootmgr -c -d /dev/nvme0n1 -p 1 -L "Arch Linux" -l '\EFI\BOOT\BOOTAA64.EFI'
-```
-
-> Black screen after picking Arch? GPU firmware, not a broken install — add `nomodeset` (press `e`) to
-> reach a console.
+- reboot → GRUB boots Arch on its own; Windows is untouched (F12 → Windows Boot Manager)
+- F12 shows no Arch entry? register once from Windows (elevated `cmd`): `bcdedit /copy {bootmgr} /d "Arch"` → `bcdedit /set {GUID} path \EFI\BOOT\BOOTAA64.EFI` → `bcdedit /set {fwbootmgr} displayorder {GUID} /addfirst`
 
 Step 1 done = plain Arch aarch64 that boots with networking:
 
@@ -423,8 +415,13 @@ cp ~/ArchLinuxARM-aarch64-latest.tar.gz /mnt/data/  # copy AS-IS, don't unpack
 cp -r /mnt/c/qcom-firmware /mnt/data/
 ```
 
-- overwrite the boot partition's `initrd.gz` with `initrd-new.gz`, then continue at **1.3**
-  - at the installer shell you mount `LABEL=DATA` (see the alternate lines in 1.3 b-iii/iv)
+- overwrite the boot partition's `initrd.gz` with `initrd-new.gz`, then continue at **1.2**
+- only difference at the installer shell: mount DATA and pull the rootfs + firmware from it (not `/root/`)
+  ```sh
+  mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
+  cd /mnt && gunzip -c /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz | tar -xpf -
+  mkdir -p /mnt/lib/firmware/qcom && cp -a /mnt/data/qcom-firmware/* /mnt/lib/firmware/qcom/
+  ```
 
 ## References
 
