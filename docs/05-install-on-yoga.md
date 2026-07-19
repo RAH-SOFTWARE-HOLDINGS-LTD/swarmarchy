@@ -143,22 +143,8 @@ cp ~/usb-single.img /mnt/c/Users/<you>/Downloads/usb-single.img
 ```
 
 - Rufus DD-flash `usb-single.img` (accept DD/MBR)
-- at the installer shell the rootfs + firmware are already at `/root/` → continue to 1.3
 
-> Gotchas:
-> - `cpio -t` lists only the first segment — verify with `zcat … | grep -a`
-> - FAT must fit the fat initrd (1500 MB ⇒ ~450 MB slack)
-> - never `truncate` SRC (read-only)
-> - `mkfs.vfat` missing → install `dosfstools`
-
-### 1.2 — Stage the firmware for the installer
-
-- **1.1 (baked)** — the firmware is already inside the initrd (step d); at the shell it's `/root/qcom-firmware/`
-- **Alternate (DATA)** — copy the Step 0 firmware onto the DATA partition
-  - `cp -r /mnt/c/qcom-firmware /mnt/data/`
-- either way, 1.3 places it onto the NVMe
-
-### 1.3 — At the installer shell: partition → extract → chroot
+### 1.2 — At the installer shell: partition → extract → chroot
 
 > After 1.1. Flash, boot (F12), land at the initrd shell.
 > - baked method (1.1): rootfs + firmware already in RAM at `/root/`
@@ -275,7 +261,7 @@ ln -s /usr/lib/systemd/system/NetworkManager.service \
   - after boot `dmesg | grep -i firmware` names anything missing
 - GPU accel = Mesa turnip later; stock `linux-aarch64` boots fine now
 
-### 1.4 — GRUB
+### 1.3 — GRUB
 
 Two quirks:
 
