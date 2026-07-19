@@ -332,7 +332,12 @@ cd ~/.local/share/swarmarchy && source install.sh
 ```
 
 - it **disables mkinitcpio hooks at the start** of each run, re-enabling them only if the run finishes
-  - a failed run leaves them off → **run `sudo mkinitcpio -P` before any reboot**
+  - a failed run leaves them off → regenerate before any reboot:
+
+    ```sh
+    sudo mkinitcpio -P
+    ```
+
 - prerequisites (yay can't build without them):
 
 ```sh
@@ -340,15 +345,43 @@ sudo pacman -S --needed base-devel fakeroot git go
 ```
 
 - clear these as they bite (each aborts the run):
-  - **`libisl` 404 / `yay: command not found`** — stale DB → `sudo pacman -Syyu`, then base-devel installs
-  - **`tzupdate` not available for aarch64** — x86-only AUR pkg; delete it from the package list
-    - `grep -rln tzupdate ~/.local/share/swarmarchy/` → remove the line in each hit
-  - **`rustup and rust are in conflict`** — `sudo pacman -Rdd rust && sudo pacman -S rustup && rustup default stable`
+  - **`libisl` 404 / `yay: command not found`** — stale DB; refresh, then base-devel installs:
+
+    ```sh
+    sudo pacman -Syyu
+    ```
+
+  - **`tzupdate` not available for aarch64** — x86-only AUR pkg; find + delete it from the package list:
+
+    ```sh
+    grep -rln tzupdate ~/.local/share/swarmarchy/    # then remove the matched line in each file
+    ```
+
+  - **`rustup and rust are in conflict`**:
+
+    ```sh
+    sudo pacman -Rdd rust && sudo pacman -S rustup && rustup default stable
+    ```
+
   - **AppImage AUR pkgs fail** (`obsidian-appimage`, `localsend`) — skip them (remove from the list), install by hand later
-  - **Btrfs/Limine steps fail** (you're on ext4 + GRUB) — harmless; `sudo pacman -S limine btrfs-progs` to satisfy them, but keep booting via your GRUB
-  - **DNS drops mid-run** — `sudo rm -f /etc/resolv.conf && echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf`
+  - **Btrfs/Limine steps fail** (you're on ext4 + GRUB) — harmless; satisfy them, but keep booting via your GRUB:
+
+    ```sh
+    sudo pacman -S limine btrfs-progs
+    ```
+
+  - **DNS drops mid-run**:
+
+    ```sh
+    sudo rm -f /etc/resolv.conf && echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf
+    ```
+
 - **mirror stays on Arch Linux ARM** — the Omarchy x86 mirror/repo/multilib repoint is now gated to x86_64, so on aarch64 nothing clobbers your ALARM mirror
-- when it finishes: `sudo mkinitcpio -P` → `sudo reboot`
+- when it finishes, regenerate the initramfs and reboot:
+
+```sh
+sudo mkinitcpio -P && sudo reboot
+```
 
 ## Step 3 — Verify on hardware
 
@@ -363,7 +396,12 @@ sudo pacman -S --needed base-devel fakeroot git go
 ### GPU — get off software rendering
 
 - symptom: Sway launches but laggy + characters duplicate; `fastfetch` shows `GPU: Mesa llvmpipe` (CPU rendering)
-- fix = the Adreno (`msm`) firmware chain — `dmesg | grep -iE 'adreno|gpu|zap|gmu'` names each miss
+- fix = the Adreno (`msm`) firmware chain; each missing file is named by:
+
+```sh
+dmesg | grep -iE 'adreno|gpu|zap|gmu'
+```
+
 - **`gen70500_sqe.fw` / `gen70500_gmu.bin`** ship in `linux-firmware`:
 
 ```sh
@@ -381,7 +419,12 @@ sudo cp <path>/qcdxkmsuc8380.mbn /lib/firmware/qcom/x1e80100/LENOVO/83ED/
 
 ### External monitors (USB-C DP-alt) — the ADSP/CDSP firmware fix
 
-- symptom: external USB-C monitors invisible; `DP-1/DP-2` stay `disconnected`, `/sys/class/typec/` is **empty**, `dmesg | grep -i remoteproc` shows `-2` (file not found) — and onboard **audio** is dead too
+- symptom: external USB-C monitors invisible; `DP-1`/`DP-2` stay `disconnected`, `/sys/class/typec/` is **empty**, onboard **audio** is dead too. Confirm the cause:
+
+```sh
+dmesg | grep -i remoteproc      # shows -2 (file not found) for adsp/cdsp
+```
+
 - cause: the Type-C DP-alt stack (`pmic_glink` / `charger_pd`) needs the **ADSP + CDSP** remoteproc firmware at the exact board path, which the bulk firmware copy doesn't land there
 - fix — place the four blobs (from your Step 0 `qcom-firmware/`, or re-extract from Windows), then **reboot** (the audio card only re-probes on a full reboot):
 
@@ -391,9 +434,19 @@ sudo cp qcadsp8380.mbn adsp_dtbs.elf qccdsp8380.mbn cdsp_dtbs.elf \
         /lib/firmware/qcom/x1e80100/LENOVO/83ED/
 ```
 
-- verify after reboot: `ls /sys/class/typec/` is non-empty, and `swaymsg -t get_outputs` shows `DP-1`/`DP-2` connected at 2560x1600@120
-- no reboot? live re-trigger (monitors only; audio still needs a reboot): `sudo sh -c 'echo start > /sys/class/remoteproc/remoteproc0/state'` (adsp=0, cdsp=1)
-- use `qcsubsys_ext_{adsp,cdsp}8380.inf*` blobs — *not* the `qcnspmcdm_ext_cdsp8380` NPU variant
+- use the `qcsubsys_ext_{adsp,cdsp}8380.inf*` blobs — *not* the `qcnspmcdm_ext_cdsp8380` NPU variant
+- verify after reboot (`typec` non-empty; DP-1/DP-2 connected at 2560x1600@120):
+
+```sh
+ls /sys/class/typec/
+swaymsg -t get_outputs
+```
+
+- no reboot? live re-trigger the DSPs (monitors only; audio still needs a reboot):
+
+```sh
+sudo sh -c 'echo start > /sys/class/remoteproc/remoteproc0/state'   # adsp=remoteproc0, cdsp=remoteproc1
+```
 
 ### Monitor layout (`~/.config/sway/monitors.conf`)
 
@@ -427,10 +480,17 @@ exec systemctl --user start elephant.service
 ### DisplayLink dock — skip it
 
 - **not needed** for USB-C hubs that pass DisplayPort through (DP-alt) — those work once the ADSP firmware above is in place (the Anker hub is DP-alt)
-- only DisplayLink-**chip** docks (e.g. Plugable USBC-6950PDZ) need the proprietary driver
-  - check with `lsusb | grep -i 17e9` (DisplayLink's vendor ID); nothing → you don't need it
-- if you ever do use one: `yay -S displaylink evdi`
-  - its outputs are `DVI-I-*`, and you must **never** `swaymsg reload` a live DisplayLink mode change (hard-locks) — edit config, then reboot/replug
+- only DisplayLink-**chip** docks (e.g. Plugable USBC-6950PDZ) need the proprietary driver — check for DisplayLink's vendor ID (nothing → you don't need it):
+
+```sh
+lsusb | grep -i 17e9
+```
+
+- if you ever do use one — install it; its outputs are `DVI-I-*`, and you must **never** `swaymsg reload` a live DisplayLink mode change (hard-locks) — edit config, then reboot/replug:
+
+```sh
+yay -S displaylink evdi
+```
 
 ### Networking that sticks
 
@@ -446,7 +506,12 @@ ip addr show wlP4p1s0                                         # want an inet lin
 ping -c3 1.1.1.1
 ```
 
-- diagnose with `wpa_cli -i <iface> status`:
+- diagnose — check the state, then read `wpa_state`:
+
+  ```sh
+  wpa_cli -i wlP4p1s0 status
+  ```
+
   - `wpa_state=COMPLETED` → link good; any failure after is DHCP
   - `DISCONNECTED` / `4WAY_HANDSHAKE_FAILED` → wrong PSK
   - `INACTIVE` → config has no valid network block
@@ -457,12 +522,27 @@ sudo systemctl enable --now NetworkManager
 nmcli device wifi connect "SSID" password "PASSWORD"
 ```
 
-- `ping 1.1.1.1` works but names don't? DNS: `sudo rm -f /etc/resolv.conf && echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf`
+- `ping 1.1.1.1` works but names don't? Fix DNS:
+
+```sh
+sudo rm -f /etc/resolv.conf && echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf
+```
 
 ### Login won't stick (flashes back to the greeter)
 
-- not a password problem — read `journalctl -b -p err`
-- usual causes: a broken login shell (`sudo chsh -s /bin/bash <you>`) or the compositor failing on the GPU (fix above)
+- not a password problem — read the boot errors:
+
+```sh
+journalctl -b -p err
+```
+
+- usual causes: a broken login shell or the compositor failing on the GPU (fix above)
+  - reset the shell if needed:
+
+    ```sh
+    sudo chsh -s /bin/bash <you>
+    ```
+
 - test the password on a raw TTY (Ctrl+Alt+F3) to tell a greeter bug from a real auth failure
 
 ---
