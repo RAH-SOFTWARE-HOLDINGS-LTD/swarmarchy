@@ -283,16 +283,23 @@ the exact `<VENDOR>/<MODEL>` leaf is dictated by the DTB, so it's done there alo
 > against current state. The *generic* Arch-ARM steps below are safe to follow literally.
 >
 > ⚠️ **Dual-boot safety:** the Yoga already has a Windows **EFI System Partition (ESP)** and
-> Windows partitions. **Reuse** the existing ESP for `/boot` — do **NOT** `mkfs` it, and never
-> touch the Windows partitions. Format **only** your new Linux root. One wrong `mkfs`/`fdisk`
-> write here can destroy Windows.
+> Windows partitions. **Reuse** the existing ESP, mounting it at **`/boot/efi`** (never at
+> `/boot`) — do **NOT** `mkfs` it, and never touch the Windows partitions. Format **only** your
+> new Linux root. One wrong `mkfs`/`fdisk` write here can destroy Windows.
+>
+> 🪤 **The ESP-fills-up trap (mount it at `/boot/efi`, NOT `/boot`).** The Windows ESP is tiny
+> (~100–300 MB). If you mount it at `/boot`, pacman writes the **kernel + initramfs + DTBs**
+> (tens of MB, and a fresh copy every kernel update) straight onto it and it fills instantly —
+> then you're hand-deleting files to make room. Instead leave `/boot` as a plain **directory on
+> your ext4 root** (roomy) and mount the ESP at **`/boot/efi`**, where only the few-MB GRUB stub
+> lives. Do this and there is **nothing to clean up.**
 
 **Recommended layout & "best options" (dual-boot, no wipe).** You only *add* to the disk:
 
 | Partition | What | Recommendation |
 |---|---|---|
-| **ESP** | existing Windows EFI System Partition (~100–300 MB FAT) | **Reuse**, mount at `/boot`, never `mkfs`. If it's cramped, make a separate `/boot` (below). |
-| **`/boot`** | *(optional)* new ~1 GB FAT32 | Only if the Windows ESP is too small for a kernel+initrd/UKI. Otherwise skip and use the ESP. |
+| **ESP** | existing Windows EFI System Partition (~100–300 MB FAT) | **Reuse**, mount at **`/boot/efi`** (NOT `/boot`), never `mkfs`. Only the GRUB stub goes here. |
+| **`/boot`** | a plain **directory on your ext4 root** — *not* a partition | Leave it on root. Kernel + initramfs + DTBs live here so they never touch the tiny ESP. Don't make a separate FAT `/boot`. |
 | **root `/`** | your new partition in the freed space | **ext4** = simplest, boots fastest (what your 1.1a bundle formats). **Btrfs** = swarmarchy's intended scheme (Snapper rollbacks + the hibernation swapfile). |
 | **swap** | — | **None. Don't make a swap partition.** The swarmarchy layer sets up **zram** automatically (see the swap note below). |
 
@@ -347,8 +354,10 @@ ROOT=${NVME}p6                                 # <-- set to the partition you ju
 /opt/tools/bin/mkfs.ext4 "$ROOT"               # format ONLY the new root — NEVER $ESP
 
 # --- mount target, extract the rootfs INTO it ---
-mount "$ROOT" /mnt                             # new Arch root (target)
-mkdir -p /mnt/boot && mount "$ESP" /mnt/boot   # EXISTING Windows ESP — mount only, do NOT mkfs
+mount "$ROOT" /mnt                                       # new Arch root (target)
+# ESP goes at /boot/efi ONLY (never /boot). /boot itself stays a dir on the ext4 root, so the
+# kernel/initrd/DTBs land on roomy ext4 and the tiny ESP only ever holds the GRUB stub.
+mkdir -p /mnt/boot/efi && mount "$ESP" /mnt/boot/efi     # EXISTING Windows ESP — mount only, do NOT mkfs
 # 1.1(c): mount the DATA carrier; its tarball path is /mnt/data/... :
 mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
 tar -xpf /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz -C /mnt   # source -> target
@@ -381,25 +390,103 @@ ln -sf /usr/share/zoneinfo/<Region>/<City> /etc/localtime && hwclock --systohc
 # uncomment your locale in /etc/locale.gen, then: locale-gen
 passwd                                          # root password
 useradd -mG wheel <you> && passwd <you>
-# write /etc/fstab from the UUIDs you noted (root -> /, ESP -> /boot vfat)
+# write /etc/fstab from the UUIDs you noted. TWO lines only:
+#   UUID=<root-uuid>  /          ext4  defaults          0 1
+#   UUID=<esp-uuid>   /boot/efi  vfat  defaults,noatime  0 2
+# NOTE: /boot has NO fstab line -- it's a dir on root. The ESP is vfat (NOT ext4), at /boot/efi.
 ```
 
-**c) Device-specific steps — DO NOT improvise; pull exact commands from the references:**
-- **Kernel:** a Snapdragon-capable kernel — the gist/comments point to the **jhovold** branch
-  (`wip/x1e80100-*`); kuruczgy's config is the authoritative kernel/quirks source.
-- **Firmware:** already copied above (from `DATA` → `/mnt/lib/firmware/qcom/x1e80100/…`). Get
-  the exact `<VENDOR>/<MODEL>` leaf + filenames from the DTB's `firmware-name`; after boot,
+**c) Kernel + firmware — still in the chroot:**
+```sh
+pacman -S linux-aarch64 linux-firmware mkinitcpio grub efibootmgr networkmanager sudo
+```
+Installing `linux-aarch64` **populates `/boot` for you** — the kernel `Image`, `initramfs-linux.img`,
+and the `dtbs/` tree all land on the ext4 `/boot`. Verify (no manual copy from the USB needed):
+```sh
+ls /boot                                # Image, initramfs-linux.img, dtbs/
+ls /boot/dtbs/qcom/ | grep yoga         # x1e80100-lenovo-yoga-slim7x.dtb (+ -el2 variant)
+```
+- **Firmware:** already copied above into `/mnt/lib/firmware/qcom/x1e80100/…`. Get the exact
+  `<VENDOR>/<MODEL>` leaf + filenames from the DTB's `firmware-name`; after boot,
   `dmesg | grep -i firmware` names the precise path of anything still missing.
 - **DTB:** `qcom/x1e80100-lenovo-yoga-slim7x.dtb`.
-- **Copy kernel + initrd + DTB from the USB installer** into the NVMe `/boot` (gist does this).
-- **Graphics:** the **zink** path the gist mentions (until Mesa **turnip** is solid).
-- **Bootloader:** first **edit the USB's GRUB to boot the NVMe** to prove it works, then install
-  a persistent bootloader (GRUB or Limine) to the **ESP** — **add** an entry *alongside* Windows,
-  don't overwrite the Windows one.
+- **Graphics:** software rendering works out of the box; for real acceleration use Mesa **turnip**
+  (or the **zink** path until turnip is solid). Not required to reach a first boot.
+- **Better kernel later:** for solid GPU/peripherals the community points to the **jhovold**
+  branch (`wip/x1e80100-*`); kuruczgy's config is the authoritative kernel/quirks source. The
+  stock `linux-aarch64` is enough to boot first.
 
-Then exit the chroot, `umount -R /mnt`, reboot, and remove the USB.
 > Authoritative sources for the device-specific commands: **joske's gist** (the flow) and
 > **kuruczgy's x1e-nixos-config** (kernel/firmware/DTB/quirks) — both linked at the top of Step 1.
+
+### 1.4 — Bootloader: GRUB (kept deliberately simple)
+
+Two quirks drive the whole approach — internalize them and the rest is short:
+
+1. **The installer has no EFI runtime services** — `/sys/firmware/efi/efivars` is empty, so
+   `efibootmgr` **cannot register a boot entry from here (or the chroot).** Don't fight it. You
+   install GRUB to the firmware's *fallback* path now, and register a proper named entry **after
+   first boot**, from the running system, where efivars work. *(That's the "do it outside the
+   chroot" part — it's not optional cleverness, it's the only place `efibootmgr` works.)*
+2. **`grub-mkconfig` doesn't emit a `devicetree` line for aarch64**, and the Yoga won't boot
+   without its DTB — so you add one custom menu entry by hand.
+
+**In the chroot** — install GRUB to the ESP's fallback path (`EFI/BOOT/BOOTAA64.EFI`):
+```sh
+grub-install --target=arm64-efi --efi-directory=/boot/efi --removable --no-nvram
+```
+- `--efi-directory=/boot/efi` — the ESP. The stub is a few MB, so the ESP stays roomy.
+- `--removable` — writes the generic `EFI/BOOT/BOOTAA64.EFI` the firmware boots by default, so
+  you don't need an NVRAM entry just to get going.
+- `--no-nvram` — skips the `efibootmgr` write that would fail in the installer.
+
+Add the DTB entry. Grab the **root** UUID, then write `/etc/grub.d/40_custom` (paste the UUID in):
+```sh
+blkid -s UUID -o value "$ROOT"          # copy this UUID into <ROOT-UUID> below
+cat > /etc/grub.d/40_custom <<'EOF'
+#!/bin/sh
+exec tail -n +3 $0
+menuentry "Arch Linux ARM (Yoga Slim 7x)" {
+    insmod ext2
+    search --no-floppy --set=root --file /boot/Image
+    linux /boot/Image root=UUID=<ROOT-UUID> rw pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait loglevel=7
+    initrd /boot/initramfs-linux.img
+    devicetree /boot/dtbs/qcom/x1e80100-lenovo-yoga-slim7x.dtb
+}
+EOF
+chmod +x /etc/grub.d/40_custom
+grub-mkconfig -o /boot/grub/grub.cfg
+grep -i devicetree /boot/grub/grub.cfg  # MUST print the devicetree line, else the DTB won't load
+```
+
+Then leave the chroot and reboot:
+```sh
+exit
+umount -R /mnt
+reboot                                  # remove the USB when it powers down
+```
+
+**First boot** (no `efibootmgr` yet): `F12` → pick the removable/USB-style entry for the internal
+drive (that's the fallback `BOOTAA64.EFI` GRUB) → at the GRUB menu choose **"Arch Linux ARM (Yoga
+Slim 7x)"** — the custom entry, *not* the auto-generated "Arch Linux" (which has no `devicetree`).
+- If `F12` shows nothing new, register it once from **Windows** (elevated `cmd`):
+  ```
+  bcdedit /copy {bootmgr} /d "Arch"
+  bcdedit /set {THAT-GUID} path \EFI\BOOT\BOOTAA64.EFI
+  bcdedit /set {fwbootmgr} displayorder {THAT-GUID} /addfirst
+  ```
+  (PowerShell: quote every brace, e.g. `'{bootmgr}'`.)
+
+**Once you're logged into Arch** — efivars now work, so give yourself a clean named boot entry.
+This is the step that **can't** run in the chroot:
+```sh
+sudo efibootmgr -c -d /dev/nvme0n1 -p 1 -L "Arch Linux" -l '\EFI\BOOT\BOOTAA64.EFI'
+```
+`F12` will then list **Arch Linux** directly, alongside **Windows Boot Manager** (untouched).
+
+> **Black screen after selecting Arch?** That's the GPU firmware, not a broken install. Press `e`
+> in GRUB and add `nomodeset` to the `linux` line to reach a text console and confirm the base is
+> good; fix graphics later (turnip/jhovold kernel).
 
 You're done with Step 1 when you have a **plain Arch aarch64 desktop that boots and has
 networking.** What must be in place:
