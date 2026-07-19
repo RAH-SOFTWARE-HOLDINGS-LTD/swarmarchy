@@ -22,16 +22,22 @@ echo -e "\n$ansi_art\n"
 # Use custom branch if instructed, otherwise default to master
 SWARMARCHY_REF="${SWARMARCHY_REF:-master}"
 
-# Set mirror based on branch
+# Set mirror based on branch.
 if [[ $SWARMARCHY_REF == "dev" ]]; then
   export SWARMARCHY_MIRROR=edge
-  echo 'Server = https://mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null
 elif [[ $SWARMARCHY_REF == "rc" ]]; then
   export SWARMARCHY_MIRROR=rc
-  echo 'Server = https://rc-mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null
 else
   export SWARMARCHY_MIRROR=stable
-  echo 'Server = https://stable-mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null
+fi
+
+# Omarchy's mirrors are x86_64-only; on aarch64 keep the existing Arch Linux ARM mirror.
+if [[ "$(uname -m)" == "x86_64" ]]; then
+  case "$SWARMARCHY_MIRROR" in
+    edge) echo 'Server = https://mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null ;;
+    rc)   echo 'Server = https://rc-mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null ;;
+    *)    echo 'Server = https://stable-mirror.omarchy.org/$repo/os/$arch' | sudo tee /etc/pacman.d/mirrorlist >/dev/null ;;
+  esac
 fi
 
 sudo pacman -Syu --noconfirm --needed git

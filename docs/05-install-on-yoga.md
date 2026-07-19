@@ -40,9 +40,8 @@ References (don't improvise the device bring-up):
 - bakes the rootfs **and** firmware into one enlarged initrd on the image's single FAT boot partition
   - ~935 MB initrd → the boot partition grows ~300 MB → ~1.5 GB (loads to RAM; needs ≥ 4 GB free)
 
-**a) Build a self-contained `fdisk` + `mkfs.ext4` bundle**
-
-- binaries + libs + loader, so they don't need the busybox initrd's libc
+- **a) Build a self-contained `fdisk` + `mkfs.ext4` bundle**
+  - binaries + libs + loader, so they don't need the busybox initrd's libc
 
 ```bash
 mkdir -p ~/initrd-tools && cd ~/initrd-tools
@@ -68,9 +67,8 @@ EOF
 chmod +x opt/tools/bin/mkfs.ext4 opt/tools/bin/fdisk.sh
 ```
 
-**b) Set up WSL + inputs**
-
-- tools, rootfs tarball, and point `SRC` at the image
+- **b) Set up WSL + inputs**
+  - tools, rootfs tarball, and point `SRC` at the image
 
 ```bash
 cd ~
@@ -79,10 +77,9 @@ wget http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
 SRC=/mnt/c/Users/<you>/Downloads/<codelinaro>.img       # the DOWNLOADED image, left untouched
 ```
 
-**c) Bake the fat initrd (original initrd + tools + rootfs)**
-
-- `sudo` preserves the original's `/dev` nodes
-- no `~/initrd.orig.gz`? pull it from SRC: `MTOOLS_SKIP_CHECK=1 mcopy -i "$SRC"@@$((2048*512)) ::/initrd.gz ~/initrd.orig.gz`
+- **c) Bake the fat initrd (original initrd + tools + rootfs)**
+  - `sudo` preserves the original's `/dev` nodes
+  - no `~/initrd.orig.gz`? pull it from SRC: `MTOOLS_SKIP_CHECK=1 mcopy -i "$SRC"@@$((2048*512)) ::/initrd.gz ~/initrd.orig.gz`
 
 ```bash
 rm -rf ~/initrd-baked && mkdir ~/initrd-baked && cd ~/initrd-baked
@@ -92,10 +89,9 @@ sudo cp ~/ArchLinuxARM-aarch64-latest.tar.gz root/      # -> /root/
 sudo sh -c 'find . | cpio -o -H newc | gzip > ~/initrd.baked.gz'    # ~905 MB
 ```
 
-**d) Append the firmware as a second cpio segment**
-
-- the kernel concatenates initramfs archives
-- `cp -r` (not `-a`) so drvfs's 777/ownership don't carry into the initramfs
+- **d) Append the firmware as a second cpio segment**
+  - the kernel concatenates initramfs archives
+  - `cp -r` (not `-a`) so drvfs's 777/ownership don't carry into the initramfs
 
 ```bash
 rm -rf ~/fwseg && mkdir -p ~/fwseg/root && cp -r /mnt/c/qcom-firmware ~/fwseg/root/   # straight off Windows C:\
@@ -104,9 +100,8 @@ cat ~/initrd.baked.gz ~/fw.cpio.gz > ~/initrd.final.gz   # ~935 MB
 zcat ~/initrd.final.gz | grep -a -c 'qcom-firmware/MANIFEST.csv'    # expect 1
 ```
 
-**e) Extract SRC's boot tree, swap in the fat initrd**
-
-- `mtools @@offset` reads the FAT (sector 2048) straight out of the file
+- **e) Extract SRC's boot tree, swap in the fat initrd**
+  - `mtools @@offset` reads the FAT (sector 2048) straight out of the file
 
 ```bash
 O=$((2048*512))
@@ -115,7 +110,7 @@ MTOOLS_SKIP_CHECK=1 mcopy -s -i "$SRC"@@$O "::/*" ~/p1extract/
 cp ~/initrd.final.gz ~/p1extract/initrd.gz
 ```
 
-**f) Rebuild that partition as a larger FAT, copy the tree back**
+- **f) Rebuild that partition as a larger FAT, copy the tree back**
 
 ```bash
 rm -f ~/p1.img; truncate -s 1500M ~/p1.img
@@ -123,9 +118,8 @@ mkfs.vfat -F32 -n BOOT ~/p1.img
 ( cd ~/p1extract && MTOOLS_SKIP_CHECK=1 mcopy -s -i ~/p1.img boot boot.cat dtb EFI gtk initrd.gz linux :: )
 ```
 
-**g) Assemble the whole-disk image**
-
-- one MBR partition, type 83 bootable, at sector 2048
+- **g) Assemble the whole-disk image**
+  - one MBR partition, type 83 bootable, at sector 2048
 
 ```bash
 rm -f ~/usb-single.img
@@ -135,7 +129,7 @@ printf 'label: dos\nunit: sectors\nstart=2048, size=%s, type=83, bootable\n' "$S
 dd if=~/p1.img of=~/usb-single.img bs=512 seek=2048 conv=notrunc status=progress
 ```
 
-**h) Verify + copy out to flash**
+- **h) Verify + copy out to flash**
 
 ```bash
 MTOOLS_SKIP_CHECK=1 mdir -i ~/usb-single.img@@$O ::      # linux + initrd.gz present
@@ -146,15 +140,9 @@ cp ~/usb-single.img /mnt/c/Users/<you>/Downloads/usb-single.img
 
 ### 1.2 — At the installer shell: partition → extract → chroot
 
-> After 1.1: flash, boot (F12), land at the initrd shell. The rootfs + firmware are already in RAM at
-> `/root/` — nothing to mount.
-
 > ⚠️ **Outline, not a verified transcript** — take device-specific kernel/DTB bits from the gist + kuruczgy.
 
 > 🪤 **Dual-boot / ESP — mount at `/boot/efi`, never `/boot`:**
-> - the ESP is tiny; at `/boot` pacman fills it with kernels
-> - keep `/boot` on the ext4 root; only the GRUB stub lands on the ESP
-> - never `mkfs` the ESP; format only your new root — one wrong write kills Windows
 
 Layout (add-only):
 
@@ -168,7 +156,7 @@ Layout (add-only):
 - LUKS: swarmarchy targets LUKS+Btrfs+Limine
   - skip it for the first boot; add on reinstall
 
-**a) Identify disks — never guess** (`lsblk` is usually missing here)
+- **a) Identify disks — never guess** (`lsblk` is usually missing here)
 
 ```sh
 cat /proc/partitions                             # every disk + partition
@@ -180,50 +168,44 @@ NVME=/dev/nvme0n1        # internal drive; the USB is a separate disk
 ESP=${NVME}p1            # existing Windows ESP — reuse, never format
 ```
 
-**b) Partition → extract → firmware → chroot**
+- **b) Partition → extract → firmware → chroot**
+  - **i) Wi-Fi**
+    - from `ip link`, make `/etc/wpa_supplicant.conf`, bring up wifi + DHCP
+    - 2nd TTY: Fn+Alt+F2
+  - **ii) Partition + format the new root**
+    ```sh
+    /opt/tools/bin/fdisk.sh "$NVME"     # create ONE new root partition in the free space
+    cat /proc/partitions                # note the NEW partition number (nvme0n1pN)
+    ROOT=${NVME}p6                      # <-- set to the partition you just created
+    /opt/tools/bin/mkfs.ext4 "$ROOT"    # format ONLY the new root — NEVER $ESP
+    ```
+  - **iii) Mount + verify + extract**
+    - mount the real disk FIRST; confirm `df -h /mnt` shows the NVMe (not RAM) before extracting
+    - busybox `tar` won't auto-decompress `.gz` → pipe through `gunzip`
+    ```sh
+    mount "$ROOT" /mnt
+    df -h /mnt                                               # must show ~250G on the NVMe, not tmpfs
+    mkdir -p /mnt/boot/efi && mount "$ESP" /mnt/boot/efi     # ESP at /boot/efi ONLY
+    cd /mnt && gunzip -c /root/ArchLinuxARM-aarch64-latest.tar.gz | tar -xpf -
+    ```
+  - **iv) Copy the firmware onto the root**
+    - it's at `/root/qcom-firmware` (baked into the initrd); copy the whole tree
+    - the driver loads only what the DTB names; `dmesg` flags any exact-path stragglers post-boot
+    ```sh
+    mkdir -p /mnt/lib/firmware/qcom
+    cp -a /root/qcom-firmware/* /mnt/lib/firmware/qcom/
+    ```
+  - **v) Bind-mount + chroot**
+    - carry DNS in so pacman works inside the chroot
+    ```sh
+    cp /etc/resolv.conf /mnt/etc/resolv.conf
+    for d in dev proc sys run; do mount --rbind /$d /mnt/$d; done
+    chroot /mnt /bin/bash
+    ```
 
-  **i) Wi-Fi**
-  - from `ip link`, make `/etc/wpa_supplicant.conf`, bring up wifi + DHCP
-  - 2nd TTY: Fn+Alt+F2
-
-  **ii) Partition + format the new root**
-  ```sh
-  /opt/tools/bin/fdisk.sh "$NVME"     # create ONE new root partition in the free space
-  cat /proc/partitions                # note the NEW partition number (nvme0n1pN)
-  ROOT=${NVME}p6                      # <-- set to the partition you just created
-  /opt/tools/bin/mkfs.ext4 "$ROOT"    # format ONLY the new root — NEVER $ESP
-  ```
-
-  **iii) Mount + verify + extract**
-  - mount the real disk FIRST; confirm `df -h /mnt` shows the NVMe (not RAM) before extracting
-  - busybox `tar` won't auto-decompress `.gz` → pipe through `gunzip`
-  ```sh
-  mount "$ROOT" /mnt
-  df -h /mnt                                               # must show ~250G on the NVMe, not tmpfs
-  mkdir -p /mnt/boot/efi && mount "$ESP" /mnt/boot/efi     # ESP at /boot/efi ONLY
-  cd /mnt && gunzip -c /root/ArchLinuxARM-aarch64-latest.tar.gz | tar -xpf -
-  ```
-
-  **iv) Copy the firmware onto the root**
-  - it's at `/root/qcom-firmware` (baked into the initrd); copy the whole tree
-  - the driver loads only what the DTB names; `dmesg` flags any exact-path stragglers post-boot
-  ```sh
-  mkdir -p /mnt/lib/firmware/qcom
-  cp -a /root/qcom-firmware/* /mnt/lib/firmware/qcom/
-  ```
-
-  **v) Bind-mount + chroot**
-  - carry DNS in so pacman works inside the chroot
-  ```sh
-  cp /etc/resolv.conf /mnt/etc/resolv.conf
-  for d in dev proc sys run; do mount --rbind /$d /mnt/$d; done
-  chroot /mnt /bin/bash
-  ```
-
-**c) Base config (in chroot)**
-
-- if `/etc/resolv.conf` is a dangling symlink, remake it (Arch default points at a missing stub)
-- the old installer kernel lacks Landlock → pacman needs `--disable-sandbox`
+- **c) Base config (in chroot)**
+  - if `/etc/resolv.conf` is a dangling symlink, remake it (Arch default points at a missing stub)
+  - the old installer kernel lacks Landlock → pacman needs `--disable-sandbox`
 
 ```sh
 rm -f /etc/resolv.conf && printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' > /etc/resolv.conf
@@ -239,9 +221,8 @@ useradd -mG wheel <you> && passwd <you>
 EDITOR=nano visudo                                      # uncomment %wheel
 ```
 
-**d) fstab — from the partition UUIDs**
-
-- capture the UUIDs into vars, then heredoc; ESP is **vfat**, and `/boot` gets no line (it's on root)
+- **d) fstab — from the partition UUIDs**
+  - capture the UUIDs into vars, then heredoc; ESP is **vfat**, and `/boot` gets no line (it's on root)
 
 ```sh
 ROOT_UUID=$(blkid -s UUID -o value /dev/nvme0n1p6)   # your new root
@@ -253,7 +234,7 @@ EOF
 cat /etc/fstab
 ```
 
-**e) Kernel + NetworkManager (in chroot)**
+- **e) Kernel + NetworkManager (in chroot)**
 
 ```sh
 pacman -S linux-aarch64 linux-firmware mkinitcpio grub efibootmgr networkmanager sudo
@@ -271,10 +252,9 @@ The DTB is the catch: `grub-mkconfig` won't emit a `devicetree` line, and the in
 vars. So boot **interactively** from the USB's GRUB first (proves the kernel + DTB), then save that same
 recipe once you're in — no `40_custom`, no `grub-mkconfig`.
 
-**a) First boot — from the USB's GRUB console (nothing to edit)**
-
-- `reboot`, then F12 → boot the USB again → at the GRUB menu press `c` for a console
-- `ls` and `ls (hd0,gptN)/` to find the partition holding `/boot/Image`, then type (your root's gpt number + device):
+- **a) First boot — from the USB's GRUB console (nothing to edit)**
+  - `reboot`, then F12 → boot the USB again → at the GRUB menu press `c` for a console
+  - `ls` and `ls (hd0,gptN)/` to find the partition holding `/boot/Image`, then type (your root's gpt number + device):
 
 ```
 set root=(hd0,gpt6)                  # your Arch root's gpt number
@@ -287,9 +267,8 @@ boot
 
 - black screen? GPU firmware, not a broken install — retype the `linux` line with `nomodeset` to reach a console, fix graphics later
 
-**b) Make it stick — from the now-booted Arch**
-
-- efivars work here (they didn't in the installer), so install GRUB to the ESP + register the entry:
+- **b) Make it stick — from the now-booted Arch**
+  - efivars work here (they didn't in the installer), so install GRUB to the ESP + register the entry:
 
 ```sh
 sudo grub-install --target=arm64-efi --efi-directory=/boot/efi --removable
@@ -334,6 +313,33 @@ source ~/.local/share/swarmarchy/install.sh
 - auto-handles AUR (yay + walker/etc.) and greetd+tuigreet login
 - reboot → log in → Sway
 
+### Install gotchas
+
+- the installer **aborts on any single error**, and is **idempotent** — fix one thing, re-run:
+
+```sh
+cd ~/.local/share/swarmarchy && source install.sh
+```
+
+- it **disables mkinitcpio hooks at the start** of each run, re-enabling them only if the run finishes
+  - a failed run leaves them off → **run `sudo mkinitcpio -P` before any reboot**
+- prerequisites (yay can't build without them):
+
+```sh
+sudo pacman -S --needed base-devel fakeroot git go
+```
+
+- clear these as they bite (each aborts the run):
+  - **`libisl` 404 / `yay: command not found`** — stale DB → `sudo pacman -Syyu`, then base-devel installs
+  - **`tzupdate` not available for aarch64** — x86-only AUR pkg; delete it from the package list
+    - `grep -rln tzupdate ~/.local/share/swarmarchy/` → remove the line in each hit
+  - **`rustup and rust are in conflict`** — `sudo pacman -Rdd rust && sudo pacman -S rustup && rustup default stable`
+  - **AppImage AUR pkgs fail** (`obsidian-appimage`, `localsend`) — skip them (remove from the list), install by hand later
+  - **Btrfs/Limine steps fail** (you're on ext4 + GRUB) — harmless; `sudo pacman -S limine btrfs-progs` to satisfy them, but keep booting via your GRUB
+  - **DNS drops mid-run** — `sudo rm -f /etc/resolv.conf && echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf`
+- **mirror stays on Arch Linux ARM** — the Omarchy x86 mirror/repo/multilib repoint is now gated to x86_64, so on aarch64 nothing clobbers your ALARM mirror
+- when it finishes: `sudo mkinitcpio -P` → `sudo reboot`
+
 ## Step 3 — Verify on hardware
 
 - [ ] Media/brightness keys → SwayOSD · `Print` screenshot · lid open/close
@@ -343,6 +349,48 @@ source ~/.local/share/swarmarchy/install.sh
 
 - x86-only hardware-fix scripts auto-skip on Snapdragon
 - fix loop: edit the `swarmarchy-*` script → commit/push → `swarmarchy-update`
+
+### GPU — get off software rendering
+
+- symptom: Sway launches but laggy + characters duplicate; `fastfetch` shows `GPU: Mesa llvmpipe` (CPU rendering)
+- usable now, no accel:
+
+```sh
+WLR_RENDERER_ALLOW_SOFTWARE=1 WLR_RENDERER=pixman sway
+```
+
+- real fix = the Adreno (`msm`) firmware chain — `dmesg | grep -iE 'adreno|gpu|zap|gmu'` names each miss
+- **`gen70500_sqe.fw` / `gen70500_gmu.bin`** ship in `linux-firmware`:
+
+```sh
+sudo pacman -Syu linux-firmware && find /lib/firmware -iname 'gen70500*'
+```
+
+- **zap shader** — signed, model-specific `qcdxkmsuc8380.mbn` from Windows; the error path is exact:
+
+```sh
+sudo mkdir -p /lib/firmware/qcom/x1e80100/LENOVO/83ED/
+sudo cp <path>/qcdxkmsuc8380.mbn /lib/firmware/qcom/x1e80100/LENOVO/83ED/
+```
+
+- reboot → no more `-2` errors, `gpu hw init` OK, lag gone
+
+### Networking that sticks
+
+- move off manual `wpa_supplicant` to NetworkManager (don't run both — they fight over the iface):
+
+```sh
+sudo systemctl enable --now NetworkManager
+nmcli device wifi connect "SSID" password "PASSWORD"
+```
+
+- `ping 1.1.1.1` works but names don't? DNS: `sudo rm -f /etc/resolv.conf && echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf`
+
+### Login won't stick (flashes back to the greeter)
+
+- not a password problem — read `journalctl -b -p err`
+- usual causes: a broken login shell (`sudo chsh -s /bin/bash <you>`) or the compositor failing on the GPU (fix above)
+- test the password on a raw TTY (Ctrl+Alt+F3) to tell a greeter bug from a real auth failure
 
 ---
 
@@ -377,14 +425,12 @@ install time.
 > - the image's boot partition is a fixed ~300 MB; initrd (127 MB) + rootfs = ~900 MB won't fit (`Input/output error`)
 > - keep it small; the rootfs rides on the DATA partition instead
 
-**a) Build the `fdisk` + `mkfs.ext4` bundle**
+- **a) Build the `fdisk` + `mkfs.ext4` bundle**
+  - same as **1.1(a)** (produces `~/initrd-tools/opt`)
 
-- same as **1.1(a)** (produces `~/initrd-tools/opt`)
-
-**b) Inject the tools into the initrd, repack**
-
-- as root, to keep `/dev` nodes
-- point `../initrd.gz` at the Codelinaro initrd
+- **b) Inject the tools into the initrd, repack**
+  - as root, to keep `/dev` nodes
+  - point `../initrd.gz` at the Codelinaro initrd
 
 ```bash
 mkdir -p ~/initrd-tools/initrd-work && cd ~/initrd-tools/initrd-work
@@ -395,10 +441,9 @@ sudo sh -c 'find . | cpio -o -H newc | gzip > ../initrd-new.gz'  # repack (~130-
 
 - zstd/xz/lz4 original → swap `zcat`/`gzip` accordingly
 
-**c) Create the DATA partition + copy the rootfs**
-
-- after Rufus DD-flashes (accept DD/MBR), make a second **FAT32** partition in the free space, label `DATA`
-- FAT32 not NTFS — the minimal initrd has no NTFS driver
+- **c) Create the DATA partition + copy the rootfs**
+  - after Rufus DD-flashes (accept DD/MBR), make a second **FAT32** partition in the free space, label `DATA`
+  - FAT32 not NTFS — the minimal initrd has no NTFS driver
 
 ```bash
 cd ~ && wget http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz
@@ -409,7 +454,7 @@ cp ~/ArchLinuxARM-aarch64-latest.tar.gz /mnt/data/  # copy AS-IS, don't unpack
 
 - no drive letter? Disk Management → *Change Drive Letter and Paths* → *Add* (greyed out → Troubleshooting)
 
-**d) Copy the Step 0 firmware onto DATA**
+- **d) Copy the Step 0 firmware onto DATA**
 
 ```bash
 cp -r /mnt/c/qcom-firmware /mnt/data/
