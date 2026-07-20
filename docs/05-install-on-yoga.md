@@ -140,10 +140,6 @@ cp ~/usb-single.img /mnt/c/Users/<you>/Downloads/usb-single.img
 
 ### 1.2 — At the installer shell: partition → extract → chroot
 
-> ⚠️ **Outline, not a verified transcript** — take device-specific kernel/DTB bits from the gist + kuruczgy.
-
-> 🪤 **Dual-boot / ESP — mount at `/boot/efi`, never `/boot`:**
-
 Layout (add-only):
 
 | Partition | Recommendation |
