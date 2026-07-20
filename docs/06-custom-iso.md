@@ -7,6 +7,13 @@ the Yoga without any of this. Treat this as a later polish goal.
 The build mechanics + live blocker tracking live in **`swarmarchy-iso/BUILD-AARCH64.md`**;
 this doc is the *strategy* and how the pieces fit.
 
+> **Path A is now done.** For the concrete, decided build plan — locked choices, ordered
+> steps, open questions — see **[`07-iso-build-plan.md`](./07-iso-build-plan.md)**.
+> Two things below are stale as a result:
+> - The kernel/DTB worry is settled — stock ALARM `linux-aarch64` ships the Yoga DTB.
+> - **All ISO work is on branch `rename-swarmarchy`**, not `master` (which is untouched
+>   upstream `omarchy-iso`).
+
 ---
 
 ## Where this fits — Path A is a prerequisite, not just "easier"
