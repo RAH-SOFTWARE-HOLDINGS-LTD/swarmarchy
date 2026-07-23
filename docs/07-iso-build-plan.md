@@ -63,21 +63,50 @@ xdg-terminal-exec  yaru-icon-theme
 
 ## Build order
 
-### Step 1 — Find out where the build actually dies
+### Step 1 — Find out where the build actually dies ✅ RESOLVED (2026-07-20)
 
-Blocker #3 gates everything and is unknown until exercised. Test it, don't theorize.
-
-- Run it natively on this laptop (aarch64 host — no QEMU emulation needed):
+Blocker #3 gates everything and was unknown until exercised. Ran it natively on the laptop:
 
 ```sh
 SWARMARCHY_MIRROR=stable ARCH=aarch64 ./bin/swarmarchy-iso-make --no-boot-offer
 ```
 
-- Expected to fail at the `pacman -Syw` offline-mirror step — that is the *known frontier*,
-  not a regression.
-- The real question this answers: **does `mkarchiso` tolerate `arch=aarch64`?**
-  - If yes → keep it, fix forward.
-  - If no → switch `builder/build-iso.sh` to **archboot**, which genuinely builds aarch64 ISOs.
+**The big question — "does mkarchiso work on aarch64?" — is answered: YES.** We keep
+mkarchiso; **archboot is NOT needed.** Two walls hit and fixed along the way:
+
+1. **Container was x86.** `bin/swarmarchy-iso-make` hardcoded `archlinux/archlinux:latest`
+   (amd64-only) → `exec format error` on the ARM host. Fixed: `ARCH`-aware image select,
+   `menci/archlinuxarm:latest` + `--platform linux/arm64` for aarch64. (The plan's
+   `archlinuxarm/archlinuxarm` image does **not exist** on Docker Hub — use `menci`.)
+2. **`archiso` isn't in ALARM.** `pacman -Sy archiso` → `target not found`. But the package
+   is **`arch=any`** — `mkarchiso` is a pure bash script that runs fine on aarch64. Fixed in
+   `builder/build-iso.sh`: pull the `any` package from a regular Arch mirror
+   (`geo.mirror.pkgbuild.com/extra/os/x86_64/archiso-*-any.pkg.tar.zst`) via `pacman -U`.
+   Also added `--disable-sandbox` to every pacman call (host kernel predates Landlock, same
+   as the manual install).
+
+Next frontier is the `pacman -Syw` offline-mirror step — where blocker #2 (the AUR packages
+have no repo) bites. That's Step 2's job.
+
+**Confirmed reached (2026-07-20):** with the fixes above, the build runs mkarchiso, clones the
+installer (via `LOCAL_SOURCE=1 SWARMARCHY_PATH=~/.local/share/swarmarchy`, so it builds the
+`rename-swarmarchy` working tree — `master` lacks the renamed `swarmarchy-*` bins), resolves the
+full package set, and dies exactly at `pacman -Syw` with:
+
+```
+error: target not found: limine-mkinitcpio-hook
+error: target not found: limine-snapper-sync
+```
+
+So the **not-in-ALARM list is bigger than the 18 below** — those two Limine hooks aren't in it.
+**First Step-2 task: enumerate the COMPLETE not-in-ALARM set** by checking every package in the
+installer's `swarmarchy-base.packages` + `swarmarchy-other.packages` against the ALARM repos, not
+just the AUR packages already installed on this laptop. Invocation that reaches this point:
+
+```sh
+LOCAL_SOURCE=1 SWARMARCHY_PATH=~/.local/share/swarmarchy \
+  SWARMARCHY_MIRROR=stable ARCH=aarch64 ./bin/swarmarchy-iso-make --no-boot-offer
+```
 
 ### Step 2 — Stand up `swarmarchy-pkgs`
 
@@ -153,12 +182,17 @@ Server = http://mirror.archlinuxarm.org/$arch/$repo
 
 ---
 
-## Open questions
+## Settled logistics (was "open questions")
 
-- **Cloudflare R2** — is there a live account, and is the `op://Shared/Cloudflare Buckets/…`
-  1Password entry real or inherited leftover from the omarchy fork?
-- **Working copy** — repo is currently only in scratchpad. Clone somewhere permanent
-  (`~/Projects/swarmarchy-iso`?) since this spans sessions.
+- **Hosting: user's own Cloudflare account.** R2 + rclone, as omarchy does.
+  - **No custom domain needed to start** — an R2 bucket's free `*.r2.dev` URL works as a pacman
+    `Server =` line. A domain (`pkgs.swarmarchy.org`) is optional polish for later; `r2.dev` is
+    rate-limited / "not for production", so buy the domain only when installs actually hit it.
+  - The inherited `bin/swarmarchy-iso-rclone-config` still points at omarchy's bucket +
+    1Password paths (`op://Shared/Cloudflare Buckets/iso.omarchy.org/…`, `--account Swarmarchy`).
+    **Repoint it at the user's bucket/credentials as part of Step 2** — do not reuse as-is.
+- **Working copy: `~/.local/share/swarmarchy-iso`** (beside the installer repo), on branch
+  `rename-swarmarchy`. Not scratchpad — that's session-temporary.
 
 ## References
 
