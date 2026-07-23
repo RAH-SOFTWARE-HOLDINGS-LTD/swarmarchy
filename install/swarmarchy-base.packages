@@ -36,7 +36,6 @@ woff2-font-awesome         # Font Awesome icon set (Waybar glyphs)
 fontconfig                 # system font configuration/management
 gnome-themes-extra         # provides the Adwaita-dark GTK theme (dark GTK apps)
 kvantum-qt5                # Qt theming engine (keeps Qt apps matching the dark look)
-yaru-icon-theme            # the application icon theme
 
 # ─── Audio (your Bose headphones ride on PipeWire) ───
 wireplumber                # PipeWire session/policy manager (routes audio streams)
@@ -74,13 +73,17 @@ gvfs-nfs                   # mount NFS network shares
 gvfs-smb                   # mount Windows / Samba shares
 dosfstools                 # FAT/EFI filesystem tools (needed for the EFI partition)
 exfatprogs                 # exFAT tools (large USB drives, SD cards)
-localsend                  # AirDrop-style file transfer between your devices
+# localsend                # OPTIONAL on aarch64 — heavy Flutter AUR build, not in the swarmarchy repo yet.
+                           # Nautilus "send via localsend" degrades gracefully when absent (shutil.which).
+                           # Install post-install: yay -S localsend
 
 # ─── Browser & media ───
 chromium                   # web browser (also hosts the web-apps via swarmarchy-launch-webapp)
 mpv                        # video/audio player
 imv                        # lightweight image viewer
-obsidian                   # markdown notes / knowledge base (vanilla — no Swarmarchy theming)
+# obsidian                 # OPTIONAL on aarch64 — heavy Electron AUR build, not in the swarmarchy repo yet.
+                           # Theme script (swarmarchy-theme-set-obsidian) no-ops when absent.
+                           # Install post-install: yay -S obsidian
 
 # ─── Capture & OCR ───
 tesseract                  # OCR engine (screen region → text)
