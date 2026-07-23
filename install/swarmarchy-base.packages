@@ -95,7 +95,7 @@ tree-sitter-cli            # builds Neovim syntax parsers on demand
 clang                      # C/C++ compiler (LLVM) — needed by some builds
 llvm                       # LLVM toolchain (pairs with clang)
 rust                       # Rust toolchain (also builds some AUR packages)
-mise                       # runtime version manager (add node/python/ruby on demand)
+mise-bin                   # runtime version manager (add node/python/ruby on demand); -bin = prebuilt (no Rust build on aarch64)
 usage                      # CLI-spec parser that mise relies on
 github-cli                 # the `gh` GitHub command-line tool
 docker                     # containers
