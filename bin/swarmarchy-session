@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# swarmarchy:summary=Start the Sway session with the user environment loaded.
+# swarmarchy:hidden=true
+#
+# greetd launches the session through a non-interactive login shell, which
+# returns from ~/.bashrc at the `[[ $- != *i* ]] && return` guard, and sway is
+# not a systemd unit -- so nothing in ~/.config/environment.d/*.conf ever reaches
+# the compositor or anything it spawns. Without this, every swarmarchy-* keybind
+# silently no-ops (the bin dir is not on PATH) and WLR_RENDERER /
+# XDG_CURRENT_DESKTOP / GDK_SCALE are unset.
+#
+# The user manager has already read environment.d by this point, so take the
+# values from it. Going through `show-environment` rather than sourcing the file
+# matters: values like QT_QPA_PLATFORM=wayland;xcb contain shell metacharacters
+# and systemd emits them properly quoted.
+
+eval "$(systemctl --user show-environment 2>/dev/null | sed 's/^/export /')" 2>/dev/null
+
+# Fallback: if the user manager was not up yet, at least guarantee the swarmarchy
+# bin dir resolves, so keybinds work even in the degraded case.
+case ":$PATH:" in
+  *":$HOME/.local/share/swarmarchy/bin:"*) ;;
+  *) export PATH="$HOME/.local/share/swarmarchy/bin:$PATH" ;;
+esac
+
+exec sway "$@"
