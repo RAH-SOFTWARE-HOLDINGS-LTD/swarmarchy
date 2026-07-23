@@ -203,6 +203,35 @@ Server = http://mirror.archlinuxarm.org/$arch/$repo
 - Change to: dual-boot, reuse the existing Windows ESP, Btrfs root in free space.
 - Verify Limine installs to the shared ESP without disturbing the Windows boot entry.
 
+#### Btrfs performance tuning (user wants this once Btrfs+Limine works)
+
+Btrfs is chosen for Snapper snapshots + bootloader rollback (Snapper needs Btrfs or LVM-thin;
+ext4 has no native snapshots, so "ext4 + Snapper" isn't a real option and ext4+LVM-thin can't
+boot-into-snapshot cleanly). Btrfs is slightly heavier than ext4 (CoW bookkeeping, checksums),
+but the real-world gap on this NVMe/desktop workload is mostly synthetic. Three tunings close it:
+
+- **`compress=zstd:1`** (fstab mount opt) — transparent compression. Btrfs default is NONE.
+  Level 1 = negligible CPU, auto-skips incompressible data. Moves less data (often *faster* I/O)
+  and saves 20–40% on text/code/logs. **Safe universal win — set by default in the configurator.**
+- **`noatime`** (fstab mount opt) — stop the write-on-read that even `relatime` still does.
+  Breaks strict-POSIX atime that a few niche tools (some mail clients) want; harmless on desktop.
+  **Safe win — set by default.**
+- **`nodatacow` on hot dirs** (`chattr +C` on an EMPTY dir before files land) — disables CoW for
+  databases (sqlite), VM images (qcow2), container storage — the exact files where CoW
+  fragmentation makes Btrfs feel slow. **CANNOT be a blanket default:** it also disables
+  checksums + snapshots + compression for those files (defeats Btrfs), so it's a targeted
+  scalpel, and which dirs are "hot" is workload-specific. **Document as opt-in**, suggest
+  `chattr +C ~/.local/share/containers`, VM dirs, etc.
+
+Example fstab line the configurator should emit for the root subvol:
+
+```
+UUID=<root> /  btrfs  subvol=@,compress=zstd:1,noatime,ssd,space_cache=v2  0 0
+```
+
+Why not on by default upstream: archinstall/Arch stay conservative for compatibility/generality
+(Fedora *does* ship zstd:1). The safe two should just be on; the scalpel stays manual by nature.
+
 ### Step 6 — Rewrite docs/06
 
 - Fold in what Path A settled (kernel/DTB/GPU all resolved) and point at this file.
