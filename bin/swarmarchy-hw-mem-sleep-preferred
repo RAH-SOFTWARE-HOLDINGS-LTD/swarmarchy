@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# swarmarchy:summary=Print the suspend mode this machine should use, or nothing if there is no choice to make.
+# swarmarchy:examples=swarmarchy-hw-mem-sleep-preferred
+
+sysfile="/sys/power/mem_sleep"
+
+# No suspend-to-memory support at all (or a kernel without SUSPEND): nothing to choose.
+[[ -r $sysfile ]] || exit 0
+
+# ACPI platforms are left alone. There "deep" is real S3 and is normally the
+# better choice, and we have no way to verify that from here.
+[[ -d /sys/firmware/acpi ]] && exit 0
+
+# Device-tree platforms (arm64 laptops). "deep" maps to PSCI SYSTEM_SUSPEND,
+# which on current hardware commonly suspends and never resumes; suspend-to-idle
+# is the path that actually works. Emit it only if the kernel offers it -- if
+# s2idle is absent there is nothing to fix and we leave the default alone.
+#
+# Format of mem_sleep is a space-separated list with the active mode bracketed,
+# e.g. "s2idle [deep]".
+for mode in $(tr -d '[]' <"$sysfile"); do
+  if [[ $mode == "s2idle" ]]; then
+    echo "s2idle"
+    exit 0
+  fi
+done
