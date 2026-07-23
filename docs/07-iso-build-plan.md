@@ -121,18 +121,45 @@ Kills blocker #2. Independent of Step 1, so do it while that build churns.
 repo-add -s -v swarmarchy.db.tar.zst *.pkg.tar.zst
 ```
 
-- Sync to R2:
+- Sync to R2 (object storage is flat — the object *key* becomes the URL path, so a key of
+  `stable/aarch64/walker-….pkg.tar.zst` is served at `<host>/stable/aarch64/walker-….pkg.tar.zst`.
+  This is why R2 gives clean `$arch` paths that GitHub Releases can't):
 
 ```sh
 rclone copy build-output/stable/aarch64/ Swarmarchy:swarmarchy-pkgs/stable/aarch64/ -P
 ```
 
-- Then add one section to `configs/pacman-online-*.conf`:
+- Then add one section to `configs/pacman-online-*.conf` (matches omarchy's `stable/$arch`
+  layout; `$arch` → `aarch64`, channel hardcoded per config file):
 
 ```ini
 [swarmarchy]
-Server = https://pkgs.<your-domain>/$repo/aarch64
+Server = https://pkgs.swarmarchy.org/stable/$arch
 ```
+
+#### R2 hosting notes
+
+- **Bucket:** `swarmarchy-pkgs`. Keys are `stable/aarch64/<file>` — no real folders, the key
+  string *is* the path.
+- **Two ways to expose it:**
+  - `r2.dev` managed subdomain (bucket → Settings → Public access) — free, instant, good for
+    testing. `https://pub-<hash>.r2.dev/stable/aarch64/…`. Rate-limited by CF, "not for production."
+  - Custom domain (`pkgs.swarmarchy.org` → connect to bucket) — routes through the Cloudflare
+    edge. **Required if you want the domain to look right AND to attach protection rules.**
+- **⚠️ ABUSE / RATE-LIMIT REMINDER (user asked for this):** the repo is public (as all pacman
+  repos are), and R2's zero-egress means download-hammering can't run up a bill — but still add
+  protection so nobody uses it as free CDN/file-host:
+  - Rules **only apply on a custom domain (or a Worker in front)** — you CANNOT attach custom
+    WAF/rate-limit rules to a bare `r2.dev` URL. So step one is "put it on `pkgs.swarmarchy.org`."
+  - In the Cloudflare dashboard for that hostname, add:
+    - a **Rate Limiting Rule** (free tier allows one) — e.g. >100 req/min from one IP to
+      `/stable/*` → managed challenge or block for 10 min.
+    - **WAF** managed ruleset (free tier) enabled on the hostname.
+    - optionally a **Cache Rule** so repeated package pulls are served from CF cache, not R2
+      (cuts R2 Class B ops too).
+- **Credentials:** `bin/swarmarchy-iso-rclone-config` still points at omarchy's bucket +
+  1Password paths (`op://Shared/Cloudflare Buckets/iso.omarchy.org/…`, `--account Swarmarchy`).
+  Repoint to the user's R2 API token + bucket before first sync.
 
 ### Step 3 — Swap the base mirror to HTTPS
 
@@ -184,10 +211,14 @@ Server = http://mirror.archlinuxarm.org/$arch/$repo
 
 ## Settled logistics (was "open questions")
 
-- **Hosting: user's own Cloudflare account.** R2 + rclone, as omarchy does.
-  - **No custom domain needed to start** — an R2 bucket's free `*.r2.dev` URL works as a pacman
-    `Server =` line. A domain (`pkgs.swarmarchy.org`) is optional polish for later; `r2.dev` is
-    rate-limited / "not for production", so buy the domain only when installs actually hit it.
+- **Hosting: user's own Cloudflare account.** R2 + rclone, as omarchy does. Free at this scale
+  (few hundred MB « 10 GB free tier; zero egress kills the cost-abuse vector). See the "R2
+  hosting notes" under Step 2 for the bucket layout, the flat-key→URL-path explanation, and the
+  **rate-limit/WAF reminder** (rules need a custom domain — they can't attach to a bare `r2.dev`
+  URL).
+  - **`r2.dev` URL is fine to START/test** (free, instant) but gets no custom protection rules.
+    A custom domain (`pkgs.swarmarchy.org`) is what enables WAF + rate-limiting — so it's less
+    "optional polish" and more "needed before this is public-facing for real."
   - The inherited `bin/swarmarchy-iso-rclone-config` still points at omarchy's bucket +
     1Password paths (`op://Shared/Cloudflare Buckets/iso.omarchy.org/…`, `--account Swarmarchy`).
     **Repoint it at the user's bucket/credentials as part of Step 2** — do not reuse as-is.
