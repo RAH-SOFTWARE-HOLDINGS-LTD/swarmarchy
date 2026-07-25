@@ -25,9 +25,23 @@ pkill -f org.swarmarchy.screensaver
 
 if [[ ${SWARMARCHY_LOCK_ONLY:-false} != "true" ]]; then
   (
-    sleep 3
+    # Wait for swaylock to actually come up.
+    for _ in $(seq 1 30); do pidof swaylock >/dev/null && break; sleep 0.1; done
     pidof swaylock >/dev/null || exit 0
+
     swarmarchy-brightness-keyboard off
-    swarmarchy-brightness-display off
+
+    # Blank the display via a swayidle DPMS stage scoped to this lock, instead of a
+    # detached `brightness off`. Because the off/on are one swayidle timeout/resume
+    # pair, ANY keypress wakes the screen back to the lock screen -- fixing the old
+    # bug where the backlight went off with nothing to restore it and the screen
+    # got stuck black with no visual feedback. Torn down when swaylock exits.
+    swayidle -w \
+      timeout 5 'swaymsg "output * dpms off"' \
+      resume 'swaymsg "output * dpms on"' &
+    blanker=$!
+    while pidof swaylock >/dev/null; do sleep 0.5; done
+    kill "$blanker" 2>/dev/null
+    swaymsg "output * dpms on" >/dev/null 2>&1
   ) &
 fi

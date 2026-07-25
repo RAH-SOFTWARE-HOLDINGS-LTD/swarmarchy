@@ -5,8 +5,11 @@
 # Single source of truth for the idle daemon, shared by Sway autostart and
 # swarmarchy-toggle-idle.
 
+# Lock after 5 min idle. Blanking + wake-on-keypress is handled inside
+# swarmarchy-system-lock (a scoped swayidle DPMS stage), so we do NOT blank the
+# display from here and don't need a `resume` brightness-restore for the idle lock.
 exec swayidle -w \
-  timeout 152 'swarmarchy-system-lock' resume 'swarmarchy-system-wake' \
+  timeout 300 'swarmarchy-system-lock' \
   before-sleep 'SWARMARCHY_LOCK_ONLY=true swarmarchy-system-lock' \
   after-resume 'sleep 1 && swarmarchy-system-wake' \
   lock 'swarmarchy-system-lock'
