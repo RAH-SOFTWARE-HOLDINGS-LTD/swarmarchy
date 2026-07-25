@@ -33,9 +33,10 @@ Elite) with no install-time prompts.
 - **AUR package repo: Cloudflare R2 + rclone**, shaped like `omarchy-pkgs`.
   - Omarchy builds PKGBUILDs → GPG-signs → `rclone` syncs a `{channel}/{arch}/` tree.
   - `bin/swarmarchy-iso-rclone-config` already configures `type = s3 / provider = Cloudflare`.
-- **Firmware: staged onto the USB at image-build time.**
-  - Run `copy-qcom-firmware.ps1` on Windows, then [`05`](./05-install-on-yoga.md) §1.1 bakes
-    the result into the image. Installer auto-detects and copies it in. No prompts.
+- **Firmware: user-staged, provisioned at install time (never baked into the published ISO).**
+  - Run `copy-qcom-firmware.ps1` on Windows → a `firmware/` dir; drop it on a USB partition. The
+    installer auto-detects the staged dir and drops the blobs at the board path. No prompts.
+    Does NOT read the Windows partition — user-staged only. See Step 4.
 
 ## What does NOT need solving
 
@@ -182,19 +183,38 @@ Server = http://mirror.archlinuxarm.org/$arch/$repo
     at ALARM instead.
   - It is a **read-only** mirror — no uploads, no signup. It cannot host `swarmarchy-pkgs`.
 
-### Step 4 — Firmware staging
+### Step 4 — Firmware staging ✅ DONE (2026-07-25)
 
-- Extend [`05`](./05-install-on-yoga.md) §1.1 image build to copy `qcom-firmware/` into the image.
-- Installer side: detect the staged directory and drop it at the board path:
+**Design refined from the original bullet.** "Copy `firmware/` into the image" doesn't fit a
+`dd`-ed ISO9660 — the medium is read-only, so nothing can be injected post-build, and licensing bars
+baking it into the *published* ISO anyway. Instead the firmware is **user-staged** and provisioned
+**at install time**:
+
+- The user runs [`copy-qcom-firmware.ps1`](./copy-qcom-firmware.ps1) on Windows to collect the blobs
+  into a `firmware/` directory, then drops that directory onto any disk attached at install time
+  (a second partition on the USB, or a second stick).
+- The installer scans attached filesystems for that staged `firmware/` dir (identified by the
+  `.ps1`'s `MANIFEST.csv`, then confirmed by actually finding the blobs inside).
+
+Deliberately does NOT read the firmware out of the Windows partition — user-staged only, per the
+locked decision. Implemented as `configs/airootfs/usr/local/bin/swarmarchy-stage-qcom-firmware`
+(registered in `profiledef.sh`), called at the end of `install_base_system` in
+`.automated_script.sh` as `swarmarchy-stage-qcom-firmware /mnt`. It finds the five blobs by name
+across scattered staged subfolders and places them **flattened** at the board path:
 
 ```sh
 /lib/firmware/qcom/x1e80100/LENOVO/83ED/
+# qcadsp8380.mbn  adsp_dtbs.elf  qccdsp8380.mbn  cdsp_dtbs.elf  qcdxkmsuc8380.mbn
 ```
 
-- Contents: `qcadsp8380.mbn`, `adsp_dtbs.elf`, `qccdsp8380.mbn`, `cdsp_dtbs.elf`,
-  `qcdxkmsuc8380.mbn`.
-- Licensing blocks redistribution — this is why it is staged per-machine and never baked
-  into a published ISO.
+The bulk copy alone doesn't land them here — this exact path is what the `msm` (GPU/display) and
+`remoteproc` (ADSP/CDSP → Type-C DP-alt monitors + audio) drivers probe (see
+[`05`](./05-install-on-yoga.md) §"External monitors"). Best-effort and **non-fatal**: it board-gates
+on `x1e80100` in the DT compatible and no-ops on other hardware, and if no source is found it warns
+and lets the install finish.
+
+**NOT YET hardware-tested** — flatten/place logic is unit-tested; the block-device scan for the
+staged `firmware/` dir needs a real Yoga install run to confirm.
 
 ### Step 5 — Configurator
 

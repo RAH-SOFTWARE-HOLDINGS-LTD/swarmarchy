@@ -1,0 +1,67 @@
+## General Steps taken to install ArchLinux via bootable USB drive
+
+1. Format the partition
+2. mount /mnt
+3. wget http:....archlinuxarm.tar.gz
+4. gunzip archlinuxarm.tar.gz
+5. tar -xpvf archlinuxarm.tar # v prints each file so we can watch the progress - it somehow worked? :shrug:
+6. ESP=/dev/nvme0n1p1
+7. mkdir -p /mnt/boot/efi && mount $ESP /mnt/boot/efi
+8. FW=/root/qcom-firmware # where qcom firmware was placed when the flash drive was flashed with ArchLinux
+9. for d in dev proce sys run; do mount --rbind /$d /mnt/$d; done
+10. cp -a /root/qcom-firmware/* /mnt/lib/firmware/qcom/
+11. chroot /mnt /bin/bash
+  a. date -s "2026-07-10 12:00:00"
+  b. pacman-key -init && pacman-key --populate archlinuxarm
+  c. Fix /etc/resolv.conf: printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8 \n' > /etc/resolv.conf
+     ->  pacman -Syyu
+  d. ln -sf /usr/share/zoneinfo/America/Vancouver /etc/localtime && hwclock --systohc
+  e. local-gen
+     echo "LANG=en_US.UTF-8" > /etc/locale.conf
+  f. passwd
+  g. useradd -mG wheel <you> && passwd <you>
+  h. ESP=/dev/nvme0n1p1; ROOT=/dev/nvme0n1p5
+  i.
+  ```bash
+  ROOT_UUID=$(blkid -s UUID -o value /dev/nvme0n1p5)
+  ESP_UUID=$(blkid -s UUID -o value /dev/nvme0n1p1)
+
+  cat > /etc/fstab <<EOF
+  UUID=$ROOT_UUID /         ext4 defaults 0 1
+  UUID=$ESP_UUID /boot/efi  ext4 defaults,noatime 0 2
+  EOF
+  cat /etc/fstab
+  ```
+  j. pacman -S linux-aarch64 linux-firmware mkinitcpio grub efibootmgr networkmanager sudo systemctl enable NetworkManager
+
+  k. EDITOR=nano visudo # uncomment: %wheel ALL=(ALL:ALL) ALL
+
+    # check that kernel actually landed in /boot
+    ls /boot                          # expect: Image / vmlinuz-linux-aarch64, initramfs-*.img
+    ls /boot/dtbs/qcom/ | grep yoga   # DTB should be here from the kernel package
+
+  l. ln -s /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-user.target.wants/NetworkManager.service
+12. reboot -> f12 -> USB -> grub menu press e (or c for console)
+```
+ls -> (hd0) (hd0,gpt1) (hd0,gpt5)... Find the one hlding your Arch /boot
+ls (hd0,gpt5)/
+insmod ext2
+set root=(hd0,gpt5)             #your nvme p5 - you'll tab-complete to find the right hdN
+linux /boot/Image root=/dev/nvme0n1p5 rw pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamp cma=128M rootwait loglevel=7
+initrd /boot/initramfs-linux.img
+devicetree /boot/dtbs/qcom/x1e80100-lenovo-yoga-slim7x.dtb
+boot
+```
+
+13. configure grub
+```
+# to claude: is this chroot or not? chroot, right?
+grub-install --target=arm64-efi --efi-directory=/boot/efi --bootloader-id=arch --removable=no
+grub-mkconfig -o /boot/grub/grub.cfg
+```
+
+14. F12 -> USB. Register boot entry properly (if not registered yet?)
+efibootmgr -c -d /dev/nvme0n1 -p 1 -L "Arch" -l '\EFI\BOOT\BOOTAA64.EFI'
+
+15. Claude: check conversation to figure out the rest of the boot manager shit..
+16.

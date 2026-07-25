@@ -27,11 +27,11 @@ References (don't improvise the device bring-up):
 3. **UEFI/BIOS** → disable **Secure Boot**
 4. **Collect Qualcomm FW** — PowerShell as *Administrator* (to include ACL'd dirs):
    ```powershell
-   .\copy-qcom-firmware.ps1 -Destination C:\qcom-firmware\
+   .\copy-qcom-firmware.ps1 -Destination C:\        # creates C:\firmware\
    ```
    - grabs `*.mbn` `*.jsn` `*dtbs.elf` from `…\DriverStore\FileRepository\` + a `MANIFEST.csv`
    - add `*.elf` to also get Wi-Fi/camera blobs
-   - reachable from WSL later at `/mnt/c/qcom-firmware`
+   - reachable from WSL later at `/mnt/c/firmware`
 
 ## Step 1 — Get bare Arch Linux ARM booting ⚠️
 
@@ -94,10 +94,10 @@ sudo sh -c 'find . | cpio -o -H newc | gzip > ~/initrd.baked.gz'    # ~905 MB
   - `cp -r` (not `-a`) so drvfs's 777/ownership don't carry into the initramfs
 
 ```bash
-rm -rf ~/fwseg && mkdir -p ~/fwseg/root && cp -r /mnt/c/qcom-firmware ~/fwseg/root/   # straight off Windows C:\
+rm -rf ~/fwseg && mkdir -p ~/fwseg/root && cp -r /mnt/c/firmware ~/fwseg/root/   # straight off Windows C:\
 ( cd ~/fwseg && find root | cpio -o -H newc 2>/dev/null | gzip ) > ~/fw.cpio.gz
 cat ~/initrd.baked.gz ~/fw.cpio.gz > ~/initrd.final.gz   # ~935 MB
-zcat ~/initrd.final.gz | grep -a -c 'qcom-firmware/MANIFEST.csv'    # expect 1
+zcat ~/initrd.final.gz | grep -a -c 'firmware/MANIFEST.csv'    # expect 1
 ```
 
 - **e) Extract SRC's boot tree, swap in the fat initrd**
@@ -195,11 +195,11 @@ ESP=${NVME}p1            # existing Windows ESP — reuse, never format
     cd /mnt && gunzip -c /root/ArchLinuxARM-aarch64-latest.tar.gz | tar -xpf -
     ```
   - **iv) Copy the firmware onto the root**
-    - it's at `/root/qcom-firmware` (baked into the initrd); copy the whole tree
+    - it's at `/root/firmware` (baked into the initrd); copy the whole tree
     - the driver loads only what the DTB names; `dmesg` flags any exact-path stragglers post-boot
     ```sh
     mkdir -p /mnt/lib/firmware/qcom
-    cp -a /root/qcom-firmware/* /mnt/lib/firmware/qcom/
+    cp -a /root/firmware/* /mnt/lib/firmware/qcom/
     ```
   - **v) Bind-mount + chroot**
     - carry DNS in so pacman works inside the chroot
@@ -478,7 +478,7 @@ dmesg | grep -i remoteproc      # shows -2 (file not found) for adsp/cdsp
 ```
 
 - cause: the Type-C DP-alt stack (`pmic_glink` / `charger_pd`) needs the **ADSP + CDSP** remoteproc firmware at the exact board path, which the bulk firmware copy doesn't land there
-- fix — place the four blobs (from your Step 0 `qcom-firmware/`, or re-extract from Windows), then **reboot** (the audio card only re-probes on a full reboot):
+- fix — place the four blobs (from your Step 0 `firmware/`, or re-extract from Windows), then **reboot** (the audio card only re-probes on a full reboot):
 
 ```sh
 sudo mkdir -p /lib/firmware/qcom/x1e80100/LENOVO/83ED/
@@ -616,7 +616,7 @@ cp ~/ArchLinuxARM-aarch64-latest.tar.gz /mnt/data/  # copy AS-IS, don't unpack
 - **d) Copy the Step 0 firmware onto DATA**
 
 ```bash
-cp -r /mnt/c/qcom-firmware /mnt/data/
+cp -r /mnt/c/firmware /mnt/data/
 ```
 
 - overwrite the boot partition's `initrd.gz` with `initrd-new.gz`, then continue at **1.2**
@@ -624,7 +624,7 @@ cp -r /mnt/c/qcom-firmware /mnt/data/
   ```sh
   mkdir -p /mnt/data && mount /dev/disk/by-label/DATA /mnt/data
   cd /mnt && gunzip -c /mnt/data/ArchLinuxARM-aarch64-latest.tar.gz | tar -xpf -
-  mkdir -p /mnt/lib/firmware/qcom && cp -a /mnt/data/qcom-firmware/* /mnt/lib/firmware/qcom/
+  mkdir -p /mnt/lib/firmware/qcom && cp -a /mnt/data/firmware/* /mnt/lib/firmware/qcom/
   ```
 
 ## References

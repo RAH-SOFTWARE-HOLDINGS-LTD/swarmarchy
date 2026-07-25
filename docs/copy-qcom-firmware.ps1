@@ -8,7 +8,7 @@
 .DESCRIPTION
   Implements docs/05-install-on-yoga.md, Step 0's "copy out the Qualcomm firmware" bullet.
   Recursively scans C:\Windows\System32\DriverStore\FileRepository\ for the firmware and
-  copies it to <Destination>\qcom-firmware\, PRESERVING each file's source subfolder so
+  copies it to <Destination>\firmware\, PRESERVING each file's source subfolder so
   same-named blobs (e.g. adsp.mbn) from different driver packages don't overwrite each other.
   Also writes MANIFEST.csv listing every file and its original path.
 
@@ -20,7 +20,7 @@
   exact target layout.
 
 .PARAMETER Destination
-  Target root, typically your USB drive letter, e.g. E:\  -- a 'qcom-firmware' folder is
+  Target root, typically your USB drive letter, e.g. E:\  -- a 'firmware' folder is
   created underneath it.
 
 .PARAMETER Source
@@ -59,7 +59,7 @@ if (-not $isAdmin) {
 }
 
 $Source   = (Resolve-Path -LiteralPath $Source).Path.TrimEnd('\')
-$destRoot = Join-Path $Destination 'qcom-firmware'
+$destRoot = Join-Path $Destination 'firmware'
 New-Item -ItemType Directory -Force -Path $destRoot | Out-Null
 
 Write-Host "Scanning $Source ..." -ForegroundColor Cyan
