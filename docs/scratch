@@ -65,3 +65,10 @@ efibootmgr -c -d /dev/nvme0n1 -p 1 -L "Arch" -l '\EFI\BOOT\BOOTAA64.EFI'
 
 15. Claude: check conversation to figure out the rest of the boot manager shit..
 16.
+
+
+
+
+RuntimeWatchdogSec=20s is set in /etc/systemd/system.conf. To turn it off whenever you want:
+sudo sed -i 's/^RuntimeWatchdogSec=.*/#RuntimeWatchdogSec=off/' /etc/systemd/system.conf
+sudo systemctl daemon-reexec
