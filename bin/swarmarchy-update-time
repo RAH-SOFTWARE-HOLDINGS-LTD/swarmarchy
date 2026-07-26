@@ -5,3 +5,18 @@
 
 echo "Updating time..."
 sudo systemctl restart systemd-timesyncd
+
+# timesyncd only polls once networkd reports the system online; if the wireless
+# link is unmanaged that never happens and it stays silent instead of failing.
+# Wait for an actual server contact rather than assuming the restart worked.
+for _ in {1..15}; do
+  if [[ -n $(timedatectl show-timesync -p ServerName --value 2>/dev/null) ]]; then
+    echo "Time synchronized: $(date)"
+    exit 0
+  fi
+  sleep 1
+done
+
+echo "systemd-timesyncd did not reach an NTP server." >&2
+echo "Check 'networkctl status' — ONLINE_STATE must not be offline." >&2
+exit 1
