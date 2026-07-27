@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# swarmarchy:summary=Install repo files into the system tree (/usr/lib, /usr/share, /etc/skel)
+# swarmarchy:args=[--dry-run]
+# swarmarchy:examples=swarmarchy dev deploy | swarmarchy dev deploy --dry-run | DESTDIR=/tmp/stage swarmarchy dev deploy
+# swarmarchy:requires-sudo=true
+
+# Deploys the repo as a source tree: nothing here requires the checkout to remain
+# on the machine afterwards. The layout mirrors what a PKGBUILD's package() would
+# stage, so DESTDIR= produces exactly the tree a package would ship.
+#
+#   $PREFIX/lib/swarmarchy/bin/                            executables
+#   $PREFIX/share/swarmarchy/{default,themes,applications} read-only data
+#   $PREFIX/bin/swarmarchy                                 dispatcher symlink
+#   /etc/skel/.config/                                     skeleton for new users
+#   /                                                      system/ tree, verbatim
+#
+# Executables live under lib/ rather than $PREFIX/bin so that every directory we
+# rsync --delete into is one we own outright; deleting stale files out of a shared
+# /usr/bin would take the rest of the system with it.
+#
+# Live ~/.config is never touched. Defaults still reach existing users because
+# their configs include $PREFIX/share/swarmarchy/default/... directly.
+
+set -eEo pipefail
+
+DRY_RUN=false
+[[ $1 == "--dry-run" ]] && DRY_RUN=true
+
+SRC=$(git -C "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" rev-parse --show-toplevel 2>/dev/null) || {
+  echo "swarmarchy-dev-deploy must run from a Swarmarchy git checkout." >&2
+  exit 1
+}
+
+PREFIX="${PREFIX:-/usr}"
+LIBDIR="$DESTDIR$PREFIX/lib/swarmarchy"
+SHARE="$DESTDIR$PREFIX/share/swarmarchy"
+SKEL="$DESTDIR/etc/skel"
+
+# Staging into a DESTDIR is an ordinary file copy; only a live deploy needs root.
+if [[ -n $DESTDIR ]]; then
+  SUDO=()
+else
+  SUDO=(sudo)
+fi
+
+RSYNC=(rsync -a --delete)
+if $DRY_RUN; then
+  RSYNC+=(--dry-run --itemize-changes)
+fi
+
+# Refuse to deploy a commit that isn't signed by a trusted key. Off by default so
+# unsigned history stays deployable; set SWARMARCHY_VERIFY=1 once commit signing
+# is configured (git config gpg.format ssh + user.signingkey + commit.gpgsign).
+if [[ ${SWARMARCHY_VERIFY:-0} == 1 ]]; then
+  if ! git -C "$SRC" verify-commit HEAD 2>/dev/null; then
+    echo "HEAD is unsigned or signed by an untrusted key — refusing to deploy." >&2
+    echo "Unset SWARMARCHY_VERIFY to bypass, or sign the commit." >&2
+    exit 1
+  fi
+  echo "Verified signature on $(git -C "$SRC" rev-parse --short HEAD)"
+fi
+
+echo "Deploying $(git -C "$SRC" rev-parse --short HEAD) -> ${DESTDIR:-/}"
+if $DRY_RUN; then
+  echo "(dry run — no changes will be made)"
+fi
+
+# ─── Read-only data ───────────────────────────────────────────────────────────
+"${SUDO[@]}" install -d "$SHARE"
+
+for dir in default themes applications; do
+  [[ -d $SRC/$dir ]] || continue
+  "${SUDO[@]}" "${RSYNC[@]}" "$SRC/$dir/" "$SHARE/$dir/"
+done
+
+if ! $DRY_RUN; then
+  for file in logo.txt icon.txt icon.png version LICENSE; do
+    [[ -f $SRC/$file ]] || continue
+    "${SUDO[@]}" install -Dm644 "$SRC/$file" "$SHARE/$file"
+  done
+fi
+
+# ─── Executables ──────────────────────────────────────────────────────────────
+# swarmarchy-dev-* are maintainer tools that operate on a checkout, which a
+# deployed machine does not have.
+"${SUDO[@]}" install -d "$LIBDIR"
+"${SUDO[@]}" "${RSYNC[@]}" --exclude='swarmarchy-dev-*' --chmod=F755 \
+  "$SRC/bin/" "$LIBDIR/bin/"
+
+# One entry point on the default PATH; the rest resolve through the PATH entry
+# that default/bash/envs and config/environment.d/sway.conf provide.
+if ! $DRY_RUN; then
+  "${SUDO[@]}" install -d "$DESTDIR$PREFIX/bin"
+  "${SUDO[@]}" ln -sfn "$PREFIX/lib/swarmarchy/bin/swarmarchy" \
+    "$DESTDIR$PREFIX/bin/swarmarchy"
+fi
+
+# ─── Skeleton for new users ───────────────────────────────────────────────────
+# Copied by useradd at account creation only. It never reaches an existing
+# ~/.config, which is the point: user edits are not ours to overwrite.
+"${SUDO[@]}" install -d "$SKEL/.config"
+"${SUDO[@]}" "${RSYNC[@]}" "$SRC/config/" "$SKEL/.config/"
+
+if [[ -f $SRC/default/bashrc ]] && ! $DRY_RUN; then
+  "${SUDO[@]}" install -Dm644 "$SRC/default/bashrc" "$SKEL/.bashrc"
+fi
+
+# ─── System tree ──────────────────────────────────────────────────────────────
+# system/ mirrors the target filesystem verbatim (system/etc/foo -> /etc/foo).
+# Absent until the unconditional install/config scripts are converted to files.
+if [[ -d $SRC/system ]]; then
+  # No --delete: this tree interleaves with directories owned by other packages,
+  # so it may only add and overwrite its own files.
+  DEPLOY=(rsync -a)
+  if $DRY_RUN; then
+    DEPLOY+=(--dry-run --itemize-changes)
+  fi
+  "${SUDO[@]}" "${DEPLOY[@]}" "$SRC/system/" "$DESTDIR/"
+
+  # sudoers ignores — and warns about — any file that is group- or world-writable.
+  if [[ -d $SRC/system/etc/sudoers.d ]] && ! $DRY_RUN; then
+    "${SUDO[@]}" chmod 0440 "$DESTDIR/etc/sudoers.d"/*
+    "${SUDO[@]}" visudo -c >/dev/null
+  fi
+fi
+
+# ─── Reload ───────────────────────────────────────────────────────────────────
+# A staged tree is not the running system, so reloading it would be wrong.
+if [[ -z $DESTDIR ]] && ! $DRY_RUN; then
+  sudo systemctl daemon-reload
+  sudo sysctl --system >/dev/null 2>&1 || true
+fi
+
+if ! $DRY_RUN; then
+  echo "Deployed."
+fi
