@@ -1,7 +1,7 @@
 if swarmarchy-battery-present; then
   cat <<EOF | sudo tee "/etc/udev/rules.d/99-power-profile.rules"
-SUBSYSTEM=="power_supply", ATTR{type}=="Mains", RUN+="/usr/bin/systemd-run --no-block --collect --unit=swarmarchy-power-profile --property=After=power-profiles-daemon.service $HOME/.local/share/swarmarchy/bin/swarmarchy-powerprofiles-set"
-SUBSYSTEM=="power_supply", ATTR{type}=="USB", RUN+="/usr/bin/systemd-run --no-block --collect --unit=swarmarchy-power-profile --property=After=power-profiles-daemon.service $HOME/.local/share/swarmarchy/bin/swarmarchy-powerprofiles-set"
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", RUN+="/usr/bin/systemd-run --no-block --collect --unit=swarmarchy-power-profile --property=After=power-profiles-daemon.service /usr/lib/swarmarchy/bin/swarmarchy-powerprofiles-set"
+SUBSYSTEM=="power_supply", ATTR{type}=="USB", RUN+="/usr/bin/systemd-run --no-block --collect --unit=swarmarchy-power-profile --property=After=power-profiles-daemon.service /usr/lib/swarmarchy/bin/swarmarchy-powerprofiles-set"
 EOF
 
   sudo systemctl enable power-profiles-daemon

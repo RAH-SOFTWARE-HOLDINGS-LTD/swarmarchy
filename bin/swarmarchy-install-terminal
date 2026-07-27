@@ -38,7 +38,7 @@ if swarmarchy-pkg-add $package; then
 
   # Copy default config for optional terminals when missing
   if [[ ! -e ~/.config/$package ]]; then
-    cp -Rpf "$SWARMARCHY_PATH/config/$package" ~/.config/
+    cp -Rpf "/etc/skel/.config/$package" ~/.config/
   fi
 
   # Update xdg-terminals.list to prioritize the proper terminal

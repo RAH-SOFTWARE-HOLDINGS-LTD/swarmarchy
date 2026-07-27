@@ -3,16 +3,16 @@
 # swarmarchy:summary=Ensure all default .desktop, web apps, TUIs, and npx wrappers are installed.
 
 mkdir -p ~/.local/share/icons/hicolor/48x48/apps/
-cp ~/.local/share/swarmarchy/applications/icons/*.png ~/.local/share/icons/hicolor/48x48/apps/
+cp /usr/share/swarmarchy/applications/icons/*.png ~/.local/share/icons/hicolor/48x48/apps/
 gtk-update-icon-cache ~/.local/share/icons/hicolor &>/dev/null
 
 # Copy .desktop declarations
 mkdir -p ~/.local/share/applications
-cp ~/.local/share/swarmarchy/applications/*.desktop ~/.local/share/applications/
-cp ~/.local/share/swarmarchy/applications/hidden/*.desktop ~/.local/share/applications/
+cp /usr/share/swarmarchy/applications/*.desktop ~/.local/share/applications/
+cp /usr/share/swarmarchy/applications/hidden/*.desktop ~/.local/share/applications/
 
 if swarmarchy-cmd-present foot; then
-  cp ~/.local/share/swarmarchy/default/foot/foot.desktop ~/.local/share/applications/
+  cp /usr/share/swarmarchy/default/foot/foot.desktop ~/.local/share/applications/
 fi
 
 # Refresh the webapps, TUIs, and npx wrappers

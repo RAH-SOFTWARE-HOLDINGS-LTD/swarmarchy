@@ -13,8 +13,8 @@ if (( EUID == 0 )); then
 fi
 
 echo "Resetting all Swarmarchy configs"
-cp -R ~/.local/share/swarmarchy/config/* ~/.config/
-cp ~/.local/share/swarmarchy/default/bashrc ~/.bashrc
+cp -R /etc/skel/.config/* ~/.config/
+cp /usr/share/swarmarchy/default/bashrc ~/.bashrc
 echo '[[ -f ~/.bashrc ]] && . ~/.bashrc' | tee ~/.bash_profile >/dev/null
 
 $(bash $SWARMARCHY_PATH/install/config/theme.sh)

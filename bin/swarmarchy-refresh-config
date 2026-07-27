@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# swarmarchy:summary=Copies the named config from ~/.local/share/swarmarchy/config/X/Y/Z -> ~/.config/X/Y/Z.
+# swarmarchy:summary=Copies the named config from /etc/skel/.config/X/Y/Z -> ~/.config/X/Y/Z.
 # swarmarchy:args=<config-path>
 
 config_file=$1
@@ -10,7 +10,7 @@ if [[ -z $config_file ]]; then
   Usage: $0 [config_file]
 
   Must provide a file path from the .config directory to be refreshed.
-  To copy ~/.local/share/swarmarchy/config/swaylock/config to ~/.config/swaylock/config
+  To copy /etc/skel/.config/swaylock/config to ~/.config/swaylock/config
 
     $0 swaylock/config
 USAGE
@@ -19,7 +19,7 @@ fi
 
 # Backup the destination file (with timestamp) to avoid clobbering (Ex: config.bak.1753817951)
 user_config_file="${HOME}/.config/$config_file"
-default_config_file="${HOME}/.local/share/swarmarchy/config/$config_file"
+default_config_file="/etc/skel/.config/$config_file"
 backup_config_file="$user_config_file.bak.$(date +%s)"
 
 mkdir -p "$(dirname "$user_config_file")"

@@ -20,8 +20,8 @@ eval "$(systemctl --user show-environment 2>/dev/null | sed 's/^/export /')" 2>/
 # Fallback: if the user manager was not up yet, at least guarantee the swarmarchy
 # bin dir resolves, so keybinds work even in the degraded case.
 case ":$PATH:" in
-  *":$HOME/.local/share/swarmarchy/bin:"*) ;;
-  *) export PATH="$HOME/.local/share/swarmarchy/bin:$PATH" ;;
+  *":/usr/lib/swarmarchy/bin:"*) ;;
+  *) export PATH="/usr/lib/swarmarchy/bin:$PATH" ;;
 esac
 
 exec sway "$@"

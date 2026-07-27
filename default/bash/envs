@@ -6,6 +6,7 @@ export BAT_THEME=ansi
 export MANROFFOPT="-c"
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
-# Duplicated from .config/uwsm/env so SSH works too
-export SWARMARCHY_PATH=$HOME/.local/share/swarmarchy
-export PATH=$SWARMARCHY_PATH/bin:$PATH:$HOME/.local/bin
+# Duplicated from .config/environment.d/sway.conf so SSH works too.
+# SWARMARCHY_PATH is the deployed data root; executables sit under /usr/lib.
+export SWARMARCHY_PATH=/usr/share/swarmarchy
+export PATH=/usr/lib/swarmarchy/bin:$PATH:$HOME/.local/bin

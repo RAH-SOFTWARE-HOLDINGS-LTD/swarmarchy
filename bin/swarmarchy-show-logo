@@ -4,6 +4,6 @@
 
 clear
 echo -e "\033[32m"
-cat <~/.local/share/swarmarchy/logo.txt
+cat </usr/share/swarmarchy/logo.txt
 echo -e "\033[0m"
 echo

@@ -7,7 +7,7 @@
 set -e
 
 COMMAND="$1"
-SWARMARCHY_PATH=${SWARMARCHY_PATH:-$HOME/.local/share/swarmarchy}
+SWARMARCHY_PATH=${SWARMARCHY_PATH:-/usr/share/swarmarchy}
 
 if [[ -z $COMMAND ]]; then
   echo "Usage: swarmarchy-snapshot <create|restore>" >&2

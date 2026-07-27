@@ -1,0 +1,19 @@
+# Let networkd track the wireless link so it counts toward ONLINE_STATE.
+#
+# iwd does its own DHCP, so without a matching .network file networkd leaves
+# wlan0 unmanaged and reports ONLINE_STATE=offline even while the link is
+# routable. systemd-timesyncd only polls once the system is considered online,
+# so it sits idle forever and the clock free-runs on the RTC.
+#
+# DHCP=no with KeepConfiguration=yes means networkd tracks the link without
+# touching iwd's addressing.
+[Match]
+Name=wlan*
+
+[Network]
+DHCP=no
+LinkLocalAddressing=no
+KeepConfiguration=yes
+
+[Link]
+RequiredForOnline=routable

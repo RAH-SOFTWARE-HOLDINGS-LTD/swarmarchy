@@ -16,7 +16,7 @@ announce_browser_installed() {
 
 copy_chromium_flags() {
   mkdir -p ~/.config
-  cp -f "${SWARMARCHY_PATH:-$HOME/.local/share/swarmarchy}/config/chromium-flags.conf" "$1"
+  cp -f "${SWARMARCHY_PATH:-/usr/share/swarmarchy}/config/chromium-flags.conf" "$1"
 }
 
 setup_firefox_preferences() {
@@ -69,7 +69,7 @@ brave-origin)
   setup_policy_directory /etc/brave/policies/managed
   mkdir -p ~/.config
   # FIXME: Use normal chromium flags when Brave Origin wrapper has been fixed
-  echo "--load-extension=~/.local/share/swarmarchy/default/chromium/extensions/copy-url" > ~/.config/brave-origin-beta-flags.conf
+  echo "--load-extension=/usr/share/swarmarchy/default/chromium/extensions/copy-url" > ~/.config/brave-origin-beta-flags.conf
   swarmarchy-theme-set-browser
   announce_browser_installed "Brave Origin"
   ;;

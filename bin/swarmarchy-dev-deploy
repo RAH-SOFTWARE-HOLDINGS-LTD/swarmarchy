@@ -44,7 +44,12 @@ else
   SUDO=(sudo)
 fi
 
-RSYNC=(rsync -a --delete)
+# -a implies -o -g, which would stamp the *source* owner onto the destination:
+# deploying as root then leaves /etc files owned by the maintainer's uid, and
+# sudo silently ignores a /etc/sudoers.d it does not see as root-owned. --no-o
+# --no-g makes the destination owned by whoever runs rsync instead — root on a
+# live deploy, the invoking user when staging into a DESTDIR.
+RSYNC=(rsync -a --no-owner --no-group --delete)
 if $DRY_RUN; then
   RSYNC+=(--dry-run --itemize-changes)
 fi
@@ -69,7 +74,10 @@ fi
 # ─── Read-only data ───────────────────────────────────────────────────────────
 "${SUDO[@]}" install -d "$SHARE"
 
-for dir in default themes applications; do
+# install/ and migrations/ ship because parts of them run long after install:
+# swarmarchy-first-run sources install/first-run/, swarmarchy-refresh-applications
+# sources install/packaging/, and swarmarchy-migrate globs migrations/.
+for dir in default themes applications install migrations; do
   [[ -d $SRC/$dir ]] || continue
   "${SUDO[@]}" "${RSYNC[@]}" "$SRC/$dir/" "$SHARE/$dir/"
 done
@@ -112,7 +120,7 @@ fi
 if [[ -d $SRC/system ]]; then
   # No --delete: this tree interleaves with directories owned by other packages,
   # so it may only add and overwrite its own files.
-  DEPLOY=(rsync -a)
+  DEPLOY=(rsync -a --no-owner --no-group)
   if $DRY_RUN; then
     DEPLOY+=(--dry-run --itemize-changes)
   fi
@@ -121,7 +129,11 @@ if [[ -d $SRC/system ]]; then
   # sudoers ignores — and warns about — any file that is group- or world-writable.
   if [[ -d $SRC/system/etc/sudoers.d ]] && ! $DRY_RUN; then
     "${SUDO[@]}" chmod 0440 "$DESTDIR/etc/sudoers.d"/*
-    "${SUDO[@]}" visudo -c >/dev/null
+    # visudo validates the live /etc/sudoers, so it means nothing against a
+    # staged tree — only run it when we actually wrote to the real one.
+    if [[ -z $DESTDIR ]]; then
+      sudo visudo -c >/dev/null
+    fi
   fi
 fi
 

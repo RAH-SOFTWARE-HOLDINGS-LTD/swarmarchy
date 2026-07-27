@@ -5,7 +5,7 @@ ConditionPathExists=%h/.local/state/swarmarchy/toggles/sway/internal-monitor-dis
 
 [Service]
 Type=oneshot
-ExecStart=%h/.local/share/swarmarchy/bin/swarmarchy-hw-recover-internal-monitor
+ExecStart=/usr/lib/swarmarchy/bin/swarmarchy-hw-recover-internal-monitor
 
 [Install]
 WantedBy=graphical-session-pre.target

@@ -3,6 +3,14 @@
 set -o pipefail
 
 SWARMARCHY_BIN_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+
+# Reached through a symlink whose directory holds no swarmarchy-* siblings — the
+# /usr/bin/swarmarchy entry point — so follow the link to where they really live.
+# Checking for siblings first keeps a symlinked-into-a-fixture-dir invocation
+# resolving against that directory, which is how the CLI tests stage commands.
+if ! compgen -G "$SWARMARCHY_BIN_DIR/swarmarchy-*" >/dev/null; then
+  SWARMARCHY_BIN_DIR=$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)
+fi
 METADATA_SCAN_LIMIT=80
 
 COMMAND_KEYS=()

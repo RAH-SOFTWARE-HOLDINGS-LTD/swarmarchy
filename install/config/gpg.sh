@@ -1,6 +1,4 @@
-# Setup GPG configuration with multiple keyservers for better reliability
-sudo mkdir -p /etc/gnupg
-sudo cp ~/.local/share/swarmarchy/default/gpg/dirmngr.conf /etc/gnupg/
-sudo chmod 644 /etc/gnupg/dirmngr.conf
+# The keyserver list is a file now — see system/etc/gnupg/dirmngr.conf.
+# dirmngr reads its config at startup, so it has to be bounced to pick it up.
 sudo gpgconf --kill dirmngr || true
 sudo gpgconf --launch dirmngr || true

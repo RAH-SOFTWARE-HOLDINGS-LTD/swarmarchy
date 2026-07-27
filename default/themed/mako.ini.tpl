@@ -1,4 +1,4 @@
-include=~/.local/share/swarmarchy/default/mako/core.ini
+include=/usr/share/swarmarchy/default/mako/core.ini
 
 text-color={{ foreground }}
 border-color={{ accent }}

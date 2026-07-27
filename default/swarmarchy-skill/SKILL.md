@@ -8,7 +8,7 @@ description: >
   monitors, gaps, borders, opacity, waybar, walker, terminal config, themes,
   wallpaper, night light, idle, lock screen, screenshots, reminders,
   workspace settings, display config, and user-facing swarmarchy commands. Excludes Swarmarchy
-  source development in ~/.local/share/swarmarchy/ and `swarmarchy dev` workflows.
+  source development in /usr/share/swarmarchy/ and `swarmarchy dev` workflows.
 ---
 
 # Swarmarchy Skill
@@ -34,11 +34,11 @@ It is not for contributing to Swarmarchy source code.
 
 **If you're about to edit a config file in ~/.config/ on this system, STOP and use this skill first.**
 
-**Do NOT use this skill for Swarmarchy development tasks** (editing files in `~/.local/share/swarmarchy/`, creating migrations, or running `swarmarchy dev ...` workflows).
+**Do NOT use this skill for Swarmarchy development tasks** (editing files in `/usr/share/swarmarchy/`, creating migrations, or running `swarmarchy dev ...` workflows).
 
 ## Critical Safety Rules
 
-**For end-user customization tasks, NEVER modify anything in `~/.local/share/swarmarchy/`** - but READING is safe and encouraged.
+**For end-user customization tasks, NEVER modify anything in `/usr/share/swarmarchy/`** - but READING is safe and encouraged.
 
 This directory contains Swarmarchy's source files managed by git. Any changes will be:
 - Lost on next `swarmarchy update`
@@ -46,7 +46,7 @@ This directory contains Swarmarchy's source files managed by git. Any changes wi
 - Break the system's update mechanism
 
 ```
-~/.local/share/swarmarchy/     # READ-ONLY - NEVER EDIT (reading is OK)
+/usr/share/swarmarchy/     # READ-ONLY - NEVER EDIT (reading is OK)
 ├── bin/                    # Source scripts (symlinked to PATH)
 ├── config/                 # Default config templates
 ├── themes/                 # Stock themes
@@ -54,11 +54,11 @@ This directory contains Swarmarchy's source files managed by git. Any changes wi
 └── install/                # Installation scripts
 ```
 
-**Reading `~/.local/share/swarmarchy/` is SAFE and useful** - do it freely to:
+**Reading `/usr/share/swarmarchy/` is SAFE and useful** - do it freely to:
 - Understand how swarmarchy commands work: `swarmarchy theme set --help` or `cat $(which swarmarchy-theme-set)`
-- See default configs before customizing: `cat ~/.local/share/swarmarchy/config/waybar/config.jsonc`
+- See default configs before customizing: `cat /usr/share/swarmarchy/config/waybar/config.jsonc`
 - Check stock theme files to copy for customization
-- Reference default Sway settings: `cat ~/.local/share/swarmarchy/default/sway/*`
+- Reference default Sway settings: `cat /usr/share/swarmarchy/default/sway/*`
 
 **Always use these safe locations instead:**
 - `~/.config/` - User configuration (safe to edit)
@@ -202,7 +202,7 @@ cp ~/.config/sway/bindings.conf ~/.config/sway/bindings.conf.bak.$(date +%s)
 ### Pattern 2: Make a new theme
 
 1. Create a directory under ~/.config/swarmarchy/themes.
-2. See how an existing theme is done via ~/.local/share/swarmarchy/themes/tokyo-night.
+2. See how an existing theme is done via /usr/share/swarmarchy/themes/tokyo-night.
 3. Download a matching background (or several) from the internet and put them in ~/.config/swarmarchy/themes/[name-of-new-theme]
 4. When done with the theme, run `swarmarchy theme set "Name of new theme"`
 
@@ -237,7 +237,7 @@ swarmarchy refresh sway
 
 # The refresh command:
 # 1. Backs up current config with timestamp
-# 2. Copies default from ~/.local/share/swarmarchy/config/
+# 2. Copies default from /usr/share/swarmarchy/config/
 # 3. Restarts the component
 ```
 
@@ -350,7 +350,7 @@ swarmarchy reinstall
 When user requests system changes:
 
 1. **Is it a stock swarmarchy command?** Use it directly
-2. **Is it a config edit?** Edit in `~/.config/`, never `~/.local/share/swarmarchy/`
+2. **Is it a config edit?** Edit in `~/.config/`, never `/usr/share/swarmarchy/`
 3. **Is it a theme customization?** Create a NEW custom theme directory
 4. **Is it automation?** Use hooks in `~/.config/swarmarchy/hooks/`
 5. **Is it a package install?** Use `swarmarchy pkg add <pkgs...>` (or `swarmarchy pkg aur add <pkgs...>` for AUR-only packages)
@@ -370,7 +370,7 @@ swarmarchy reminder clear
 ## Out of Scope
 
 This skill intentionally does not cover Swarmarchy source development. Do not use this skill for:
-- Editing files in `~/.local/share/swarmarchy/` (`bin/`, `config/`, `default/`, `themes/`, `migrations/`, etc.)
+- Editing files in `/usr/share/swarmarchy/` (`bin/`, `config/`, `default/`, `themes/`, `migrations/`, etc.)
 - Creating or editing migrations
 - Running `swarmarchy dev ...` commands
 
