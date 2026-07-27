@@ -1,7 +1,10 @@
 # Swarmarchy foundation packages — the base system, drivers, boot and audio stack.
-# Baked into the ISO's offline mirror (install/packaging never installs these
-# directly; the base install + drivers do). One package per line; text after '#'
-# is a human note — the builder parses only the first token. aarch64 / Snapdragon X.
+# Baked into the ISO's offline mirror. install/packaging/other.sh also installs the
+# repo-available subset at post-install time (skipping the kernel + AUR-only limine
+# hooks, which the base-install and boot phases own), so a plain `source install.sh`
+# gets the full userland instead of only what dependencies happen to drag in.
+# One package per line; text after '#' is a human note — the builder parses only the
+# first token. aarch64 / Snapdragon X.
 
 # ─── Base system ───
 base                       # core Arch base meta-package (essential userland)
