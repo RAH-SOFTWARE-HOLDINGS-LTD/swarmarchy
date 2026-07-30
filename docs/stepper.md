@@ -1,0 +1,25 @@
+- boot.sh (will probably remove...)
+  - (via curl) git clones repo and then runs install.sh
+- install.sh
+  - triggered by boot or ISO
+  - (calls) chroot | presentation | errors | logging
+  - /helpers/all.sh
+    - /helpers/chroot.sh
+      - triggered by install.sh
+      - enable + start service OR enable only (can't start service in chroot)
+    - /helpers/presentation.sh
+      - triggered by install.sh
+      - prettify terminal output
+    - /helpers/errors.sh
+      - probably the part that logs errors & posts online
+    - /helpers/logging.sh
+      - initialize logging functions
+  - /preflight/allsh
+    - /preflight/guard.sh
+      - proceed/abort installation based on system req
+    - /preflight/begin.sh
+      - start logging (as per logging.sh fx)
+    - run_logged show-env.sh
+      - display le ENV
+    - run_logged pacman.sh
+      - install build tools
