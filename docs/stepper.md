@@ -1,3 +1,5 @@
+- install yazi to replace nautilus and remove any pkg dependencies
+
 - boot.sh (will probably remove...)
   - (via curl) git clones repo and then runs install.sh
 - install.sh
@@ -14,12 +16,26 @@
       - probably the part that logs errors & posts online
     - /helpers/logging.sh
       - initialize logging functions
-  - /preflight/allsh
+  - /preflight/all.sh
     - /preflight/guard.sh
       - proceed/abort installation based on system req
     - /preflight/begin.sh
       - start logging (as per logging.sh fx)
-    - run_logged show-env.sh
+    - run_logged /preflight/show-env.sh
       - display le ENV
-    - run_logged pacman.sh
+    - run_logged /preflight/pacman.sh
       - install build tools
+      - TODO: remove x6586_64-only check
+    - run_logged /prefligh/migrations.sh
+      - TODO: remove migrations...
+    - run_logged /preflight/first-run-mode.sh
+      - authorize unpriviliged user to run first-run/<scripts>
+    - run_logged /prefilght/disable-mkinitcpio.sh
+      - prevent initramfs from rebuilding for each kernel pkg install
+  - /packaging/all.sh
+    - /packaging/aur-helper.sh
+      - installs AUR helper
+      - TODO: does a git clone of yay, maybe remove this?
+    - /packaging/base.sh
+      - reads swarmarchy-base.packages and installed via pacman
+
