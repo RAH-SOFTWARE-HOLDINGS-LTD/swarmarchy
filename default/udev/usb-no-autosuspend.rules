@@ -1,0 +1,11 @@
+# Disable USB autosuspend globally, via udev.
+#
+# swarmarchy also drops `options usbcore autosuspend=-1` into /etc/modprobe.d, but
+# that is IGNORED when usbcore is built into the kernel (the usual case on aarch64 /
+# ALARM) -- module options only take effect for a loadable usbcore or via the kernel
+# cmdline. This rule sets power/control=on on every USB device as it appears, which
+# works regardless of built-in-vs-module. It prevents peripherals -- especially
+# hubs/KVMs -- from autosuspending and dropping off the bus on idle. On the Yoga
+# Slim 7x (X1E80100) an autosuspended USB-C KVM hub drops the DP-alt link with it and
+# wedges the Adreno GMU (silent hard hang).
+ACTION=="add", SUBSYSTEM=="usb", TEST=="power/control", ATTR{power/control}="on"
