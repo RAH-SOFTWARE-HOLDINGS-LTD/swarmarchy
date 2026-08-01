@@ -18,7 +18,7 @@ show-failed-attempts
 indicator
 indicator-radius=100
 indicator-thickness=10
-font=JetBrainsMono Nerd Font
+font=JetBrains Mono
 
 # Colors — dark defaults (overridden by theme when present)
 color=1e1e2e
