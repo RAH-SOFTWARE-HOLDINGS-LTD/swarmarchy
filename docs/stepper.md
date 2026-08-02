@@ -37,5 +37,27 @@
       - installs AUR helper
       - TODO: does a git clone of yay, maybe remove this?
     - /packaging/base.sh
-      - reads swarmarchy-base.packages and installed via pacman
-
+      - reads swarmarchy-base and installs pkgs in the list via pacman
+      - gnome-keyring --(replace)--> oo7
+      - remove
+        - noto-fonts-cjk | kvantum-qt5 | (safe to remove) woff2-font-awesome
+        - nautilis (check what related things need to be removed)
+        - remove rust and install via mise??
+      - make cups (printing) optional - keep cups-pdf
+      - ask claude to remove all nautilus stuff
+      - add localsend & obsidian
+      - remove - socat | xmlstarlet
+      - remove - docker stuff...should be optional (prompt user)
+    - /packaging/other.sh
+      - reads swarmarch-other and installs pkgs in the list via pacman
+    - /packaging/fonts.sh
+      - update to not copy fonts into ~/.local/share...
+    - /packaging/icons.sh
+      - copy icons from repo to ~/.local/share/applications/icons
+    - /packaging/webapps.sh
+      - seem useless...will remove all
+    - /packaging/tuis.sh
+      - install launcher? need to re-evaluate...
+    - /packaging/npx.sh
+      - creates bootstrap scripts for npx packages (ie. codex) - ensure node.js is installed, installs aforementioned package, runs package...
+    - /packaging/asus-rog.sh - specific to asus? Remove?
