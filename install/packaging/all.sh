@@ -2,7 +2,6 @@ run_logged $SWARMARCHY_INSTALL/packaging/aur-helper.sh
 run_logged $SWARMARCHY_INSTALL/packaging/base.sh
 run_logged $SWARMARCHY_INSTALL/packaging/other.sh
 run_logged $SWARMARCHY_INSTALL/packaging/fonts.sh
-run_logged $SWARMARCHY_INSTALL/packaging/nvim.sh
 run_logged $SWARMARCHY_INSTALL/packaging/icons.sh
 run_logged $SWARMARCHY_INSTALL/packaging/webapps.sh
 run_logged $SWARMARCHY_INSTALL/packaging/tuis.sh
