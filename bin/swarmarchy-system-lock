@@ -36,12 +36,18 @@ if [[ ${SWARMARCHY_LOCK_ONLY:-false} != "true" ]]; then
     # pair, ANY keypress wakes the screen back to the lock screen -- fixing the old
     # bug where the backlight went off with nothing to restore it and the screen
     # got stuck black with no visual feedback. Torn down when swaylock exits.
+    #
+    # Which output(s) to blank. Defaults to all ("*"). Machines where blanking an
+    # external DP output crashes the GPU -- e.g. Snapdragon X / X1E80100, where the
+    # DP-link teardown on DPMS-off wedges the Adreno GMU (unrecoverable) -- can set
+    # SWARMARCHY_IDLE_BLANK_OUTPUT=eDP-1 to blank only the internal panel.
+    blank_out="${SWARMARCHY_IDLE_BLANK_OUTPUT:-*}"
     swayidle -w \
-      timeout 5 'swaymsg "output * dpms off"' \
-      resume 'swaymsg "output * dpms on"' &
+      timeout 5 "swaymsg \"output $blank_out dpms off\"" \
+      resume "swaymsg \"output $blank_out dpms on\"" &
     blanker=$!
     while pidof swaylock >/dev/null; do sleep 0.5; done
     kill "$blanker" 2>/dev/null
-    swaymsg "output * dpms on" >/dev/null 2>&1
+    swaymsg "output $blank_out dpms on" >/dev/null 2>&1
   ) &
 fi

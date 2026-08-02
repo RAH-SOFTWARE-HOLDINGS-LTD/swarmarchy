@@ -5,8 +5,10 @@
 
 set -e
 
-# Ensure screensaver/sleep doesn't set in during updates (pause swayidle)
-pkill -x swayidle &>/dev/null || true
+# Ensure screensaver/sleep doesn't set in during updates (pause swayidle).
+# swayidle is a Restart=always service, so stop the unit -- a bare pkill would just
+# be respawned mid-update.
+systemctl --user stop swayidle.service &>/dev/null || true
 
 # Perform all update steps
 swarmarchy-update-keyring
@@ -22,4 +24,4 @@ swarmarchy-update-analyze-logs
 swarmarchy-update-restart
 
 # Re-enable screensaver/sleep after updates (resume swayidle)
-swarmarchy-swayidle &>/dev/null & disown
+systemctl --user start swayidle.service &>/dev/null || true

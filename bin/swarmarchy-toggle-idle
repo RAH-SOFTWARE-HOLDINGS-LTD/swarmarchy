@@ -2,11 +2,14 @@
 
 # swarmarchy:summary=Toggle swayidle idle locking
 
-if pgrep -x swayidle >/dev/null; then
-  pkill -x swayidle
+# swayidle runs as a Restart=always user service. Toggle via systemd stop/start
+# (a bare pkill would be undone by the auto-restart). `stop` is a clean, commanded
+# stop, so systemd leaves it stopped until we start it again.
+if systemctl --user is-active --quiet swayidle.service; then
+  systemctl --user stop swayidle.service
   notify-send -u low "󱫖    Stop locking computer when idle"
 else
-  swarmarchy-swayidle >/dev/null 2>&1 &
+  systemctl --user start swayidle.service
   notify-send -u low "󱫖    Now locking computer when idle"
 fi
 

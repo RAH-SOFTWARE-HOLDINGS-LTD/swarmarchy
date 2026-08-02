@@ -1,0 +1,13 @@
+[Unit]
+Description=swayidle (Swarmarchy idle lock / display blank / sleep)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/swarmarchy/bin/swarmarchy-swayidle
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

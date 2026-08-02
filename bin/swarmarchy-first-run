@@ -17,6 +17,7 @@ if [[ -f $FIRST_RUN_MODE ]]; then
   bash "$SWARMARCHY_PATH/install/first-run/dns-resolver.sh"
   bash "$SWARMARCHY_PATH/install/first-run/gnome-theme.sh"
   bash "$SWARMARCHY_PATH/install/first-run/swayosd.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/swayidle.sh"
   bash "$SWARMARCHY_PATH/install/first-run/gtk-primary-paste.sh"
   bash "$SWARMARCHY_PATH/install/first-run/elephant.sh"
   swarmarchy-hook-install post-update "$SWARMARCHY_PATH/install/first-run/install-voxtype.hook"

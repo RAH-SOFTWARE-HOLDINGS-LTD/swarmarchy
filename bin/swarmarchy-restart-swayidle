@@ -3,5 +3,7 @@
 # swarmarchy:summary=Restart the swayidle service (used for idle detection and auto-lock).
 # (Ported to Sway; filename retained for compatibility.)
 
-pkill -x swayidle
-swarmarchy-swayidle >/dev/null 2>&1 &
+# swayidle runs as a Restart=always user service, so restart it through systemd
+# rather than pkill + relaunch (a bare pkill is just undone by the auto-restart, and
+# a manual relaunch would race a second instance).
+systemctl --user restart swayidle.service
