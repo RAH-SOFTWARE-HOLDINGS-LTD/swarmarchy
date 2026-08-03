@@ -53,7 +53,7 @@
     - /packaging/fonts.sh
       - update to not copy fonts into ~/.local/share...
     - /packaging/icons.sh
-      - copy icons from repo to ~/.local/share/applications/icons
+      - copy icons from ~/.local/share/swarmarchy (repo) to ~/.local/share/applications/icons
     - /packaging/webapps.sh
       - seem useless...will remove all
     - /packaging/tuis.sh
@@ -61,3 +61,11 @@
     - /packaging/npx.sh
       - creates bootstrap scripts for npx packages (ie. codex) - ensure node.js is installed, installs aforementioned package, runs package...
     - /packaging/asus-rog.sh - specific to asus? Remove?
+    - /packaging/framework16.sh - specific to framework16? Remove?
+    - /packaging/dell-xps-touchpad-haptics.sh - remove - specific to xps
+    - /packaging/surface.sh - remove - specific to surface
+    - /packaging - add linux-firmware-qcom ??
+  - /config/all.sh
+    - /config/config.sh
+      - copy ~/.local/share/swarmarchy (repo) configs to ~/.config/
+      - copy ~/.local/share/swarmarchy (repo) default/bashrc to ~/.bashrc
