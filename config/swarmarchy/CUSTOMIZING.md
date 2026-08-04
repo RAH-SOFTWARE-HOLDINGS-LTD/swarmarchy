@@ -68,6 +68,7 @@ Restore a config to the shipped default (it backs up your version first):
 swarmarchy refresh --help                 # list per-app reset commands
 swarmarchy refresh sway                   # e.g. reset the whole sway config
 swarmarchy refresh waybar                 # reset waybar
+swarmarchy refresh config --list          # list EVERY restorable file + its exact command
 swarmarchy refresh config foot/foot.ini   # reset any single file by its ~/.config path
 ```
 

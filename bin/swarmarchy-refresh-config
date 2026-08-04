@@ -1,18 +1,39 @@
 #!/bin/bash
 
-# swarmarchy:summary=Copies the named config from /etc/skel/.config/X/Y/Z -> ~/.config/X/Y/Z.
-# swarmarchy:args=<config-path>
+# swarmarchy:summary=Copy a shipped default from /etc/skel/.config/ into ~/.config/ (or --list them).
+# swarmarchy:args=<config-path> | --list
 
 config_file=$1
 
+# --list: print every restorable config + the exact command, from the shipped skel.
+if [[ $config_file == "--list" ]]; then
+  skel=/etc/skel/.config
+  if [[ ! -d $skel ]]; then
+    echo "No shipped defaults at $skel yet (run 'swarmarchy dev deploy' first)." >&2
+    exit 1
+  fi
+  echo "Restore a shipped default into ~/.config (your version is backed up first):"
+  echo "  swarmarchy refresh config <path>"
+  echo
+  echo "Available (from $skel):"
+  ( cd "$skel" && find . -type f ! -name '*.bak.*' -printf '%P\n' | sort ) | while IFS= read -r rel; do
+    have=""; [[ -e "$HOME/.config/$rel" ]] && have="   (you have this)"
+    printf "  swarmarchy refresh config %s%s\n" "$rel" "$have"
+  done
+  echo
+  echo "Whole-app resets (sway, waybar, walker, ...):  swarmarchy refresh --help"
+  exit 0
+fi
+
 if [[ -z $config_file ]]; then
   cat <<USAGE
-  Usage: $0 [config_file]
+  Usage: swarmarchy refresh config <config-path>
+         swarmarchy refresh config --list
 
-  Must provide a file path from the .config directory to be refreshed.
-  To copy /etc/skel/.config/swaylock/config to ~/.config/swaylock/config
+  Provide a file path under .config to restore its shipped default. Example --
+  copy /etc/skel/.config/swaylock/config to ~/.config/swaylock/config:
 
-    $0 swaylock/config
+    swarmarchy refresh config swaylock/config
 USAGE
   exit 1
 fi
