@@ -27,10 +27,18 @@ set -eEo pipefail
 DRY_RUN=false
 [[ $1 == "--dry-run" ]] && DRY_RUN=true
 
-SRC=$(git -C "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" rev-parse --show-toplevel 2>/dev/null) || {
-  echo "swarmarchy-dev-deploy must run from a Swarmarchy git checkout." >&2
+# Source tree = the repo root two levels up from this script (bin/swarmarchy-dev-deploy).
+# Derived from the script's own path, NOT git, so this also deploys from a plain
+# unpacked source tree with no .git -- the repo is a source tree you build/deploy
+# from (make-install semantics), not a git or runtime dependency.
+SRC=$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")
+if [[ ! -d $SRC/bin || ! -d $SRC/default ]]; then
+  echo "swarmarchy-dev-deploy: '$SRC' is not a Swarmarchy source tree (missing bin/ + default/)." >&2
   exit 1
-}
+fi
+
+# git is only used for optional provenance below; skipped cleanly for a non-git tree.
+if git -C "$SRC" rev-parse --git-dir >/dev/null 2>&1; then IS_GIT=true; else IS_GIT=false; fi
 
 PREFIX="${PREFIX:-/usr}"
 LIBDIR="$DESTDIR$PREFIX/lib/swarmarchy"
@@ -58,6 +66,10 @@ fi
 # unsigned history stays deployable; set SWARMARCHY_VERIFY=1 once commit signing
 # is configured (git config gpg.format ssh + user.signingkey + commit.gpgsign).
 if [[ ${SWARMARCHY_VERIFY:-0} == 1 ]]; then
+  if ! $IS_GIT; then
+    echo "SWARMARCHY_VERIFY=1 but '$SRC' is not a git checkout — nothing to verify a signature against." >&2
+    exit 1
+  fi
   if ! git -C "$SRC" verify-commit HEAD 2>/dev/null; then
     echo "HEAD is unsigned or signed by an untrusted key — refusing to deploy." >&2
     echo "Unset SWARMARCHY_VERIFY to bypass, or sign the commit." >&2
@@ -66,7 +78,11 @@ if [[ ${SWARMARCHY_VERIFY:-0} == 1 ]]; then
   echo "Verified signature on $(git -C "$SRC" rev-parse --short HEAD)"
 fi
 
-echo "Deploying $(git -C "$SRC" rev-parse --short HEAD) -> ${DESTDIR:-/}"
+if $IS_GIT; then
+  echo "Deploying $(git -C "$SRC" rev-parse --short HEAD) -> ${DESTDIR:-/}"
+else
+  echo "Deploying $SRC -> ${DESTDIR:-/}"
+fi
 if $DRY_RUN; then
   echo "(dry run — no changes will be made)"
 fi
