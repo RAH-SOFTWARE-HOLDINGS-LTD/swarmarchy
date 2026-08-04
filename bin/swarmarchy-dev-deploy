@@ -74,10 +74,10 @@ fi
 # ─── Read-only data ───────────────────────────────────────────────────────────
 "${SUDO[@]}" install -d "$SHARE"
 
-# install/ and migrations/ ship because parts of them run long after install:
+# install/ ships because parts of it run long after install:
 # swarmarchy-first-run sources install/first-run/, swarmarchy-refresh-applications
-# sources install/packaging/, and swarmarchy-migrate globs migrations/.
-for dir in default themes applications install migrations; do
+# sources install/packaging/.
+for dir in default themes applications install; do
   [[ -d $SRC/$dir ]] || continue
   "${SUDO[@]}" "${RSYNC[@]}" "$SRC/$dir/" "$SHARE/$dir/"
 done

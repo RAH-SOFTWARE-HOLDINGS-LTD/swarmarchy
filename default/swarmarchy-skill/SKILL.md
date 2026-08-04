@@ -34,7 +34,7 @@ It is not for contributing to Swarmarchy source code.
 
 **If you're about to edit a config file in ~/.config/ on this system, STOP and use this skill first.**
 
-**Do NOT use this skill for Swarmarchy development tasks** (editing files in `/usr/share/swarmarchy/`, creating migrations, or running `swarmarchy dev ...` workflows).
+**Do NOT use this skill for Swarmarchy development tasks** (editing files in `/usr/share/swarmarchy/`, or running `swarmarchy dev ...` workflows).
 
 ## Critical Safety Rules
 
@@ -370,8 +370,7 @@ swarmarchy reminder clear
 ## Out of Scope
 
 This skill intentionally does not cover Swarmarchy source development. Do not use this skill for:
-- Editing files in `/usr/share/swarmarchy/` (`bin/`, `config/`, `default/`, `themes/`, `migrations/`, etc.)
-- Creating or editing migrations
+- Editing files in `/usr/share/swarmarchy/` (`bin/`, `config/`, `default/`, `themes/`, etc.)
 - Running `swarmarchy dev ...` commands
 
 ## Example Requests

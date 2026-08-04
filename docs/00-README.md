@@ -35,7 +35,7 @@ Elite)**. It is **two repositories**:
    | Phase (`install/…`) | What it does |
    |---|---|
    | `helpers/` | shared bash functions (`run_logged`, etc.) |
-   | `preflight/` | guards, environment, pacman setup, migrations, temporarily disable mkinitcpio |
+   | `preflight/` | guards, environment, pacman setup, temporarily disable mkinitcpio |
    | `packaging/` | install packages: **`base.sh`** (reads `swarmarchy-base.packages`), fonts, nvim, **`icons.sh`** (copies `applications/icons`), **`webapps.sh`** (installs the Chromium PWAs), tuis, hardware-specific |
    | `config/` | **`config.sh`** copies `config/*` → `~/.config/`; then theme, git/gpg, timezone, **`detect-keyboard-layout.sh`** (writes your layout into the Sway config), toggles, and a long list of hardware fixes |
    | `login/` | keyring, login manager, hibernation, **Limine + Snapper** boot/snapshot entries |

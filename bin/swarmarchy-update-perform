@@ -14,7 +14,6 @@ systemctl --user stop swayidle.service &>/dev/null || true
 swarmarchy-update-keyring
 swarmarchy-update-available-reset
 swarmarchy-update-system-pkgs
-swarmarchy-migrate
 swarmarchy-update-aur-pkgs
 swarmarchy-update-orphan-pkgs
 swarmarchy-hook post-update

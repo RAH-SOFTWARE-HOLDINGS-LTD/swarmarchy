@@ -27,8 +27,6 @@
     - run_logged /preflight/pacman.sh
       - install build tools
       - TODO: remove x6586_64-only check
-    - run_logged /prefligh/migrations.sh
-      - TODO: remove migrations...
     - run_logged /preflight/first-run-mode.sh
       - authorize unpriviliged user to run first-run/<scripts>
     - run_logged /prefilght/disable-mkinitcpio.sh
