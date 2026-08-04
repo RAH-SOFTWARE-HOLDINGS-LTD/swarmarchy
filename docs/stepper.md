@@ -1,3 +1,4 @@
+- https://gitlab.com/kernel-firmware/linux-firmware/
 - install yazi to replace nautilus and remove any pkg dependencies
 
 - boot.sh (will probably remove...)
@@ -69,3 +70,5 @@
     - /config/config.sh
       - copy ~/.local/share/swarmarchy (repo) configs to ~/.config/
       - copy ~/.local/share/swarmarchy (repo) default/bashrc to ~/.bashrc
+      - should do something similar to system-files.sh - rsync
+    - /config/system-files.sh
