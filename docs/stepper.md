@@ -1,5 +1,6 @@
 - https://gitlab.com/kernel-firmware/linux-firmware/
 - install yazi to replace nautilus and remove any pkg dependencies
+- revistit sway fork | investigate unexpected system crash | understand repo.. and install script | fix timezone display issue
 
 - boot.sh (will probably remove...)
   - (via curl) git clones repo and then runs install.sh
@@ -37,36 +38,39 @@
       - TODO: does a git clone of yay, maybe remove this?
     - /packaging/base.sh
       - reads swarmarchy-base and installs pkgs in the list via pacman
-      - gnome-keyring --(replace)--> oo7
-      - remove
+      - TODO: gnome-keyring --(replace)--> oo7
+      - TODO: remove
         - noto-fonts-cjk | kvantum-qt5 | (safe to remove) woff2-font-awesome
         - nautilis (check what related things need to be removed)
         - remove rust and install via mise??
-      - make cups (printing) optional - keep cups-pdf
-      - ask claude to remove all nautilus stuff
-      - add localsend & obsidian
-      - remove - socat | xmlstarlet
-      - remove - docker stuff...should be optional (prompt user)
+      - TODO: make cups (printing) optional - keep cups-pdf
+      - TODO: remove all nautilus stuff | socat | xmlstarlet
+      - TODO: add localsend & obsidian
+      - TODO: make docker stuff optional (prompt user)
     - /packaging/other.sh
       - reads swarmarch-other and installs pkgs in the list via pacman
     - /packaging/fonts.sh
-      - update to not copy fonts into ~/.local/share...
+      - TODO: update to copy fonts NOT from local git repo and paste elsewhere (not ~/.local/share..., mabye)
     - /packaging/icons.sh
-      - copy icons from ~/.local/share/swarmarchy (repo) to ~/.local/share/applications/icons
+      - TODO: NOT copy icons from local git repo and paste elsewhere (NOT ~/.local/ in ~/.local/share/applications/icons)
     - /packaging/webapps.sh
-      - seem useless...will remove all
+      - TODO: remove all
     - /packaging/tuis.sh
-      - install launcher? need to re-evaluate...
+      - TODO: confirm this is just on the launcher - need to re-evaluate...remove?
     - /packaging/npx.sh
       - creates bootstrap scripts for npx packages (ie. codex) - ensure node.js is installed, installs aforementioned package, runs package...
+      - TODO: remove
     - /packaging/asus-rog.sh - specific to asus? Remove?
     - /packaging/framework16.sh - specific to framework16? Remove?
     - /packaging/dell-xps-touchpad-haptics.sh - remove - specific to xps
     - /packaging/surface.sh - remove - specific to surface
-    - /packaging - add linux-firmware-qcom ??
+    - /packaging
+      - TODO: add linux-firmware-qcom ?? update installation script to install this and then fall back to windows fw
   - /config/all.sh
     - /config/config.sh
-      - copy ~/.local/share/swarmarchy (repo) configs to ~/.config/
-      - copy ~/.local/share/swarmarchy (repo) default/bashrc to ~/.bashrc
+      - TODO: NOT copy from local git repo
+      - TODO: NOT copy from local git repo - default/bashrc to ~/.bashrc
       - should do something similar to system-files.sh - rsync
     - /config/system-files.sh
+      - system files -> /etc/...
+    - /config/theme.sh
