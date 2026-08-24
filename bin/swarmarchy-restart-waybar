@@ -4,4 +4,4 @@
 # swarmarchy:examples=swarmarchy restart waybar
 
 pkill -9 -x waybar
-setsid uwsm-app -- waybar >/dev/null 2>&1 &
+setsid -f waybar >/dev/null 2>&1
