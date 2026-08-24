@@ -4,8 +4,6 @@ run_logged $SWARMARCHY_INSTALL/config/theme.sh
 run_logged $SWARMARCHY_INSTALL/config/branding.sh
 run_logged $SWARMARCHY_INSTALL/config/git.sh
 run_logged $SWARMARCHY_INSTALL/config/gpg.sh
-run_logged $SWARMARCHY_INSTALL/config/increase-sudo-tries.sh
-run_logged $SWARMARCHY_INSTALL/config/increase-lockout-limit.sh
 run_logged $SWARMARCHY_INSTALL/config/detect-keyboard-layout.sh
 run_logged $SWARMARCHY_INSTALL/config/xcompose.sh
 run_logged $SWARMARCHY_INSTALL/config/mise-work.sh

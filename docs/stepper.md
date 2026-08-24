@@ -74,3 +74,14 @@
     - /config/system-files.sh
       - system files -> /etc/...
     - /config/theme.sh
+      - TODO: should NOT rely on local repo.....
+    - /config/branding.sh
+      - TODO: should NOT rely on local repo.....
+    - /config/git.sh
+      - sets name and email
+    - /config/gpg.sh
+      - some gpg conf stuff..
+    - /config/increase-sudo-tries
+      - remove
+    - /config/increase-lockout-limit
+      - remove
