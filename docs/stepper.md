@@ -82,6 +82,8 @@
     - /config/gpg.sh
       - some gpg conf stuff..
     - /config/increase-sudo-tries
-      - remove
+      - removed
     - /config/increase-lockout-limit
-      - remove
+      - removed
+    - /config/detect-keyboard-layout
+      - removed
