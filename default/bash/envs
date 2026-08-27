@@ -9,4 +9,6 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 # Duplicated from .config/environment.d/sway.conf so SSH works too.
 # SWARMARCHY_PATH is the deployed data root; executables sit under /usr/lib.
 export SWARMARCHY_PATH=/usr/share/swarmarchy
-export PATH=/usr/lib/swarmarchy/bin:$PATH:$HOME/.local/bin
+if [[ ":$PATH:" != *":/usr/lib/swarmarchy/bin:"* ]]; then
+  export PATH=/usr/lib/swarmarchy/bin:$PATH:$HOME/.local/bin
+fi

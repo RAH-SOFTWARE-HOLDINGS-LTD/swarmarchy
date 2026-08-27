@@ -4,8 +4,6 @@ run_logged $SWARMARCHY_INSTALL/config/theme.sh
 run_logged $SWARMARCHY_INSTALL/config/branding.sh
 run_logged $SWARMARCHY_INSTALL/config/git.sh
 run_logged $SWARMARCHY_INSTALL/config/gpg.sh
-run_logged $SWARMARCHY_INSTALL/config/xcompose.sh
-run_logged $SWARMARCHY_INSTALL/config/mise-work.sh
 run_logged $SWARMARCHY_INSTALL/config/fix-powerprofilesctl-shebang.sh
 run_logged $SWARMARCHY_INSTALL/config/docker.sh
 run_logged $SWARMARCHY_INSTALL/config/mimetypes.sh
