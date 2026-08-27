@@ -87,3 +87,19 @@
       - removed
     - /config/detect-keyboard-layout
       - removed
+    - /config/xcompose.sh
+      - emoji stuff...removed
+    - /config/mise-work.sh
+      - removed
+    - /config/fix-powerprofilesctl-shebang.sh
+      - manage power profile on linux
+    - /config/docker.sh
+      - need to update to use podman
+    - /config/mimetypes
+      - remove defaults like Nautilus and HEY
+    - /config/user-dirs.sh
+      - create user dirs and such..updated already
+    - /config/nautilus-python.sh
+      - need to add yazi keybinding to replace localsend.py and transcode.py
+    - /config/localdb.sh
+      - run updatedb (which is run on a daily cadence by default)
