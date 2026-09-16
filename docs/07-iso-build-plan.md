@@ -298,25 +298,13 @@ placement, boot-order handling, and sentinel files proving pre-existing ESP cont
 
 #### Freeing the space (user does this first)
 
-Boot the swarmarchy ISO and get a shell instead of the installer. No GParted needed — it has no
-aarch64 build, and the ISO already carries `e2fsprogs` and `parted` (via
-`archinstall → python-pyparted → parted`).
+The installer only ever *adds* partitions into space that is already free; it never shrinks
+anything. The user frees it first, from the ISO's own shell.
 
-Shrink the **filesystem first, the partition second** — never leave the partition smaller than the
-filesystem:
-
-```sh
-e2fsck -f /dev/nvme0n1p3
-resize2fs /dev/nvme0n1p3 150G
-parted /dev/nvme0n1 unit MiB resizepart 3 363366
-resize2fs /dev/nvme0n1p3
-e2fsck -f /dev/nvme0n1p3
-```
-
-- Confirm the device with `lsblk -f` first — `p3` is the ext4 root on this machine.
-- The trailing bare `resize2fs` grows the filesystem back to fill the partition exactly.
-- Shrinking preserves the partition's UUID and slot number, so the existing GRUB entry keeps
-  booting.
+- Full boot-to-install runbook: [`06`](./06-custom-iso.md) §"Running the installer".
+- No GParted needed — it has no aarch64 build, and the ISO already ships `e2fsprogs`, `parted`,
+  `fdisk`/`sfdisk`/`cfdisk`, `gdisk`/`sgdisk` and `ntfsresize`.
+- Minimum to unlock the alongside option: **21 GiB** free (20 root + 1 ESP).
 
 #### Btrfs performance tuning (user wants this once Btrfs+Limine works)
 

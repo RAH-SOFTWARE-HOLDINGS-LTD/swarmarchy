@@ -11,8 +11,8 @@ this doc is the *strategy* and how the pieces fit.
 > steps, open questions — see **[`07-iso-build-plan.md`](./07-iso-build-plan.md)**.
 > Two things below are stale as a result:
 > - The kernel/DTB worry is settled — stock ALARM `linux-aarch64` ships the Yoga DTB.
-> - **All ISO work is on branch `rename-swarmarchy`**, not `master` (which is untouched
->   upstream `omarchy-iso`).
+> - **All ISO work is on `master`** now; it used to live on `rename-swarmarchy`, and `master`
+>   used to be untouched upstream `omarchy-iso`. Both are the same commit today.
 
 ---
 
@@ -80,3 +80,107 @@ Path A proves the *layer* works on real hardware and surfaces the kernel/firmwar
 need. That knowledge feeds directly into Path B — once you know exactly which kernel +
 firmware + DTB boot the Yoga (from doing Path A), bundling them into the custom ISO is the
 main remaining work. **Do Path A first; it de-risks Path B.**
+
+---
+
+## Running the installer (boot → shrink → install)
+
+The dual-boot install, start to finish, on the Yoga. Assumes a USB already flashed with
+`swarmarchy-<date>-aarch64-master.iso`.
+
+**Before you start:** the installer never shrinks anything by itself — steps 4-9 free the space,
+step 10 installs into it. Windows and any existing Linux are only read, never written.
+
+- **1. Boot the USB**
+
+  Power on and tap `F12` for the Lenovo boot menu, then pick the USB entry.
+
+  - Secure Boot must be off (`05` Step 0).
+  - No USB entry? Re-seat the stick and retry — the firmware only rescans on a cold boot.
+
+- **2. Get a shell instead of the installer**
+
+  Press `Ctrl+Alt+F2`.
+
+  - The installer auto-runs on **tty1 only** (`.zlogin` → `.automated_script.sh`, gated on
+    `$(tty) == /dev/tty1`). Any other tty is a plain root shell.
+  - Do not do the resize on tty1 — the installer is already running there.
+
+- **3. Confirm which partition is the Linux root**
+
+```sh
+lsblk -f
+```
+
+  - Expect `nvme0n1p1` = ESP (vfat, `SYSTEM`), `nvme0n1p2` = Windows (ntfs), `nvme0n1p3` = root (ext4).
+  - **Check this every time.** Partition numbers shift when partitions are added or deleted.
+  - Nothing on `nvme0n1` is mounted right now — you booted from USB. That is what makes the
+    resize safe.
+
+- **4. Check the filesystem before touching it**
+
+```sh
+e2fsck -f /dev/nvme0n1p3
+```
+
+  - `resize2fs` refuses to shrink a filesystem that has not been checked.
+  - Fix any errors it reports before going further.
+
+- **5. Shrink the filesystem**
+
+```sh
+resize2fs /dev/nvme0n1p3 150G
+```
+
+  - **Filesystem first, partition second.** A partition smaller than its filesystem destroys data.
+  - 150G leaves ~120G free on a 270G root. Adjust to taste; the installer needs **21 GiB minimum**
+    (20 root + 1 ESP) before it will even offer the alongside option.
+
+- **6. Shrink the partition**
+
+```sh
+parted /dev/nvme0n1 unit MiB resizepart 3 363366
+```
+
+  - `363366` is the partition **end** in MiB, not its size: start (209366) + 154000.
+  - That is ~4 GiB more than the filesystem — deliberate slack so the partition can never land
+    under it. Step 7 reclaims it.
+  - `parted` 3.x only moves the partition boundary; it does not touch the filesystem.
+
+- **7. Grow the filesystem back to fill the partition**
+
+```sh
+resize2fs /dev/nvme0n1p3
+```
+
+  - With no size argument it expands to exactly the partition size, removing the slack.
+
+- **8. Verify**
+
+```sh
+e2fsck -f /dev/nvme0n1p3
+parted /dev/nvme0n1 unit GB print free
+```
+
+  - The free-space line at the end is what the installer will offer to use.
+  - Shrinking preserves the partition UUID and slot number, so the existing GRUB entry still boots.
+
+- **9. Stage the Qualcomm firmware (optional, Yoga only)**
+
+  Plug in the stick holding the `firmware/` directory from `copy-qcom-firmware.ps1`.
+
+  - The installer scans attached filesystems for it and places the blobs at the board path.
+  - Skip it and the install still finishes — you just get no DP-alt monitors, no audio and
+    software rendering until the blobs are added by hand (`05` §"External monitors").
+
+- **10. Run the installer**
+
+```sh
+~/.automated_script.sh
+```
+
+  - Or switch back with `Ctrl+Alt+F1` if you have not started it there yet.
+  - Choose **"Install alongside"** when asked. The wipe option destroys Windows.
+  - It creates a 1 GiB ESP plus a Btrfs root in the free space, installs Limine to its own ESP,
+    and appends its firmware boot entry rather than taking over the boot order.
+
