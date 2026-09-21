@@ -83,6 +83,71 @@ main remaining work. **Do Path A first; it de-risks Path B.**
 
 ---
 
+## Flashing the USB
+
+Run these on a working Linux box (your current Arch install) — not on the Yoga's installer.
+
+**Nothing to install.** `dd`, `lsblk` and `sync` come with `coreutils`/`util-linux`. The ISO is
+hybrid-bootable (`DOS/MBR boot sector`), so a raw `dd` is all it needs — no `isohybrid`, no Ventoy,
+no Etcher.
+
+- **1. Plug the USB in, then find its device name**
+
+```sh
+lsblk -o NAME,SIZE,TRAN,RM,MODEL,MOUNTPOINT
+```
+
+  - Take the row with `TRAN=usb` and `RM=1` — usually `/dev/sda`.
+  - `nvme0n1` is the internal disk. Writing there destroys Windows *and* Linux.
+  - Needs a 4 GB stick or larger.
+
+- **2. Point a variable at it, editing `sda` to match step 1**
+
+```sh
+USB=/dev/sda
+```
+
+- **3. Select the newest ISO**
+
+```sh
+ISO=$(ls -t ~/.local/share/swarmarchy-iso/release/*.iso | head -1); echo "$ISO"
+```
+
+  - It echoes what it picked — check the date is the build you meant. Old ISOs stay in that
+    directory and are easy to grab by mistake.
+
+- **4. Unmount anything the desktop auto-mounted from the stick**
+
+```sh
+sudo umount ${USB}?* 2>/dev/null || true
+```
+
+  - Unmount the *partitions*; the write targets the whole device.
+
+- **5. Write it**
+
+```sh
+sudo dd if="$ISO" of="$USB" bs=4M conv=fsync oflag=direct status=progress
+```
+
+  - Takes a few minutes for 3.1 GB. `dd` does not ask for confirmation and does not warn.
+  - Target the whole device (`/dev/sda`), never a partition (`/dev/sda1`).
+
+- **6. Flush and confirm**
+
+```sh
+sync
+lsblk -f "$USB"
+```
+
+  - Expect a partition labelled `SWARMARCHY_<date>`. If the label is missing, the write did not
+    land — do not boot it.
+
+Then continue with §"Running the installer" below.
+
+
+---
+
 ## Running the installer (boot → shrink → install)
 
 The dual-boot install, start to finish, on the Yoga. Assumes a USB already flashed with
