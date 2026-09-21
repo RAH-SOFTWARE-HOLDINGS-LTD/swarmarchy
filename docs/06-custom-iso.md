@@ -91,57 +91,57 @@ Run these on a working Linux box (your current Arch install) — not on the Yoga
 hybrid-bootable (`DOS/MBR boot sector`), so a raw `dd` is all it needs — no `isohybrid`, no Ventoy,
 no Etcher.
 
-- **1. Plug the USB in, then find its device name**
+1. **Plug the USB in, then find its device name**
 
-```sh
-lsblk -o NAME,SIZE,TRAN,RM,MODEL,MOUNTPOINT
-```
+   ```sh
+   lsblk -o NAME,SIZE,TRAN,RM,MODEL,MOUNTPOINT
+   ```
 
-  - Take the row with `TRAN=usb` and `RM=1` — usually `/dev/sda`.
-  - `nvme0n1` is the internal disk. Writing there destroys Windows *and* Linux.
-  - Needs a 4 GB stick or larger.
+   - Take the row with `TRAN=usb` and `RM=1` — usually `/dev/sda`.
+   - `nvme0n1` is the internal disk. Writing there destroys Windows *and* Linux.
+   - Needs a 4 GB stick or larger.
 
-- **2. Point a variable at it, editing `sda` to match step 1**
+2. **Point a variable at it, editing `sda` to match step 1**
 
-```sh
-USB=/dev/sda
-```
+   ```sh
+   USB=/dev/sda
+   ```
 
-- **3. Select the newest ISO**
+3. **Select the newest ISO**
 
-```sh
-ISO=$(ls -t ~/.local/share/swarmarchy-iso/release/*.iso | head -1); echo "$ISO"
-```
+   ```sh
+   ISO=$(ls -t ~/.local/share/swarmarchy-iso/release/*.iso | head -1); echo "$ISO"
+   ```
 
-  - It echoes what it picked — check the date is the build you meant. Old ISOs stay in that
-    directory and are easy to grab by mistake.
+   - It echoes what it picked — check the date is the build you meant. Old ISOs stay in that
+     directory and are easy to grab by mistake.
 
-- **4. Unmount anything the desktop auto-mounted from the stick**
+4. **Unmount anything the desktop auto-mounted from the stick**
 
-```sh
-sudo umount ${USB}?* 2>/dev/null || true
-```
+   ```sh
+   sudo umount ${USB}?* 2>/dev/null || true
+   ```
 
-  - Unmount the *partitions*; the write targets the whole device.
+   - Unmount the *partitions*; the write targets the whole device.
 
-- **5. Write it**
+5. **Write it**
 
-```sh
-sudo dd if="$ISO" of="$USB" bs=4M conv=fsync oflag=direct status=progress
-```
+   ```sh
+   sudo dd if="$ISO" of="$USB" bs=4M conv=fsync oflag=direct status=progress
+   ```
 
-  - Takes a few minutes for 3.1 GB. `dd` does not ask for confirmation and does not warn.
-  - Target the whole device (`/dev/sda`), never a partition (`/dev/sda1`).
+   - Takes a few minutes for 3.1 GB. `dd` does not ask for confirmation and does not warn.
+   - Target the whole device (`/dev/sda`), never a partition (`/dev/sda1`).
 
-- **6. Flush and confirm**
+6. **Flush and confirm**
 
-```sh
-sync
-lsblk -f "$USB"
-```
+   ```sh
+   sync
+   lsblk -f "$USB"
+   ```
 
-  - Expect a partition labelled `SWARMARCHY_<date>`. If the label is missing, the write did not
-    land — do not boot it.
+   - Expect a partition labelled `SWARMARCHY_<date>`. If the label is missing, the write did not
+     land — do not boot it.
 
 Then continue with §"Running the installer" below.
 
@@ -156,113 +156,113 @@ The dual-boot install, start to finish, on the Yoga. Assumes a USB already flash
 **Before you start:** the installer never shrinks anything by itself — steps 4-9 free the space,
 step 10 installs into it. Windows and any existing Linux are only read, never written.
 
-- **1. Boot the USB**
+1. **Boot the USB**
 
-  Power on and tap `F12` for the Lenovo boot menu, then pick the USB entry.
+   Power on and tap `F12` for the Lenovo boot menu, then pick the USB entry.
 
-  - Secure Boot must be off (`05` Step 0).
-  - No USB entry? Re-seat the stick and retry — the firmware only rescans on a cold boot.
+   - Secure Boot must be off (`05` Step 0).
+   - No USB entry? Re-seat the stick and retry — the firmware only rescans on a cold boot.
 
-- **2. Get a shell instead of the installer**
+2. **Get a shell instead of the installer**
 
-  Press `Ctrl+Alt+F2`.
+   Press `Ctrl+Alt+F2`.
 
-  - The installer auto-runs on **tty1 only** (`.zlogin` → `.automated_script.sh`, gated on
-    `$(tty) == /dev/tty1`). Any other tty is a plain root shell.
-  - Do not do the resize on tty1 — the installer is already running there.
+   - The installer auto-runs on **tty1 only** (`.zlogin` → `.automated_script.sh`, gated on
+     `$(tty) == /dev/tty1`). Any other tty is a plain root shell.
+   - Do not do the resize on tty1 — the installer is already running there.
 
-- **3. Confirm which partition is the Linux root**
+3. **Confirm which partition is the Linux root**
 
-```sh
-lsblk -f
-```
+   ```sh
+   lsblk -f
+   ```
 
-  - Expect `nvme0n1p1` = ESP (vfat, `SYSTEM`), `nvme0n1p2` = Windows (ntfs), `nvme0n1p3` = root (ext4).
-  - **Check this every time.** Partition numbers shift when partitions are added or deleted.
-  - Nothing on `nvme0n1` is mounted right now — you booted from USB. That is what makes the
-    resize safe.
+   - Expect `nvme0n1p1` = ESP (vfat, `SYSTEM`), `nvme0n1p2` = Windows (ntfs), `nvme0n1p3` = root (ext4).
+   - **Check this every time.** Partition numbers shift when partitions are added or deleted.
+   - Nothing on `nvme0n1` is mounted right now — you booted from USB. That is what makes the
+     resize safe.
 
-- **4. Check the filesystem before touching it**
+4. **Check the filesystem before touching it**
 
-```sh
-sudo e2fsck -f /dev/nvme0n1p3
-```
+   ```sh
+   sudo e2fsck -f /dev/nvme0n1p3
+   ```
 
-  - `resize2fs` refuses to shrink a filesystem that has not been checked.
-  - Fix anything it reports before going further.
+   - `resize2fs` refuses to shrink a filesystem that has not been checked.
+   - Fix anything it reports before going further.
 
-- **5. Shrink the filesystem**
+5. **Shrink the filesystem**
 
-  Pick the new root size in **GiB** and shrink to it:
+   Pick the new root size in **GiB** and shrink to it:
 
-```sh
-sudo resize2fs /dev/nvme0n1p3 150G
-```
+   ```sh
+   sudo resize2fs /dev/nvme0n1p3 150G
+   ```
 
-  - `resize2fs`'s `G` means **GiB** (1024 MiB), not GB. `150G` = 153600 MiB.
-  - **Filesystem first, partition second.** A partition smaller than its filesystem destroys data.
-  - Free at least **21 GiB** or the installer will not offer the alongside option. Leaving
-    80-120 GiB free is comfortable.
+   - `resize2fs`'s `G` means **GiB** (1024 MiB), not GB. `150G` = 153600 MiB.
+   - **Filesystem first, partition second.** A partition smaller than its filesystem destroys data.
+   - Free at least **21 GiB** or the installer will not offer the alongside option. Leaving
+     80-120 GiB free is comfortable.
 
-- **6. Work out the new partition end — do not hand-calculate it**
+6. **Work out the new partition end — do not hand-calculate it**
 
-  Read the real filesystem size and the real partition start, then derive the end:
+   Read the real filesystem size and the real partition start, then derive the end:
 
-```sh
-FS_MIB=$(sudo dumpe2fs -h /dev/nvme0n1p3 2>/dev/null | awk '/^Block count:/{c=$3} /^Block size:/{b=$3} END{printf "%d", (c*b)/1048576}')
-START_MIB=$(sudo parted -ms /dev/nvme0n1 unit MiB print | awk -F: '$1=="3"{gsub(/MiB/,"",$2); printf "%d", $2}')
-END_MIB=$(( START_MIB + FS_MIB + 256 ))
-echo "fs=${FS_MIB}MiB  start=${START_MIB}MiB  new end=${END_MIB}MiB  size=$(( END_MIB - START_MIB ))MiB"
-```
+   ```sh
+   FS_MIB=$(sudo dumpe2fs -h /dev/nvme0n1p3 2>/dev/null | awk '/^Block count:/{c=$3} /^Block size:/{b=$3} END{printf "%d", (c*b)/1048576}')
+   START_MIB=$(sudo parted -ms /dev/nvme0n1 unit MiB print | awk -F: '$1=="3"{gsub(/MiB/,"",$2); printf "%d", $2}')
+   END_MIB=$(( START_MIB + FS_MIB + 256 ))
+   echo "fs=${FS_MIB}MiB  start=${START_MIB}MiB  new end=${END_MIB}MiB  size=$(( END_MIB - START_MIB ))MiB"
+   ```
 
-  - `FS_MIB` comes from the filesystem itself, so it is correct whatever size was used in step 5.
-  - `parted` takes an **end offset**, not a size — hence `start + size`.
-  - The 256 MiB margin guarantees the partition is never smaller than the filesystem. Step 8
-    reclaims it.
+   - `FS_MIB` comes from the filesystem itself, so it is correct whatever size was used in step 5.
+   - `parted` takes an **end offset**, not a size — hence `start + size`.
+   - The 256 MiB margin guarantees the partition is never smaller than the filesystem. Step 8
+     reclaims it.
 
-- **7. Confirm it is safe, then shrink the partition**
+7. **Confirm it is safe, then shrink the partition**
 
-  This refuses to print the `parted` line unless the partition will still contain the filesystem:
+   This refuses to print the `parted` line unless the partition will still contain the filesystem:
 
-```sh
-if [ $(( END_MIB - START_MIB )) -ge "$FS_MIB" ]; then
-  sudo parted /dev/nvme0n1 unit MiB resizepart 3 "$END_MIB"
-else
-  echo "ABORT: partition would be smaller than the filesystem — do not continue"
-fi
-```
+   ```sh
+   if [ $(( END_MIB - START_MIB )) -ge "$FS_MIB" ]; then
+     sudo parted /dev/nvme0n1 unit MiB resizepart 3 "$END_MIB"
+   else
+     echo "ABORT: partition would be smaller than the filesystem — do not continue"
+   fi
+   ```
 
-  - If it prints ABORT, stop. Re-run step 5 with a smaller size and redo step 6.
-  - `parted` 3.x only moves the boundary; it never touches the filesystem.
+   - If it prints ABORT, stop. Re-run step 5 with a smaller size and redo step 6.
+   - `parted` 3.x only moves the boundary; it never touches the filesystem.
 
-- **8. Grow the filesystem back to fill the partition**
+8. **Grow the filesystem back to fill the partition**
 
-```sh
-sudo resize2fs /dev/nvme0n1p3
-sudo e2fsck -f /dev/nvme0n1p3
-sudo parted /dev/nvme0n1 unit GiB print free
-```
+   ```sh
+   sudo resize2fs /dev/nvme0n1p3
+   sudo e2fsck -f /dev/nvme0n1p3
+   sudo parted /dev/nvme0n1 unit GiB print free
+   ```
 
-  - With no size argument `resize2fs` expands to exactly the partition, removing the margin.
-  - The free-space line at the end is what the installer will offer to use.
-  - Shrinking preserves the partition UUID and slot number, so the existing GRUB entry still boots.
+   - With no size argument `resize2fs` expands to exactly the partition, removing the margin.
+   - The free-space line at the end is what the installer will offer to use.
+   - Shrinking preserves the partition UUID and slot number, so the existing GRUB entry still boots.
 
-- **9. Stage the Qualcomm firmware (optional, Yoga only)**
+9. **Stage the Qualcomm firmware (optional, Yoga only)**
 
-  Plug in the stick holding the `firmware/` directory from `copy-qcom-firmware.ps1`.
+   Plug in the stick holding the `firmware/` directory from `copy-qcom-firmware.ps1`.
 
-  - The installer scans attached filesystems for it and places the blobs at the board path.
-  - Skip it and the install still finishes — you just get no DP-alt monitors, no audio and
-    software rendering until the blobs are added by hand (`05` §"External monitors").
+   - The installer scans attached filesystems for it and places the blobs at the board path.
+   - Skip it and the install still finishes — you just get no DP-alt monitors, no audio and
+     software rendering until the blobs are added by hand (`05` §"External monitors").
 
-- **10. Run the installer**
+10. **Run the installer**
 
-```sh
-~/.automated_script.sh
-```
+    ```sh
+    ~/.automated_script.sh
+    ```
 
-  - Or switch back with `Ctrl+Alt+F1` if you have not started it there yet.
-  - Choose **"Install alongside"** when asked. The wipe option destroys Windows.
-  - It creates a 1 GiB ESP plus a Btrfs root in the free space, installs Limine to its own ESP,
-    and appends its firmware boot entry rather than taking over the boot order.
+    - Or switch back with `Ctrl+Alt+F1` if you have not started it there yet.
+    - Choose **"Install alongside"** when asked. The wipe option destroys Windows.
+    - It creates a 1 GiB ESP plus a Btrfs root in the free space, installs Limine to its own ESP,
+      and appends its firmware boot entry rather than taking over the boot order.
 
