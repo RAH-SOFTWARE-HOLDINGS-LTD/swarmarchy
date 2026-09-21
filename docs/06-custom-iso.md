@@ -133,15 +133,19 @@ no Etcher.
    - Takes a few minutes for 3.1 GB. `dd` does not ask for confirmation and does not warn.
    - Target the whole device (`/dev/sda`), never a partition (`/dev/sda1`).
 
-6. **Flush and confirm**
+6. **Flush, then confirm the right build landed**
 
    ```sh
    sync
-   lsblk -f "$USB"
+   blkid -o value -s UUID "$ISO"
+   lsblk -no UUID "$USB"
    ```
 
-   - Expect a partition labelled `SWARMARCHY_<date>`. If the label is missing, the write did not
-     land — do not boot it.
+   - **The two UUIDs must match.** They are ISO9660 creation timestamps, so they identify the
+     exact build.
+   - Do **not** check the label. It is only year and month (`SWARMARCHY_202609`), so every build
+     in a given month looks identical and a stale ISO passes unnoticed.
+   - No UUID at all means the write did not land — do not boot it.
 
 Then continue with §"Running the installer" below.
 
