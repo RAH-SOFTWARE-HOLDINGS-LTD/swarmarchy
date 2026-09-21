@@ -182,72 +182,49 @@ step 10 installs into it. Windows and any existing Linux are only read, never wr
    - Nothing on `nvme0n1` is mounted right now — you booted from USB. That is what makes the
      resize safe.
 
-4. **Check the filesystem before touching it**
+4. **Check the filesystem**
 
    ```sh
-   sudo e2fsck -f /dev/nvme0n1p3
+   e2fsck -f /dev/nvme0n1p3
    ```
 
    - `resize2fs` refuses to shrink a filesystem that has not been checked.
-   - Fix anything it reports before going further.
 
-5. **Shrink the filesystem**
-
-   Pick the new root size in **GiB** and shrink to it:
+5. **Shrink the filesystem** — pick the new root size in GiB
 
    ```sh
-   sudo resize2fs /dev/nvme0n1p3 150G
+   resize2fs /dev/nvme0n1p3 140G
    ```
 
-   - `resize2fs`'s `G` means **GiB** (1024 MiB), not GB. `150G` = 153600 MiB.
-   - **Filesystem first, partition second.** A partition smaller than its filesystem destroys data.
-   - Free at least **21 GiB** or the installer will not offer the alongside option. Leaving
+   - Leave at least **21 GiB** free or the installer will not offer the alongside option.
      80-120 GiB free is comfortable.
+   - **Filesystem first, partition second.** A partition smaller than its filesystem destroys data.
 
-6. **Work out the new partition end — do not hand-calculate it**
-
-   Read the real filesystem size and the real partition start, then derive the end:
+6. **Shrink the partition to that number + 1**
 
    ```sh
-   FS_MIB=$(sudo dumpe2fs -h /dev/nvme0n1p3 2>/dev/null | awk '/^Block count:/{c=$3} /^Block size:/{b=$3} END{printf "%d", (c*b)/1048576}')
-   START_MIB=$(sudo parted -ms /dev/nvme0n1 unit MiB print | awk -F: '$1=="3"{gsub(/MiB/,"",$2); printf "%d", $2}')
-   END_MIB=$(( START_MIB + FS_MIB + 256 ))
-   echo "fs=${FS_MIB}MiB  start=${START_MIB}MiB  new end=${END_MIB}MiB  size=$(( END_MIB - START_MIB ))MiB"
+   echo ',141G' | sfdisk -N 3 --force /dev/nvme0n1
    ```
 
-   - `FS_MIB` comes from the filesystem itself, so it is correct whatever size was used in step 5.
-   - `parted` takes an **end offset**, not a size — hence `start + size`.
-   - The 256 MiB margin guarantees the partition is never smaller than the filesystem. Step 8
+   - The only arithmetic is **+1**. `G` means GiB in both commands, so the numbers line up.
+   - The spare GiB guarantees the partition cannot end up smaller than the filesystem. Step 7
      reclaims it.
+   - The leading `,` means "leave the start where it is" — you never type an offset, and `sfdisk`
+     takes a size rather than an end position.
 
-7. **Confirm it is safe, then shrink the partition**
-
-   This refuses to print the `parted` line unless the partition will still contain the filesystem:
-
-   ```sh
-   if [ $(( END_MIB - START_MIB )) -ge "$FS_MIB" ]; then
-     sudo parted /dev/nvme0n1 unit MiB resizepart 3 "$END_MIB"
-   else
-     echo "ABORT: partition would be smaller than the filesystem — do not continue"
-   fi
-   ```
-
-   - If it prints ABORT, stop. Re-run step 5 with a smaller size and redo step 6.
-   - `parted` 3.x only moves the boundary; it never touches the filesystem.
-
-8. **Grow the filesystem back to fill the partition**
+7. **Grow the filesystem back and check**
 
    ```sh
-   sudo resize2fs /dev/nvme0n1p3
-   sudo e2fsck -f /dev/nvme0n1p3
-   sudo parted /dev/nvme0n1 unit GiB print free
+   resize2fs /dev/nvme0n1p3
+   e2fsck -f /dev/nvme0n1p3
+   parted /dev/nvme0n1 unit GiB print free
    ```
 
-   - With no size argument `resize2fs` expands to exactly the partition, removing the margin.
-   - The free-space line at the end is what the installer will offer to use.
-   - Shrinking preserves the partition UUID and slot number, so the existing GRUB entry still boots.
+   - Bare `resize2fs` expands to exactly the partition, removing the spare GiB.
+   - The free-space line is what the installer will offer to use.
+   - The partition keeps its UUID and number, so the existing GRUB entry still boots.
 
-9. **Stage the Qualcomm firmware (optional, Yoga only)**
+8. **Stage the Qualcomm firmware (optional, Yoga only)**
 
    Plug in the stick holding the `firmware/` directory from `copy-qcom-firmware.ps1`.
 
@@ -255,7 +232,7 @@ step 10 installs into it. Windows and any existing Linux are only read, never wr
    - Skip it and the install still finishes — you just get no DP-alt monitors, no audio and
      software rendering until the blobs are added by hand (`05` §"External monitors").
 
-10. **Run the installer**
+9. **Run the installer**
 
     ```sh
     ~/.automated_script.sh
