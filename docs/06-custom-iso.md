@@ -133,19 +133,28 @@ no Etcher.
    - Takes a few minutes for 3.1 GB. `dd` does not ask for confirmation and does not warn.
    - Target the whole device (`/dev/sda`), never a partition (`/dev/sda1`).
 
-6. **Flush, then confirm the right build landed**
+6. **Flush, then verify the whole image byte for byte**
 
    ```sh
    sync
-   blkid -o value -s UUID "$ISO"
-   lsblk -no UUID "$USB"
+   sudo cmp -n $(stat -c%s "$ISO") "$ISO" "$USB"
    ```
 
-   - **The two UUIDs must match.** They are ISO9660 creation timestamps, so they identify the
-     exact build.
-   - Do **not** check the label. It is only year and month (`SWARMARCHY_202609`), so every build
-     in a given month looks identical and a stale ISO passes unnoticed.
-   - No UUID at all means the write did not land — do not boot it.
+   - **Silence means identical.** Any output means re-flash; do not boot it.
+   - Takes a few minutes for 3.1 GB. Do it anyway — see below for why nothing cheaper works.
+   - `dd` must be allowed to finish. It prints a `records in / records out / bytes copied`
+     summary when it is genuinely done; interrupting it leaves a stick that still looks bootable.
+
+   A partial rewrite over an older ISO passes every cheap check, because the head of the image is
+   written first and correctly:
+
+   - The **label** is only year and month (`SWARMARCHY_202609`) — identical across builds.
+   - The **UUID** lives in the volume descriptor at 32 KiB, so it reads as the new build even when
+     the write stopped a gigabyte later. `blkid`/`lsblk` also cache it, and the cache survives a
+     rewrite, so a correct stick can report the *previous* build's UUID. `blkid -p` bypasses the
+     cache but still only proves the first 32 KiB landed.
+   - The result is a stick holding the head of one ISO and the tail of another. It boots, then
+     fails strangely once it reads the corrupted squashfs.
 
 Then continue with §"Running the installer" below.
 
