@@ -185,48 +185,65 @@ lsblk -f
 - **4. Check the filesystem before touching it**
 
 ```sh
-e2fsck -f /dev/nvme0n1p3
+sudo e2fsck -f /dev/nvme0n1p3
 ```
 
   - `resize2fs` refuses to shrink a filesystem that has not been checked.
-  - Fix any errors it reports before going further.
+  - Fix anything it reports before going further.
 
 - **5. Shrink the filesystem**
 
+  Pick the new root size in **GiB** and shrink to it:
+
 ```sh
-resize2fs /dev/nvme0n1p3 150G
+sudo resize2fs /dev/nvme0n1p3 150G
 ```
 
+  - `resize2fs`'s `G` means **GiB** (1024 MiB), not GB. `150G` = 153600 MiB.
   - **Filesystem first, partition second.** A partition smaller than its filesystem destroys data.
-  - 150G leaves ~120G free on a 270G root. Adjust to taste; the installer needs **21 GiB minimum**
-    (20 root + 1 ESP) before it will even offer the alongside option.
+  - Free at least **21 GiB** or the installer will not offer the alongside option. Leaving
+    80-120 GiB free is comfortable.
 
-- **6. Shrink the partition**
+- **6. Work out the new partition end — do not hand-calculate it**
 
-```sh
-parted /dev/nvme0n1 unit MiB resizepart 3 363366
-```
-
-  - `363366` is the partition **end** in MiB, not its size: start (209366) + 154000.
-  - That is ~4 GiB more than the filesystem — deliberate slack so the partition can never land
-    under it. Step 7 reclaims it.
-  - `parted` 3.x only moves the partition boundary; it does not touch the filesystem.
-
-- **7. Grow the filesystem back to fill the partition**
+  Read the real filesystem size and the real partition start, then derive the end:
 
 ```sh
-resize2fs /dev/nvme0n1p3
+FS_MIB=$(sudo dumpe2fs -h /dev/nvme0n1p3 2>/dev/null | awk '/^Block count:/{c=$3} /^Block size:/{b=$3} END{printf "%d", (c*b)/1048576}')
+START_MIB=$(sudo parted -ms /dev/nvme0n1 unit MiB print | awk -F: '$1=="3"{gsub(/MiB/,"",$2); printf "%d", $2}')
+END_MIB=$(( START_MIB + FS_MIB + 256 ))
+echo "fs=${FS_MIB}MiB  start=${START_MIB}MiB  new end=${END_MIB}MiB  size=$(( END_MIB - START_MIB ))MiB"
 ```
 
-  - With no size argument it expands to exactly the partition size, removing the slack.
+  - `FS_MIB` comes from the filesystem itself, so it is correct whatever size was used in step 5.
+  - `parted` takes an **end offset**, not a size — hence `start + size`.
+  - The 256 MiB margin guarantees the partition is never smaller than the filesystem. Step 8
+    reclaims it.
 
-- **8. Verify**
+- **7. Confirm it is safe, then shrink the partition**
+
+  This refuses to print the `parted` line unless the partition will still contain the filesystem:
 
 ```sh
-e2fsck -f /dev/nvme0n1p3
-parted /dev/nvme0n1 unit GB print free
+if [ $(( END_MIB - START_MIB )) -ge "$FS_MIB" ]; then
+  sudo parted /dev/nvme0n1 unit MiB resizepart 3 "$END_MIB"
+else
+  echo "ABORT: partition would be smaller than the filesystem — do not continue"
+fi
 ```
 
+  - If it prints ABORT, stop. Re-run step 5 with a smaller size and redo step 6.
+  - `parted` 3.x only moves the boundary; it never touches the filesystem.
+
+- **8. Grow the filesystem back to fill the partition**
+
+```sh
+sudo resize2fs /dev/nvme0n1p3
+sudo e2fsck -f /dev/nvme0n1p3
+sudo parted /dev/nvme0n1 unit GiB print free
+```
+
+  - With no size argument `resize2fs` expands to exactly the partition, removing the margin.
   - The free-space line at the end is what the installer will offer to use.
   - Shrinking preserves the partition UUID and slot number, so the existing GRUB entry still boots.
 
