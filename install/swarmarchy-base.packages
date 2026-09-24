@@ -11,6 +11,16 @@ swayosd                    # on-screen popup for volume / brightness / caps-lock
 foot                       # default terminal emulator (fast, Wayland-native)
 waybar                     # the top status bar
 mako                       # desktop notification daemon
+walker                     # application launcher (SUPER+Space)
+elephant                   # walker's data backend
+elephant-calc              # walker provider: calculator
+elephant-clipboard         # walker provider: clipboard history
+elephant-desktopapplications  # walker provider: installed apps
+elephant-files             # walker provider: file search
+elephant-menus             # walker provider: menus
+elephant-providerlist      # walker provider: provider switcher
+elephant-symbols           # walker provider: emoji/symbols
+elephant-websearch         # walker provider: web search
 libnotify                  # provides notify-send (used by ~21 swarmarchy-* scripts)
 grim                       # screenshot capture backend
 slurp                      # screen-region selector (pairs with grim, OCR, recorder)
