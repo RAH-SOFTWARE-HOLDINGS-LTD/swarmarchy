@@ -4,7 +4,7 @@
 # swarmarchy:examples=swarmarchy logout | swarmarchy system logout
 # swarmarchy:aliases=swarmarchy logout
 
-nohup bash -c "sleep 2 && uwsm stop" >/dev/null 2>&1 &
+nohup bash -c "sleep 2 && swaymsg exit" >/dev/null 2>&1 &
 
 # Now close all windows
 swarmarchy-wm-window-close-all

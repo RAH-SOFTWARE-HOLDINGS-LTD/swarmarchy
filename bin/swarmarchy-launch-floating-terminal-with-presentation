@@ -4,4 +4,4 @@
 # swarmarchy:args=<command>
 
 cmd="$*"
-exec setsid uwsm-app -- xdg-terminal-exec --app-id=org.swarmarchy.terminal --title=Swarmarchy -e bash -c "swarmarchy-show-logo; $cmd; if (( \$? != 130 )); then swarmarchy-show-done; fi"
+exec setsid xdg-terminal-exec --app-id=org.swarmarchy.terminal --title=Swarmarchy -e bash -c "swarmarchy-show-logo; $cmd; if (( \$? != 130 )); then swarmarchy-show-done; fi"

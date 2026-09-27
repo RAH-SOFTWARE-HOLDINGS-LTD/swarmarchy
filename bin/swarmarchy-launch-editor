@@ -10,6 +10,6 @@ nvim | vim | nano | micro | hx | helix | fresh)
   exec swarmarchy-launch-tui "$EDITOR" "$@"
   ;;
 *)
-  exec setsid uwsm-app -- "$EDITOR" "$@"
+  exec setsid "$EDITOR" "$@"
   ;;
 esac

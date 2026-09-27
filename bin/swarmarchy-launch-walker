@@ -3,12 +3,11 @@
 # swarmarchy:summary=Launch Walker and ensure its Elephant data provider is running
 
 if ! pgrep -x elephant > /dev/null; then
-  setsid uwsm-app -- elephant &
+  setsid -f elephant
 fi
 
-# Ensure walker service is running
-if ! pgrep -f "walker --gapplication-service" > /dev/null; then
-  setsid uwsm-app -- env GSK_RENDERER=cairo walker --gapplication-service &
-fi
+# Deliberately NOT starting `walker --gapplication-service`: with walker 2.16 +
+# elephant 2.21 the warm service wedges after the first popup and Super+Space
+# stops responding. Cold-launching below is reliable. See ~/.config/sway/autostart.conf.
 
 exec walker --width 644 --maxheight 300 --minheight 300 "$@"
