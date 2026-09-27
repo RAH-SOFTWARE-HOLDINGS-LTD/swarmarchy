@@ -130,7 +130,7 @@ no Etcher.
    sudo dd if="$ISO" of="$USB" bs=4M conv=fsync oflag=direct status=progress
    ```
 
-   - Takes a few minutes for 3.1 GB. `dd` does not ask for confirmation and does not warn.
+   - Takes a few minutes. `dd` does not ask for confirmation and does not warn.
    - Target the whole device (`/dev/sda`), never a partition (`/dev/sda1`).
 
 6. **Flush, then verify the whole image byte for byte**
@@ -141,7 +141,7 @@ no Etcher.
    ```
 
    - **Silence means identical.** Any output means re-flash; do not boot it.
-   - Takes a few minutes for 3.1 GB. Do it anyway — see below for why nothing cheaper works.
+   - Takes a few minutes. Do it anyway — see below for why nothing cheaper works.
    - `dd` must be allowed to finish. It prints a `records in / records out / bytes copied`
      summary when it is genuinely done; interrupting it leaves a stick that still looks bootable.
 
@@ -166,8 +166,9 @@ Then continue with §"Running the installer" below.
 The dual-boot install, start to finish, on the Yoga. Assumes a USB already flashed with
 `swarmarchy-<date>-aarch64-master.iso`.
 
-**Before you start:** the installer never shrinks anything by itself — steps 4-9 free the space,
-step 10 installs into it. Windows and any existing Linux are only read, never written.
+**Before you start:** the installer never shrinks anything by itself. Steps 6-9 free space for a
+first install; step 4 lets you skip them when reinstalling over an existing Swarmarchy. Windows and
+any existing Linux are only read, never written.
 
 1. **Boot the USB**
 
@@ -195,7 +196,22 @@ step 10 installs into it. Windows and any existing Linux are only read, never wr
    - Nothing on `nvme0n1` is mounted right now — you booted from USB. That is what makes the
      resize safe.
 
-4. **Check the filesystem**
+4. **Already have a Swarmarchy install? Skip to step 10**
+
+   The installer detects a previous install by its partition labels (`SWARMBOOT` + `swarmarchy`)
+   and offers to reinstall onto it, reformatting only those two. Steps 6-9 are for making room the
+   *first* time.
+
+   ```sh
+   lsblk -o NAME,SIZE,FSTYPE,LABEL /dev/nvme0n1
+   ```
+
+   - Both labels present → no resizing, no deleting. Go to step 10.
+   - Neither present → carry on with step 6 to free space.
+   - The confirmation screen lists what gets reformatted and what is left alone, so you can see
+     Swarmarchy is being replaced and the other OS is not.
+
+5. **Check the filesystem**
 
    ```sh
    e2fsck -f /dev/nvme0n1p3
@@ -203,7 +219,7 @@ step 10 installs into it. Windows and any existing Linux are only read, never wr
 
    - `resize2fs` refuses to shrink a filesystem that has not been checked.
 
-5. **Shrink the filesystem** — pick the new root size in GiB
+6. **Shrink the filesystem** — pick the new root size in GiB
 
    ```sh
    resize2fs /dev/nvme0n1p3 140G
@@ -213,19 +229,19 @@ step 10 installs into it. Windows and any existing Linux are only read, never wr
      80-120 GiB free is comfortable.
    - **Filesystem first, partition second.** A partition smaller than its filesystem destroys data.
 
-6. **Shrink the partition to that number + 1**
+7. **Shrink the partition to that number + 1**
 
    ```sh
    echo ',141G' | sfdisk -N 3 --force /dev/nvme0n1
    ```
 
    - The only arithmetic is **+1**. `G` means GiB in both commands, so the numbers line up.
-   - The spare GiB guarantees the partition cannot end up smaller than the filesystem. Step 7
+   - The spare GiB guarantees the partition cannot end up smaller than the filesystem. Step 8
      reclaims it.
    - The leading `,` means "leave the start where it is" — you never type an offset, and `sfdisk`
      takes a size rather than an end position.
 
-7. **Grow the filesystem back and check**
+8. **Grow the filesystem back and check**
 
    ```sh
    resize2fs /dev/nvme0n1p3
@@ -237,7 +253,7 @@ step 10 installs into it. Windows and any existing Linux are only read, never wr
    - The free-space line is what the installer will offer to use.
    - The partition keeps its UUID and number, so the existing GRUB entry still boots.
 
-8. **Stage the Qualcomm firmware (optional, Yoga only)**
+9. **Stage the Qualcomm firmware (optional, Yoga only)**
 
    Plug in the stick holding the `firmware/` directory from `copy-qcom-firmware.ps1`.
 
@@ -245,7 +261,7 @@ step 10 installs into it. Windows and any existing Linux are only read, never wr
    - Skip it and the install still finishes — you just get no DP-alt monitors, no audio and
      software rendering until the blobs are added by hand (`05` §"External monitors").
 
-9. **Run the installer**
+10. **Run the installer**
 
     ```sh
     ~/.automated_script.sh
