@@ -24,5 +24,10 @@ if [[ -n $mem_sleep_mode ]]; then
 w /sys/power/mem_sleep - - - - $mem_sleep_mode
 EOF
 
-  sudo systemd-tmpfiles --create /etc/tmpfiles.d/99-mem-sleep.conf
+  # Applying it now is best-effort: during an ISO install this runs in a chroot
+  # where /sys is read-only, and failing there aborted the whole script
+  # ("Failed to open file /sys/power/mem_sleep: Read-only file system").
+  # The rule above is what matters -- systemd applies it on the next boot.
+  sudo systemd-tmpfiles --create /etc/tmpfiles.d/99-mem-sleep.conf 2>/dev/null ||
+    echo "note: could not apply mem_sleep now (read-only /sys?); it will apply at boot"
 fi

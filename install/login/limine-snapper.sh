@@ -85,11 +85,62 @@ echo "mkinitcpio hooks re-enabled"
 # boot entries into /boot/limine.conf. Only fall back to limine-update if those
 # hooks didn't run for some reason — running it unconditionally rebuilds every
 # UKI a second time.
-if ! grep -q "^/+" /boot/limine.conf; then
+# "^/" is any menu entry: CONFIG.md says an entry is a line starting with "/".
+# (The previous "^/+" was a basic regex matching a literal "/+", so it never
+# matched a plain "/Name" entry.)
+if ! grep -q "^/" /boot/limine.conf; then
   sudo limine-update
 fi
 
-if ! grep -q "^/+" /boot/limine.conf; then
+# Fallback for Arch Linux ARM. limine-entry-tool locates kernels by reading
+# /usr/lib/modules/<version>/pkgbase, which mainline Arch's kernel package ships
+# and ALARM's linux-aarch64 does not. It therefore finds no kernels, writes no
+# entries, and returns success -- leaving a bootloader whose menu says
+# "config file contains no valid entries". limine-install also exits early here
+# ("The system is not x86_64."). Write a direct kernel entry instead.
+if ! grep -q "^/" /boot/limine.conf; then
+  echo "No boot entries were generated; writing one directly." >&2
+
+  root_uuid="$(findmnt -no UUID /)"
+  root_subvol="$(findmnt -no FSROOT / | sed 's|^/||')"
+  kernel=""
+  for candidate in /boot/Image /boot/vmlinuz-linux; do
+    [[ -f $candidate ]] && { kernel="${candidate#/boot/}"; break; }
+  done
+  initramfs=""
+  for candidate in /boot/initramfs-linux.img /boot/initramfs-linux-fallback.img; do
+    [[ -f $candidate ]] && { initramfs="${candidate#/boot/}"; break; }
+  done
+
+  if [[ -z $kernel || -z $initramfs || -z $root_uuid ]]; then
+    echo "Error: cannot build a boot entry (kernel='$kernel' initramfs='$initramfs' root='$root_uuid')" >&2
+    exit 1
+  fi
+
+  # Snapdragon boards boot via device tree, not ACPI. global_dtb applies to every
+  # entry that does not set its own dtb_path, so any entries generated later
+  # inherit it too.
+  board_dtb="$(find /boot/dtbs -name 'x1e80100-lenovo-yoga-slim7x.dtb' 2>/dev/null | head -1)"
+  if [[ -n $board_dtb ]]; then
+    grep -q '^global_dtb:' /boot/limine.conf ||
+      sudo sed -i "1i global_dtb: boot():/${board_dtb#/boot/}" /boot/limine.conf
+  fi
+
+  cmdline="root=UUID=${root_uuid} rootflags=subvol=${root_subvol:-@} rw"
+  [[ -f /etc/default/limine ]] &&
+    cmdline="$(sed -n 's/^KERNEL_CMDLINE\[default\]+="\(.*\)"$/\1/p' /etc/default/limine | tr '\n' ' ')"
+
+  sudo tee -a /boot/limine.conf >/dev/null <<ENTRY
+
+/${TARGET_OS_NAME:-Swarmarchy}
+    protocol: linux
+    path: boot():/${kernel}
+    cmdline: ${cmdline}
+    module_path: boot():/${initramfs}
+ENTRY
+fi
+
+if ! grep -q "^/" /boot/limine.conf; then
   echo "Error: failed to add boot entries to /boot/limine.conf" >&2
   exit 1
 fi

@@ -11,6 +11,9 @@ swayosd                    # on-screen popup for volume / brightness / caps-lock
 foot                       # default terminal emulator (fast, Wayland-native)
 waybar                     # the top status bar
 mako                       # desktop notification daemon
+greetd                     # login manager (launches the Sway session)
+greetd-tuigreet            # greetd's terminal greeter UI
+yay                        # AUR helper; prebuilt in the swarmarchy repo (building it needs go + network)
 walker                     # application launcher (SUPER+Space)
 elephant                   # walker's data backend
 elephant-calc              # walker provider: calculator
