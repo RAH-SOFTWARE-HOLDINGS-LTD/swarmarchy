@@ -11,7 +11,6 @@ run_logged $SWARMARCHY_INSTALL/config/user-dirs.sh
 run_logged $SWARMARCHY_INSTALL/config/nautilus-python.sh
 run_logged $SWARMARCHY_INSTALL/config/localdb.sh
 run_logged $SWARMARCHY_INSTALL/config/walker-elephant.sh
-run_logged $SWARMARCHY_INSTALL/config/pi.sh
 run_logged $SWARMARCHY_INSTALL/config/swarmarchy-toggles.sh
 run_logged $SWARMARCHY_INSTALL/config/kernel-modules-hook.sh
 run_logged $SWARMARCHY_INSTALL/config/powerprofilesctl-rules.sh
