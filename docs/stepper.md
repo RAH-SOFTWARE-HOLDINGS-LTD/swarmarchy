@@ -1,6 +1,6 @@
 - https://gitlab.com/kernel-firmware/linux-firmware/
 - install yazi to replace nautilus and remove any pkg dependencies
-- revistit sway fork | investigate unexpected system crash | understand repo.. and install script | fix timezone display issue
+- revistit sway fork | investigate unexpected system crash | understand repo.. and install script | fix timezone display issue | delta_corps_priest_1 - https://patorjk.com/software/taag/#p=display&f=Delta+Corps+Priest+1&t=SWARMARCHY&x=none&v=4&h=4&w=80&we=false
 
 - boot.sh (will probably remove...)
   - (via curl) git clones repo and then runs install.sh
@@ -101,5 +101,14 @@
       - create user dirs and such..updated already
     - /config/nautilus-python.sh
       - need to add yazi keybinding to replace localsend.py and transcode.py
+      - to be removed
     - /config/localdb.sh
       - run updatedb (which is run on a daily cadence by default)
+    - /config/walker-elephant.sh
+      - I don't know what these are for but it seems useful, don't remove
+    - /config/sudoless-asdcontrol
+      - removed
+    - /config/input-group
+      - removed
+    - /config/pi
+      - ai coding assistant
