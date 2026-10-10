@@ -16,9 +16,9 @@ echo_in_style() {
 clear
 echo
 if has_tte; then
-  tte -i ~/.local/share/swarmarchy/logo.txt --canvas-width 0 --anchor-text c --frame-rate 920 laseretch
+  tte -i "$SWARMARCHY_PATH/logo.txt" --canvas-width 0 --anchor-text c --frame-rate 920 laseretch
 else
-  cat ~/.local/share/swarmarchy/logo.txt
+  cat "$SWARMARCHY_PATH/logo.txt"
 fi
 echo
 

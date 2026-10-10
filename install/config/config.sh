@@ -1,6 +1,6 @@
 # Copy over Swarmarchy configs
 mkdir -p ~/.config
-cp -R ~/.local/share/swarmarchy/config/* ~/.config/
+cp -R "$SWARMARCHY_PATH"/config/* ~/.config/
 
 # Use default bashrc from Swarmarchy
-cp ~/.local/share/swarmarchy/default/bashrc ~/.bashrc
+cp "$SWARMARCHY_PATH"/default/bashrc ~/.bashrc

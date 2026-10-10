@@ -122,7 +122,7 @@ catch_errors() {
 
     case "$choice" in
     "Retry installation")
-      bash ~/.local/share/swarmarchy/install.sh
+      bash "$SWARMARCHY_PATH/install.sh"
       break
       ;;
     "View full log")

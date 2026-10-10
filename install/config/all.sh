@@ -1,3 +1,4 @@
+run_logged $SWARMARCHY_INSTALL/config/deploy.sh
 run_logged $SWARMARCHY_INSTALL/config/config.sh
 run_logged $SWARMARCHY_INSTALL/config/system-files.sh
 run_logged $SWARMARCHY_INSTALL/config/theme.sh
