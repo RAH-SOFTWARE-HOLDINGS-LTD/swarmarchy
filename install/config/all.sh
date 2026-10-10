@@ -11,9 +11,6 @@ run_logged $SWARMARCHY_INSTALL/config/user-dirs.sh
 run_logged $SWARMARCHY_INSTALL/config/nautilus-python.sh
 run_logged $SWARMARCHY_INSTALL/config/localdb.sh
 run_logged $SWARMARCHY_INSTALL/config/walker-elephant.sh
-run_logged $SWARMARCHY_INSTALL/config/sudoless-asdcontrol.sh
-run_logged $SWARMARCHY_INSTALL/config/input-group.sh
-run_logged $SWARMARCHY_INSTALL/config/swarmarchy-ai-skill.sh
 run_logged $SWARMARCHY_INSTALL/config/pi.sh
 run_logged $SWARMARCHY_INSTALL/config/swarmarchy-toggles.sh
 run_logged $SWARMARCHY_INSTALL/config/kernel-modules-hook.sh
