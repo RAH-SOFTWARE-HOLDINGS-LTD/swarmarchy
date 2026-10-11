@@ -1,9 +1,27 @@
 #!/bin/bash
 
 # swarmarchy:summary=Set Wi-Fi power save mode on wireless interfaces
-# swarmarchy:args=<on|off>
+# swarmarchy:args=[autodetect|on|off]
+
+action="${1-}"
+
+# Auto-detect when called with no argument: any Mains or USB power-supply
+# reporting online=1 counts as "on AC". USB-C-only laptops never bring the
+# legacy Mains supply online, so matching Mains alone would pin powersave on.
+if [[ -z $action || $action == "autodetect" ]]; then
+  action=on
+  for ps in /sys/class/power_supply/*; do
+    [[ -r $ps/online && -r $ps/type ]] || continue
+    type=$(cat "$ps/type")
+    [[ $type == "Mains" || $type == "USB" ]] || continue
+    if [[ $(cat "$ps/online") == "1" ]]; then
+      action=off
+      break
+    fi
+  done
+fi
 
 for iface in /sys/class/net/*/wireless; do
   iface="$(basename "$(dirname "$iface")")"
-  iw dev "$iface" set power_save "$1" 2>/dev/null
+  iw dev "$iface" set power_save "$action" 2>/dev/null
 done

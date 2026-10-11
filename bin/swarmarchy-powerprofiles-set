@@ -1,15 +1,16 @@
 #!/bin/bash
 
-# swarmarchy:summary=Set the power profile to the requested level, falling back to balanced
+# swarmarchy:summary=Set the CPU governor (and power profile) for AC or battery
 # swarmarchy:args=[autodetect|ac|battery]
+
+# power-profiles-daemon has no backend for this machine's `scmi` cpufreq driver,
+# so setting a ppd profile alone changes nothing. The governor is the real knob,
+# so drive it directly and keep ppd in sync for the menu's benefit.
+AC_GOVERNOR=performance
+BATTERY_GOVERNOR=schedutil
 
 action="${1-}"
 
-# Auto-detect when called with no argument: treat any Mains or USB
-# power-supply device reporting online=1 as "on AC". This handles
-# USB-C only laptops where the legacy AC device may not fire udev
-# events, and also avoids false negatives from per-port USB-C devices
-# that are present-but-empty (online=0) while another port supplies power.
 if [[ -z $action || $action == "autodetect" ]]; then
   action=battery
   for ps in /sys/class/power_supply/*; do
@@ -23,18 +24,29 @@ if [[ -z $action || $action == "autodetect" ]]; then
   done
 fi
 
-mapfile -t profiles < <(powerprofilesctl list | awk '/^\s*[* ]\s*[a-zA-Z0-9\-]+:$/ { gsub(/^[*[:space:]]+|:$/,""); print }')
+case "$action" in
+  ac)      governor=$AC_GOVERNOR ;;
+  battery) governor=$BATTERY_GOVERNOR ;;
+  *)       exit 0 ;;
+esac
 
+# Governor writes need root. The udev rule already runs as root; the Sway
+# autostart and menu paths go through the sudoers-whitelisted helper.
+if [[ $EUID -eq 0 ]]; then
+  swarmarchy-powerprofiles-governor "$governor" 2>/dev/null
+else
+  sudo -n /usr/lib/swarmarchy/bin/swarmarchy-powerprofiles-governor "$governor" 2>/dev/null
+fi
+
+# Keep ppd's reported profile coherent with intent (cosmetic on this hardware).
+mapfile -t profiles < <(powerprofilesctl list 2>/dev/null | awk '/^\s*[* ]\s*[a-zA-Z0-9\-]+:$/ { gsub(/^[*[:space:]]+|:$/,""); print }')
 case "$action" in
   ac)
-    # Prefer performance, fall back to balanced
     if [[ " ${profiles[*]} " == *" performance "* ]]; then
-      powerprofilesctl set performance
+      powerprofilesctl set performance 2>/dev/null
     else
-      powerprofilesctl set balanced
+      powerprofilesctl set balanced 2>/dev/null
     fi
     ;;
-  battery)
-    powerprofilesctl set balanced
-    ;;
+  battery) powerprofilesctl set balanced 2>/dev/null ;;
 esac
