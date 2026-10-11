@@ -23,9 +23,3 @@ run_logged $SWARMARCHY_INSTALL/config/hardware/printer.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/usb-autosuspend.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/suspend-mode.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/ignore-power-button.sh
-
-run_logged $SWARMARCHY_INSTALL/config/hardware/fix-bcm43xx.sh
-run_logged $SWARMARCHY_INSTALL/config/hardware/fix-surface-keyboard.sh
-run_logged $SWARMARCHY_INSTALL/config/hardware/fix-yt6801-ethernet-adapter.sh
-run_logged $SWARMARCHY_INSTALL/config/hardware/fix-synaptic-touchpad.sh
-run_logged $SWARMARCHY_INSTALL/config/hardware/fix-tuxedo-backlight.sh

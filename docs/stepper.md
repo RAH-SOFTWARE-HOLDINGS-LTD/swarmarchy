@@ -112,3 +112,10 @@
       - removed
     - /config/pi
       - ai coding assistant
+    - /config/swarmarchy-toggles
+      - redundant script that creates a dir...removed
+    - /config/kernel-modules-hook
+      - useful, keep. helps with garbage collection of kernel modules and prevents errors when removing kernel packages
+    - /config/powerprofilesctl-rules
+      - auto profile switching (power-aware, balanced, performance) - useful, keep
+    - /config/wifi-powersave-rules.sh
