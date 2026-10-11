@@ -10,6 +10,12 @@ FIRST_RUN_MODE=~/.local/state/swarmarchy/first-run.mode
 if [[ -f $FIRST_RUN_MODE ]]; then
   rm -f "$FIRST_RUN_MODE"
 
+  # Revoke the install-time sudo grant on the way out, whatever happens. The
+  # mode file above is already gone, so this script never runs again; with the
+  # revoke as the last statement instead, any `set -e` abort in the steps below
+  # left /etc/sudoers.d/first-run in place permanently.
+  trap 'sudo rm -f /etc/sudoers.d/first-run' EXIT
+
   bash "$SWARMARCHY_PATH/install/first-run/battery-monitor.sh"
   bash "$SWARMARCHY_PATH/install/first-run/recover-internal-monitor.sh"
   bash "$SWARMARCHY_PATH/install/first-run/cleanup-reboot-sudoers.sh"
@@ -21,7 +27,6 @@ if [[ -f $FIRST_RUN_MODE ]]; then
   bash "$SWARMARCHY_PATH/install/first-run/gtk-primary-paste.sh"
   bash "$SWARMARCHY_PATH/install/first-run/elephant.sh"
   swarmarchy-hook-install post-update "$SWARMARCHY_PATH/install/first-run/install-voxtype.hook"
-  sudo rm -f /etc/sudoers.d/first-run
 
   bash "$SWARMARCHY_PATH/install/first-run/welcome.sh"
   bash "$SWARMARCHY_PATH/install/first-run/wifi.sh"
