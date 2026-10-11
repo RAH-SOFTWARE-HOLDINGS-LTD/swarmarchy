@@ -18,16 +18,11 @@ run_logged $SWARMARCHY_INSTALL/config/wifi-powersave-rules.sh
 
 run_logged $SWARMARCHY_INSTALL/config/hardware/network.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/set-wireless-regdom.sh
-run_logged $SWARMARCHY_INSTALL/config/hardware/fix-fkeys.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/bluetooth.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/printer.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/usb-autosuspend.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/suspend-mode.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/ignore-power-button.sh
-run_logged $SWARMARCHY_INSTALL/config/hardware/nvidia.sh
-run_logged $SWARMARCHY_INSTALL/config/hardware/vulkan.sh
-
-run_logged $SWARMARCHY_INSTALL/config/hardware/lenovo/fix-yoga-pro7-bass-speakers.sh
 
 run_logged $SWARMARCHY_INSTALL/config/hardware/fix-bcm43xx.sh
 run_logged $SWARMARCHY_INSTALL/config/hardware/fix-surface-keyboard.sh
