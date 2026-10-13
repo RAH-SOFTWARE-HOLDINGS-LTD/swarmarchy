@@ -748,32 +748,19 @@ show_remove_elixir_menu() {
   esac
 }
 
-show_update_menu() {
-  case $(menu "Update" "  Swarmarchy\n󰔫  Channel\n  Config\n󰸌  Extra Themes\n  Process\n󰇅  Hardware\n  Firmware\n  Password\n  Timezone\n  Time") in
-  *Swarmarchy*) present_terminal swarmarchy-update ;;
-  *Channel*) show_update_channel_menu ;;
-  *Config*) show_update_config_menu ;;
+show_maintain_menu() {
+  case $(menu "Maintain" "  Config\n󰸌  Extra Themes\n  Process\n󰇅  Hardware\n  Password\n  Timezone") in
   *Themes*) present_terminal swarmarchy-theme-update ;;
-  *Process*) show_update_process_menu ;;
-  *Hardware*) show_update_hardware_menu ;;
-  *Firmware*) present_terminal swarmarchy-update-firmware ;;
+  *Config*) show_maintain_config_menu ;;
+  *Process*) show_maintain_process_menu ;;
+  *Hardware*) show_maintain_hardware_menu ;;
   *Timezone*) present_terminal swarmarchy-tz-select ;;
-  *Time*) present_terminal swarmarchy-update-time ;;
-  *Password*) show_update_password_menu ;;
+  *Password*) show_maintain_password_menu ;;
   *) show_main_menu ;;
   esac
 }
 
-show_update_channel_menu() {
-  case $(menu "Update channel" "🟢 Stable\n🟡 RC\n🟠 Edge\n🔴 Dev") in
-  *Stable*) present_terminal "swarmarchy-channel-set stable" ;;
-  *RC*) present_terminal "swarmarchy-channel-set rc" ;;
-  *Edge*) present_terminal "swarmarchy-channel-set edge" ;;
-  *Dev*) present_terminal "swarmarchy-channel-set dev" ;;
-  *) show_update_menu ;;
-  esac
-}
-show_update_process_menu() {
+show_maintain_process_menu() {
   case $(menu "Restart" "  Swayidle\n  Nightlight\n󰎟  Mako\n  Swayosd\n󰌧  Walker\n󰍜  Waybar") in
   *Swayidle*) swarmarchy-restart-swayidle ;;
   *Nightlight*) swarmarchy-restart-wlsunset ;;
@@ -781,11 +768,11 @@ show_update_process_menu() {
   *Swayosd*) swarmarchy-restart-swayosd ;;
   *Walker*) swarmarchy-restart-walker ;;
   *Waybar*) swarmarchy-restart-waybar ;;
-  *) show_update_menu ;;
+  *) show_maintain_menu ;;
   esac
 }
 
-show_update_config_menu() {
+show_maintain_config_menu() {
   case $(menu "Use default config" "  Sway\n  Swaylock\n  Swayosd\n  Tmux\n󰌧  Walker\n󰍜  Waybar") in
   *Swaylock*) present_terminal swarmarchy-refresh-swaylock ;;
   *Swayosd*) present_terminal swarmarchy-refresh-swayosd ;;
@@ -793,25 +780,25 @@ show_update_config_menu() {
   *Tmux*) present_terminal swarmarchy-refresh-tmux ;;
   *Walker*) present_terminal swarmarchy-refresh-walker ;;
   *Waybar*) present_terminal swarmarchy-refresh-waybar ;;
-  *) show_update_menu ;;
+  *) show_maintain_menu ;;
   esac
 }
 
-show_update_hardware_menu() {
+show_maintain_hardware_menu() {
   case $(menu "Restart" "  Audio\n󱚾  Wi-Fi\n󰂯  Bluetooth\n󰟸  Trackpad") in
   *Audio*) present_terminal swarmarchy-restart-pipewire ;;
   *Wi-Fi*) present_terminal swarmarchy-restart-wifi ;;
   *Bluetooth*) present_terminal swarmarchy-restart-bluetooth ;;
   *Trackpad*) present_terminal swarmarchy-restart-trackpad ;;
-  *) show_update_menu ;;
+  *) show_maintain_menu ;;
   esac
 }
 
-show_update_password_menu() {
+show_maintain_password_menu() {
   case $(menu "Update Password" "  Drive Encryption\n  User") in
   *Drive*) present_terminal swarmarchy-drive-password ;;
   *User*) present_terminal passwd ;;
-  *) show_update_menu ;;
+  *) show_maintain_menu ;;
   esac
 }
 
@@ -838,7 +825,7 @@ show_system_menu() {
 }
 
 show_main_menu() {
-  go_to_menu "$(menu "Go" "󰀻  Apps\n󰧑  Learn\n󱓞  Trigger\n  Style\n  Setup\n󰉉  Install\n󰭌  Remove\n  Update\n  About\n  System")"
+  go_to_menu "$(menu "Go" "󰀻  Apps\n󰧑  Learn\n󱓞  Trigger\n  Style\n  Setup\n󰉉  Install\n󰭌  Remove\n  Maintain\n  About\n  System")"
 }
 
 go_to_menu() {
@@ -860,7 +847,7 @@ go_to_menu() {
   *power*) show_setup_power_menu ;;
   *install*) show_install_menu ;;
   *remove*) show_remove_menu ;;
-  *update*) show_update_menu ;;
+  *maintain*) show_maintain_menu ;;
   *about*) show_about ;;
   *system*) show_system_menu ;;
   esac

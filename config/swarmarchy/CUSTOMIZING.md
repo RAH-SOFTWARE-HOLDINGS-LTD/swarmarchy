@@ -2,7 +2,7 @@
 
 Everything below lives in **`~/.config/`** (your files, safe to edit). Swarmarchy's
 shipped defaults live in **`/usr/share/swarmarchy/default/`** — read them for
-reference, but never edit them (a `swarmarchy update` overwrites them).
+reference, but never edit them (a redeploy with `swarmarchy-dev-deploy` overwrites them).
 
 ## The three locations
 

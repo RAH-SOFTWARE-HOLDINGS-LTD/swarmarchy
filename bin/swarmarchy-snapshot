@@ -15,12 +15,12 @@ if [[ -z $COMMAND ]]; then
 fi
 
 if ! command -v snapper &>/dev/null; then
-  exit 127 # swarmarchy-update can use this to just ignore if snapper is not available
+  exit 127 # callers can use this to ignore a missing snapper
 fi
 
 case "$COMMAND" in
 create)
-  DESC="$(swarmarchy-version)"
+  DESC="swarmarchy $(date +%F)"
 
   echo -e "\e[32mCreate system snapshot\e[0m"
 

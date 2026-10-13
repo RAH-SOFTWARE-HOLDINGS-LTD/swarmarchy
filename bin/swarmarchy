@@ -492,7 +492,6 @@ Usage:
   swarmarchy <group> <command> --help
 
 Common commands:
-  swarmarchy update              Update Swarmarchy and system packages
   swarmarchy theme list          List available themes
   swarmarchy theme set <name>    Apply a theme
   swarmarchy font list           List available fonts

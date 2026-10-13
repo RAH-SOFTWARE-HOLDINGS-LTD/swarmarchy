@@ -115,8 +115,8 @@ assert_output_contains "bare share help uses canonical route" "$output" "swarmar
 output=$("$CLI" menu share)
 assert_output_contains "bare required-arg filename route renders CLI help" "$output" "swarmarchy share <clipboard|file|folder> [path...]"
 
-output=$("$CLI" branch set)
-assert_output_contains "bare required-choice route renders CLI help" "$output" "swarmarchy branch set <master|rc|dev>"
+output=$("$CLI" install browser)
+assert_output_contains "bare required-choice route renders CLI help" "$output" "swarmarchy install browser <chrome|brave|brave-origin|edge|firefox|zen>"
 
 CLI="$CLI" python3 <<'PY'
 import json
@@ -156,9 +156,9 @@ output=$(timeout 5 "$CLI" theme set --help)
 assert_output_contains "command help renders without executing" "$output" "Binary:"
 assert_output_contains "theme set help names binary" "$output" "swarmarchy-theme-set"
 
-output=$(timeout 5 "$CLI" update --help)
-assert_output_contains "mutating command help does not execute target" "$output" "swarmarchy-update"
-assert_output_contains "root command help shows related child commands" "$output" "swarmarchy update perform"
+output=$(timeout 5 "$CLI" toggle --help)
+assert_output_contains "mutating command help does not execute target" "$output" "swarmarchy-toggle"
+assert_output_contains "root command help shows related child commands" "$output" "swarmarchy toggle enabled <flag-name>"
 
 output=$("$CLI" screenshot --help)
 assert_output_contains "root alias resolves to command help" "$output" "swarmarchy-capture-screenshot"
@@ -189,7 +189,6 @@ pass "safe dispatch works for font list"
 pass "safe dispatch works for font current"
 
 for binary in \
-  swarmarchy-update \
   swarmarchy-theme-set \
   swarmarchy-capture-screenshot \
   swarmarchy-system-reboot \

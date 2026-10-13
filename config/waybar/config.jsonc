@@ -5,7 +5,7 @@
   "spacing": 0,
   "height": 26,
   "modules-left": ["custom/swarmarchy", "sway/workspaces"],
-  "modules-center": ["clock", "custom/weather", "custom/update", "custom/voxtype", "custom/screenrecording-indicator", "custom/idle-indicator", "custom/notification-silencing-indicator"],
+  "modules-center": ["clock", "custom/weather", "custom/voxtype", "custom/screenrecording-indicator", "custom/idle-indicator", "custom/notification-silencing-indicator"],
   "modules-right": [
     "group/tray-expander",
     "bluetooth",
@@ -45,15 +45,6 @@
     "on-click-right": "xdg-terminal-exec",
     "tooltip-format": "Swarmarchy Menu\n\nSuper + Alt + Space"
   },
-  "custom/update": {
-    "format": "",
-    "exec": "swarmarchy-update-available",
-    "on-click": "swarmarchy-launch-floating-terminal-with-presentation swarmarchy-update",
-    "tooltip-format": "Swarmarchy update available",
-    "signal": 7,
-    "interval": 21600
-  },
-
   "cpu": {
     "interval": 5,
     "format": "󰍛",

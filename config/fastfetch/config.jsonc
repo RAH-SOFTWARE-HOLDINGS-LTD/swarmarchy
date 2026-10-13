@@ -66,19 +66,7 @@
       "type": "command",
       "key": "\ue900 OS",
       "keyColor": "blue",
-      "text": "version=$(swarmarchy-version); echo \"Swarmarchy $version\""
-    },
-    {
-      "type": "command",
-      "key": "│ ├󰘬",
-      "keyColor": "blue",
-      "text": "branch=$(swarmarchy-version-branch); echo \"$branch\""
-    },
-    {
-      "type": "command",
-      "key": "│ ├󰔫",
-      "keyColor": "blue",
-      "text": "channel=$(swarmarchy-version-channel); echo \"$channel\""
+      "text": "echo Swarmarchy"
     },
     {
       "type": "kernel",
@@ -140,12 +128,6 @@
       "type": "uptime",
       "key": "󱫐 Uptime",
       "keyColor": "magenta"
-    },
-    {
-      "type": "command",
-      "key": " Update",
-      "keyColor": "magenta",
-      "text": "updated=$(swarmarchy-version-pkgs); echo \"$updated\""
     },
     {
       "type": "custom",
