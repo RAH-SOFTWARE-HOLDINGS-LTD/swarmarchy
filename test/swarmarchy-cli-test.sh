@@ -48,7 +48,7 @@ pass "main help does not show group counts"
 output=$("$CLI" commands)
 assert_output_contains "commands lists documented commands" "$output" "swarmarchy theme set <theme-name>"
 
-"$CLI" commands --json | jq -e '.ok == true and (.commands | length >= 200)' >/dev/null
+"$CLI" commands --json | jq -e '.ok == true and (.commands | length >= 150)' >/dev/null
 pass "commands --json is valid JSON with full bin coverage"
 
 "$CLI" commands --json | jq -e 'all(.commands[]; .summary != "undocumented")' >/dev/null
@@ -98,12 +98,12 @@ assert_output_contains "restart group includes inferred commands" "$output" "swa
 assert_output_contains "restart group includes all restart commands" "$output" "swarmarchy restart wifi"
 
 output=$("$CLI" hw --help)
-assert_output_contains "hardware group help renders" "$output" "swarmarchy hw asus rog"
+assert_output_contains "hardware group help renders" "$output" "swarmarchy hw external monitors"
 assert_output_contains "hardware group includes touchpad" "$output" "swarmarchy hw touchpad"
 
-output=$("$CLI" hw asus)
-assert_output_contains "partial hardware prefix renders matching commands" "$output" "swarmarchy hw asus rog"
-assert_output_contains "partial hardware prefix includes nested match" "$output" "swarmarchy hw asus zenbook ux5406aa"
+output=$("$CLI" wm monitor)
+assert_output_contains "partial prefix renders matching commands" "$output" "swarmarchy wm monitor focused"
+assert_output_contains "partial prefix includes nested match" "$output" "swarmarchy wm monitor internal mirror"
 
 output=$("$CLI" menu --help)
 assert_output_contains "menu group includes share fallback route" "$output" "swarmarchy menu share"

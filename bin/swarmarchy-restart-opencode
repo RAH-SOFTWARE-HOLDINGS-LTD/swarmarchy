@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# swarmarchy:summary=Reload opencode configuration (used by the Swarmarchy theme switching).
-
-if pgrep -x opencode >/dev/null; then
-  killall -SIGUSR2 opencode
-fi

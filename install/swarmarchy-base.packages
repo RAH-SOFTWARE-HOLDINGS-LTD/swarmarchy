@@ -95,7 +95,6 @@ chromium                   # web browser (also hosts the web-apps via swarmarchy
 mpv                        # video/audio player
 imv                        # lightweight image viewer
 # obsidian                 # OPTIONAL on aarch64 — heavy Electron AUR build, not in the swarmarchy repo yet.
-                           # Theme script (swarmarchy-theme-set-obsidian) no-ops when absent.
                            # Install post-install: yay -S obsidian
 
 # ─── Capture & OCR ───

@@ -27,11 +27,10 @@ Common prefixes include:
 - `setup-` - interactive setup wizards
 - `toggle-` - toggle features on/off
 - `theme-` - theme management
-- `update-` - update components
 
 Other current prefixes include:
 
-- `ac-`, `audio-`, `battery-`, `branch-`, `brightness-`, `channel-`, `config-`, `debug-`, `dev-`, `drive-`, `first-`, `font-`, `haptic-`, `hibernation-`, `hook-`, `menu-`, `migrate-`, `notification-`, `npx-`, `plymouth-`, `powerprofiles-`, `reinstall-`, `remove-`, `screensaver-`, `show-`, `snapshot-`, `state-`, `sudo-`, `swayosd-`, `system-`, `transcode-`, `tui-`, `tz-`, `upload-`, `version-`, `voxtype-`, `webapp-`, `wifi-`, `windows-`, `wm-`
+- `ac-`, `audio-`, `battery-`, `brightness-`, `config-`, `debug-`, `dev-`, `drive-`, `first-`, `font-`, `haptic-`, `hibernation-`, `hook-`, `menu-`, `migrate-`, `notification-`, `npx-`, `plymouth-`, `powerprofiles-`, `remove-`, `screensaver-`, `show-`, `snapshot-`, `state-`, `sudo-`, `swayosd-`, `system-`, `transcode-`, `tui-`, `tz-`, `upload-`, `webapp-`, `wifi-`, `wm-`
 
 # Command Metadata
 
@@ -82,7 +81,7 @@ Use these instead of raw shell commands:
 - `swarmarchy-cmd-missing` / `swarmarchy-cmd-present` - check for commands
 - `swarmarchy-pkg-missing` / `swarmarchy-pkg-present` - check for packages
 - `swarmarchy-pkg-add` - install packages (handles both pacman and AUR)
-- `swarmarchy-hw-asus-rog` - detect ASUS ROG hardware (and similar `hw-*` commands)
+- `swarmarchy-hw-match` - match the machine's DMI product name (and similar `hw-*` commands)
 
 Exceptions are allowed for bootstrap, preflight, migration, and package-helper scripts where the helper may not be available yet, where the helper itself is being implemented, or where direct package-manager behavior is required.
 

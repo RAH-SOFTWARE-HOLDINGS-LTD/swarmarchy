@@ -6,7 +6,3 @@ run_logged $SWARMARCHY_INSTALL/packaging/icons.sh
 run_logged $SWARMARCHY_INSTALL/packaging/webapps.sh
 run_logged $SWARMARCHY_INSTALL/packaging/tuis.sh
 run_logged $SWARMARCHY_INSTALL/packaging/npx.sh
-run_logged $SWARMARCHY_INSTALL/packaging/asus-rog.sh
-run_logged $SWARMARCHY_INSTALL/packaging/framework16.sh
-run_logged $SWARMARCHY_INSTALL/packaging/dell-xps-touchpad-haptics.sh
-run_logged $SWARMARCHY_INSTALL/packaging/surface.sh

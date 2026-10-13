@@ -57,17 +57,12 @@ swarmarchy-restart-swayosd
 swarmarchy-restart-terminal
 swarmarchy-restart-sway
 swarmarchy-restart-btop
-swarmarchy-restart-opencode
 swarmarchy-restart-mako
-swarmarchy-restart-helix
 
 # Change app-specific themes
 swarmarchy-theme-set-foot
 swarmarchy-theme-set-gnome
 swarmarchy-theme-set-browser
-swarmarchy-theme-set-vscode
-swarmarchy-theme-set-obsidian
-swarmarchy-theme-set-keyboard
 
 # Call hook on theme set
 swarmarchy-hook theme-set "$THEME_NAME" >/dev/null

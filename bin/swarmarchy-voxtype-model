@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# swarmarchy:summary=Open Voxtype AI model setup
-
-set -e
-
-swarmarchy-launch-floating-terminal-with-presentation "voxtype setup model"
-swarmarchy-restart-waybar

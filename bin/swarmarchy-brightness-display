@@ -23,11 +23,6 @@ elif [[ $step == "on" ]]; then
   exit 0
 fi
 
-if swarmarchy-wm-monitor-focused-apple; then
-  swarmarchy-brightness-display-apple "$step"
-  exit
-fi
-
 # Current brightness percentage
 current=$(brightnessctl -d "$device" -m | cut -d',' -f4 | tr -d '%')
 

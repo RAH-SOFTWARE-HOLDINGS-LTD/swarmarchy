@@ -220,16 +220,8 @@ show_toggle_menu() {
 show_hardware_menu() {
   local options="󰛧  Laptop Display\n 󰍹  Mirror Display"
 
-  if swarmarchy-hw-hybrid-gpu; then
-    options="$options\n  Hybrid GPU"
-  fi
-
   if swarmarchy-hw-touchpad; then
     options="$options\n󰟸  Touchpad"
-  fi
-
-  if swarmarchy-hw-dell-xps-haptic-touchpad && swarmarchy-cmd-present dell-xps-touchpad-haptics; then
-    options="$options\n󰌌  Touchpad Haptics"
   fi
 
   if swarmarchy-hw-touchscreen; then
@@ -239,52 +231,20 @@ show_hardware_menu() {
   case $(menu "Toggle" "$options") in
   *Laptop*) swarmarchy-wm-monitor-internal toggle ;;
   *Mirror*) swarmarchy-wm-monitor-internal-mirror toggle ;;
-  *Haptics*) show_hardware_touchpad_haptics_menu ;;
   *Touchpad*) swarmarchy-toggle-touchpad ;;
   *Touchscreen*) swarmarchy-toggle-touchscreen ;;
-  *"Hybrid GPU"*) present_terminal swarmarchy-toggle-hybrid-gpu ;;
   *) back_to show_trigger_menu ;;
   esac
 }
 
-show_hardware_touchpad_haptics_menu() {
-  local current=$(dell-xps-touchpad-haptics get)
-  local selected=$(menu "Touchpad Haptics" "low\nmid\nhigh" "" "$current")
-
-  if [[ -n $selected ]]; then
-    dell-xps-touchpad-haptics set "$selected"
-  else
-    back_to show_hardware_menu
-  fi
-}
-
 show_style_menu() {
-  case $(menu "Style" "󰸌  Theme\n󰟵  Unlock\n  Font\n  Background\n  Sway\n  About") in
+  case $(menu "Style" "󰸌  Theme\n󰟵  Unlock\n  Font\n  Background\n  Sway") in
   *Theme*) show_theme_menu ;;
   *Unlock*) swarmarchy-launch-walker -m menus:swarmarchyunlocks --width 800 --minheight 400 ;;
   *Font*) show_font_menu ;;
   *Background*) show_background_menu ;;
   *Sway*) open_in_editor ~/.config/sway/looknfeel.conf ;;
-  *About*) show_about_menu ;;
   *) show_main_menu ;;
-  esac
-}
-
-show_about_menu() {
-  case $(menu "About" "  Edit Text\n  Set From Image\n  Restore Default") in
-  *Text*) swarmarchy-branding-about text ;;
-  *Image*) swarmarchy-branding-about image ;;
-  *Default*) swarmarchy-branding-about reset ;;
-  *) show_style_menu ;;
-  esac
-}
-
-show_screensaver_menu() {
-  case $(menu "Screensaver" "  Edit Text\n  Set From Image\n  Restore Default") in
-  *Text*) swarmarchy-branding-screensaver text ;;
-  *Image*) swarmarchy-branding-screensaver image ;;
-  *Default*) swarmarchy-branding-screensaver reset ;;
-  *) show_style_menu ;;
   esac
 }
 
@@ -453,13 +413,12 @@ show_setup_default_editor_menu() {
 }
 
 show_setup_config_menu() {
-  case $(menu "Setup" "  Sway\n  Swaylock\n  Swayosd\n󰌧  Walker\n󰍜  Waybar\n󰞅  XCompose") in
+  case $(menu "Setup" "  Sway\n  Swaylock\n  Swayosd\n󰌧  Walker\n󰍜  Waybar") in
   *Swaylock*) open_in_editor ~/.config/swaylock/config ;;
   *Swayosd*) open_in_editor ~/.config/swayosd/config.toml && swarmarchy-restart-swayosd ;;
   *Sway*) open_in_editor ~/.config/sway/config && swarmarchy-restart-sway ;;
   *Walker*) open_in_editor ~/.config/walker/config.toml && swarmarchy-restart-walker ;;
   *Waybar*) open_in_editor ~/.config/waybar/config.jsonc && swarmarchy-restart-waybar ;;
-  *XCompose*) open_in_editor ~/.XCompose && swarmarchy-restart-xcompose ;;
   *) show_setup_menu ;;
   esac
 }
@@ -488,7 +447,7 @@ show_setup_system_menu() {
 }
 
 show_install_menu() {
-  case $(menu "Install" "󰣇  Package\n󰣇  AUR\n  Web App\n  TUI\n  Service\n  Style\n󰵮  Development\n  Editor\n  Terminal\n  Browser\n󱚤  AI\n  Gaming\n󰍲  Windows") in
+  case $(menu "Install" "󰣇  Package\n󰣇  AUR\n  Web App\n  TUI\n  Service\n  Style\n󰵮  Development\n  Editor\n  Terminal\n  Browser\n󱚤  AI") in
   *Package*) terminal swarmarchy-pkg-install ;;
   *AUR*) terminal swarmarchy-pkg-aur-install ;;
   *Web*) present_terminal swarmarchy-webapp-install ;;
@@ -499,9 +458,7 @@ show_install_menu() {
   *Editor*) show_install_editor_menu ;;
   *Terminal*) show_install_terminal_menu ;;
   *Browser*) show_install_browser_menu ;;
-  *Gaming*) show_install_gaming_menu ;;
   *AI*) show_install_ai_menu ;;
-  *Windows*) present_terminal "swarmarchy-windows-vm install" ;;
   *) show_main_menu ;;
   esac
 }
@@ -519,11 +476,7 @@ show_install_browser_menu() {
 }
 
 show_install_service_menu() {
-  case $(menu "Install" "  Dropbox\n  Tailscale\n󱇱  NordVPN [AUR]\n󰏖  ONCE\n󰟵  Bitwarden\n  Chromium Account") in
-  *Dropbox*) present_terminal swarmarchy-install-dropbox ;;
-  *Tailscale*) present_terminal swarmarchy-install-tailscale ;;
-  *NordVPN*) present_terminal swarmarchy-install-nordvpn ;;
-  *ONCE*) present_terminal swarmarchy-install-once ;;
+  case $(menu "Install" "󰟵  Bitwarden\n  Chromium Account") in
   *Bitwarden*) install_and_launch "Bitwarden" "bitwarden bitwarden-cli" "bitwarden" ;;
   *Chromium*) present_terminal swarmarchy-install-chromium-google-account ;;
   *) show_install_menu ;;
@@ -531,12 +484,9 @@ show_install_service_menu() {
 }
 
 show_install_editor_menu() {
-  case $(menu "Install" "  VSCode\n  Cursor\n  Zed\n  Sublime Text\n  Helix\n  Vim\n  Emacs") in
-  *VSCode*) present_terminal swarmarchy-install-vscode ;;
+  case $(menu "Install" "  Cursor\n  Sublime Text\n  Vim\n  Emacs") in
   *Cursor*) install_and_launch "Cursor" "cursor-bin" "cursor" ;;
-  *Zed*) present_terminal swarmarchy-install-zed ;;
   *Sublime*) install_and_launch "Sublime Text" "sublime-text-4" "sublime_text" ;;
-  *Helix*) present_terminal swarmarchy-install-helix ;;
   *Vim*) install "Vim" "vim" ;;
   *Emacs*) install "Emacs" "emacs-wayland" && systemctl --user enable --now emacs.service ;;
   *) show_install_menu ;;
@@ -560,26 +510,10 @@ show_install_ai_menu() {
       echo ollama
   )
 
-  case $(menu "Install" "  Dictation\n󱚤  LM Studio\n󱚤  Ollama\n󱚤  Crush") in
-  *Dictation*) present_terminal swarmarchy-voxtype-install ;;
+  case $(menu "Install" "󱚤  LM Studio\n󱚤  Ollama\n󱚤  Crush") in
   *Studio*) install "LM Studio" "lmstudio-bin" ;;
   *Ollama*) install "Ollama" $ollama_pkg ;;
   *Crush*) install "Crush" "crush-bin" ;;
-  *) show_install_menu ;;
-  esac
-}
-
-show_install_gaming_menu() {
-  case $(menu "Install" "  Steam\n  RetroArch\n󰍳  Minecraft\n󰢹  NVIDIA GeForce NOW\n  Xbox Cloud Gaming\n󰂯  Xbox Controller\n󰍹  Moonlight (GameStream)\n  Lutris (Battle.net)\n󱓟  Heroic (Epic Games)") in
-  *Steam*) present_terminal swarmarchy-install-gaming-steam ;;
-  *RetroArch*) present_terminal swarmarchy-install-gaming-retroarch ;;
-  *Minecraft*) install_and_launch "Minecraft" "minecraft-launcher" "minecraft-launcher" ;;
-  *GeForce*) present_terminal swarmarchy-install-gaming-geforce-now ;;
-  *"Xbox Cloud"*) present_terminal swarmarchy-install-gaming-xbox-cloud ;;
-  *Xbox*) present_terminal swarmarchy-install-gaming-xbox-controllers ;;
-  *Lutris*) present_terminal swarmarchy-install-gaming-lutris ;;
-  *Heroic*) present_terminal swarmarchy-install-gaming-heroic ;;
-  *Moonlight*) present_terminal swarmarchy-install-gaming-moonlight ;;
   *) show_install_menu ;;
   esac
 }
@@ -652,16 +586,13 @@ show_install_elixir_menu() {
 }
 
 show_remove_menu() {
-  case $(menu "Remove" "󰣇  Package\n  Web App\n  TUI\n󰵮  Development\n󰸌  Theme\n  Browser\n  Dictation\n  Gaming\n󰍲  Windows\n󰏓  Preinstalls\n  Security") in
+  case $(menu "Remove" "󰣇  Package\n  Web App\n  TUI\n󰵮  Development\n󰸌  Theme\n  Browser\n󰏓  Preinstalls\n  Security") in
   *Package*) terminal swarmarchy-pkg-remove ;;
   *Web*) present_terminal swarmarchy-webapp-remove ;;
   *TUI*) present_terminal swarmarchy-tui-remove ;;
   *Development*) show_remove_development_menu ;;
   *Theme*) present_terminal swarmarchy-theme-remove ;;
   *Browser*) show_remove_browser_menu ;;
-  *Dictation*) present_terminal swarmarchy-voxtype-remove ;;
-  *Gaming*) show_remove_gaming_menu ;;
-  *Windows*) present_terminal "swarmarchy-windows-vm remove" ;;
   *Preinstalls*) present_terminal swarmarchy-remove-preinstalls ;;
   *Security*) show_remove_security_menu ;;
   *) show_main_menu ;;
@@ -684,21 +615,6 @@ show_remove_browser_menu() {
   *Brave*) present_terminal "swarmarchy-remove-browser brave" ;;
   *Firefox*) present_terminal "swarmarchy-remove-browser firefox" ;;
   *Zen*) present_terminal "swarmarchy-remove-browser zen" ;;
-  *) show_remove_menu ;;
-  esac
-}
-
-show_remove_gaming_menu() {
-  case $(menu "Remove" "  Steam\n  RetroArch\n󰍳  Minecraft\n󰢹  NVIDIA GeForce NOW\n  Xbox Cloud Gaming\n󰖺  Xbox Controller (󰂯)\n󰍹  Moonlight (GameStream)\n  Lutris (Battle.net)\n󱓟  Heroic (Epic Games)") in
-  *Steam*) present_terminal swarmarchy-remove-gaming-steam ;;
-  *RetroArch*) present_terminal swarmarchy-remove-gaming-retroarch ;;
-  *Minecraft*) present_terminal swarmarchy-remove-gaming-minecraft ;;
-  *GeForce*) present_terminal swarmarchy-remove-gaming-geforce-now ;;
-  *"Xbox Cloud"*) present_terminal swarmarchy-remove-gaming-xbox-cloud ;;
-  *Xbox*) present_terminal swarmarchy-remove-gaming-xbox-controllers ;;
-  *Moonlight*) present_terminal swarmarchy-remove-gaming-moonlight ;;
-  *Lutris*) present_terminal swarmarchy-remove-gaming-lutris ;;
-  *Heroic*) present_terminal swarmarchy-remove-gaming-heroic ;;
   *) show_remove_menu ;;
   esac
 }
@@ -807,13 +723,12 @@ show_about() {
 }
 
 show_system_menu() {
-  local options="󱄄  Screensaver\n  Lock"
+  local options="  Lock"
   ! swarmarchy-toggle-enabled suspend-off && options="$options\n󰒲  Suspend"
   swarmarchy-hibernation-available && options="$options\n󰤁  Hibernate"
   options="$options\n󰍃  Logout\n󰜉  Restart\n󰐥  Shutdown"
 
   case $(menu "System" "$options") in
-  *Screensaver*) swarmarchy-launch-screensaver force ;;
   *Lock*) swarmarchy-system-lock ;;
   *Suspend*) systemctl suspend ;;
   *Hibernate*) systemctl hibernate ;;

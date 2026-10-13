@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# swarmarchy:summary=Restart an application by killing it and relaunching it detached.
-# swarmarchy:args=<application-name> [application-args...]
-
-pkill -x $1
-setsid -f "$@" >/dev/null 2>&1
