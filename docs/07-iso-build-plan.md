@@ -70,7 +70,7 @@ Known-unfixed, worth reading before trusting a run:
   - Nothing is ever shrunk automatically. The user frees the space first.
 - **AUR package repo: Cloudflare R2 + rclone**, shaped like `omarchy-pkgs`.
   - Omarchy builds PKGBUILDs → GPG-signs → `rclone` syncs a `{channel}/{arch}/` tree.
-  - `bin/swarmarchy-iso-rclone-config` already configures `type = s3 / provider = Cloudflare`.
+  - Package sync uses a `Swarmarchy:` rclone remote (`type = s3 / provider = Cloudflare`) created by hand with your own R2 API token. There is no setup script.
 - **Firmware: user-staged, provisioned at install time (never baked into the published ISO).**
   - Run `copy-qcom-firmware.ps1` on Windows → a `firmware/` dir; drop it on a USB partition. The
     installer auto-detects the staged dir and drops the blobs at the board path. No prompts.
@@ -196,9 +196,7 @@ Server = https://pkgs.swarmarchy.org/stable/$arch
     - **WAF** managed ruleset (free tier) enabled on the hostname.
     - optionally a **Cache Rule** so repeated package pulls are served from CF cache, not R2
       (cuts R2 Class B ops too).
-- **Credentials:** `bin/swarmarchy-iso-rclone-config` still points at omarchy's bucket +
-  1Password paths (`op://Shared/Cloudflare Buckets/iso.omarchy.org/…`, `--account Swarmarchy`).
-  Repoint to the user's R2 API token + bucket before first sync.
+- **Credentials:** the `Swarmarchy:` rclone remote in `~/.config/rclone/rclone.conf`, created by hand with the user's own R2 API token. The inherited omarchy setup script (1Password-based, and it overwrote the whole rclone.conf) was removed, so there is nothing to repoint.
 
 ### Step 3 — Swap the base mirror to HTTPS ✅ CLOSED — no-op (2026-07-24)
 
@@ -353,15 +351,13 @@ Why not on by default upstream: archinstall/Arch stay conservative for compatibi
   - **`r2.dev` URL is fine to START/test** (free, instant) but gets no custom protection rules.
     A custom domain (`pkgs.swarmarchy.org`) is what enables WAF + rate-limiting — so it's less
     "optional polish" and more "needed before this is public-facing for real."
-  - The inherited `bin/swarmarchy-iso-rclone-config` still points at omarchy's bucket +
-    1Password paths (`op://Shared/Cloudflare Buckets/iso.omarchy.org/…`, `--account Swarmarchy`).
-    **Repoint it at the user's bucket/credentials as part of Step 2** — do not reuse as-is.
+  - Credentials are the hand-made `Swarmarchy:` rclone remote (user's own R2 API token). The inherited omarchy `swarmarchy-iso-rclone-config` was removed.
 - **Working copy: `~/.local/share/swarmarchy-iso`** (beside the installer repo), on `master`.
   Not scratchpad — that's session-temporary.
 
 ## References
 
 - `swarmarchy-iso/BUILD-AARCH64.md` — live blocker tracking
-- `swarmarchy-iso/plans/aarch64-support.md` — file-by-file port plan (11 changes)
+- `swarmarchy-iso/plans/aarch64-support.md` — file-by-file port plan (10 changes)
 - [`05-install-on-yoga.md`](./05-install-on-yoga.md) — Path A, the known-good manual install
 - [omarchy-pkgs](https://github.com/omacom-io/omarchy-pkgs) — the repo-hosting model we copy
