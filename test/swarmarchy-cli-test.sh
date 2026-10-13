@@ -262,3 +262,20 @@ assert_output_contains "partial metadata command dispatches" "$output" "partial-
 
 output=$("$TMPDIR/swarmarchy" body metadata test)
 assert_output_contains "body metadata command dispatches by filename" "$output" "body-metadata-ok"
+
+# Log upload: the option must stay hidden until an endpoint is configured, and the
+# uploader must refuse to run (exit 2) rather than guess a destination.
+if env -u SWARMARCHY_LOG_UPLOAD_URL HOME="$TMPDIR/no-home" "$ROOT/bin/swarmarchy-upload-file" --check; then
+  fail "upload-file --check fails when no endpoint is configured"
+fi
+pass "upload-file --check fails when no endpoint is configured"
+
+SWARMARCHY_LOG_UPLOAD_URL=http://127.0.0.1:1/ "$ROOT/bin/swarmarchy-upload-file" --check
+pass "upload-file --check succeeds when an endpoint is configured"
+
+set +e
+env -u SWARMARCHY_LOG_UPLOAD_URL HOME="$TMPDIR/no-home" "$ROOT/bin/swarmarchy-upload-file" "$ROOT/AGENTS.md" >/dev/null 2>&1
+rc=$?
+set -e
+(( rc == 2 )) || fail "upload-file exits 2 with no endpoint (got $rc)"
+pass "upload-file exits 2 with no endpoint"

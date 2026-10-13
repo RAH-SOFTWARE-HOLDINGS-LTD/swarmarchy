@@ -66,7 +66,7 @@ if [[ $PRINT_ONLY = "true" ]]; then
 fi
 
 OPTIONS=("View log" "Save in current directory")
-if ping -c 1 8.8.8.8 >/dev/null 2>&1; then
+if swarmarchy-upload-file --check && ping -c 1 8.8.8.8 >/dev/null 2>&1; then
   OPTIONS=("Upload log" "${OPTIONS[@]}")
 fi
 
@@ -74,15 +74,13 @@ ACTION=$(gum choose "${OPTIONS[@]}")
 
 case "$ACTION" in
   "Upload log")
-    echo "Uploading debug log to logs.omarchy.org..."
-    URL=$(curl -sf -F "file=@$LOG_FILE" https://logs.omarchy.org/)
-    if (( $? == 0 )) && [[ -n $URL ]]; then
+    echo "Uploading debug log..."
+    if URL=$(swarmarchy-upload-file "$LOG_FILE"); then
       echo "✓ Log uploaded successfully!"
-      echo "Share this URL:"
+      echo "Open this URL on any computer:"
       echo ""
       echo "  $URL"
     else
-      echo "Error: Failed to upload log file"
       exit 1
     fi
     ;;
