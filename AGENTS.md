@@ -34,7 +34,7 @@ Other current prefixes include:
 
 # Command Metadata
 
-Commands in `bin/` can declare CLI metadata in comments near the top of the file. `bin/swarmarchy` scans the first 80 lines, and tests expect command metadata to remain valid.
+Commands in `bin/` can declare CLI metadata in comments near the top of the file. `bin/swarmarchy` scans the first 80 lines. Run `swarmarchy commands --check` after adding, renaming or removing a command to confirm the metadata is still valid.
 
 Supported metadata keys:
 
