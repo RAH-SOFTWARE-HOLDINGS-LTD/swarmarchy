@@ -53,16 +53,18 @@ Elite)**. It is **two repositories**:
 | `bin/` | the **`swarmarchy-*` command toolbox** (~280 scripts): the menu, app launchers, window/monitor toggles, screenshot/OCR, theme, lock/idle, system | every runtime command the desktop & menu call by name |
 | `config/` | **user** config templates → copied to `~/.config/` | per-user dotfiles: `sway/`, `waybar/`, `foot/`, `mako/` *(via default)*, `swaylock/`, `walker/`, `btop/`, … |
 | `default/` | **shipped** defaults → `~/.local/share/swarmarchy/default/` (the read-only layer the user configs `include`) | `sway/` defaults (bindings/appearance/input/autostart), `bash/`, `limine/`, `snapper/`, `wayland-sessions/` |
-| `applications/` | `.desktop` launchers + **`icons/`** (incl. web-app icons like `X.png`) + **`hidden/`** (NoDisplay entries that hide clutter from the launcher) | app launchers + their PNG icons |
+| `applications/` | `.desktop` launchers + **`icons/`** (incl. web-app icons like `GitHub.png`) + **`hidden/`** (NoDisplay entries that hide clutter from the launcher) | app launchers + their PNG icons |
 | `themes/` | theme folders (colours + wallpapers) — only `tokyo-night` now | one folder per theme |
 | `boot.sh` / `install.sh` | entry points (curl-bootstrap / the installer itself) | the top-level run scripts |
 | `docs/` | this documentation, numbered in the order it was created | — |
 
-> **Why `applications/icons/X.png` exists:** `install/packaging/webapps.sh` installs a
-> set of web-apps as Chromium PWAs (ChatGPT, YouTube, X, WhatsApp, Google\*, GitHub,
-> Discord, Zoom, Figma…). Each needs an icon — `X.png` is the icon for the X/Twitter
-> web-app. `icons.sh` copies them to `~/.local/share/applications/icons`. To drop a
-> web-app, remove its line in `webapps.sh` and its icon.
+> **Why `applications/icons/GitHub.png` exists:** `install/packaging/webapps.sh` installs
+> web-apps as Chromium PWAs — now just **GitHub** and **Zoom** (the rest were dropped; the
+> URLs are reached via keybindings in `config/sway/bindings.conf` instead, which call
+> `swarmarchy-launch-webapp` directly and need no `.desktop`). Each needs an icon —
+> `GitHub.png` is the icon for the GitHub web-app. `icons.sh` copies them to
+> `~/.local/share/applications/icons`. To drop a web-app, remove its line in `webapps.sh`
+> and its icon. Zoom is kept for its `x-scheme-handler/zoommtg` registration.
 
 ### swarmarchy-iso (the ISO builder)
 | Path | What it is |
