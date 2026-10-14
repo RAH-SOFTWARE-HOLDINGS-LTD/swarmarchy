@@ -8,7 +8,7 @@
   border-radius: 0;
   min-height: 0;
   font-family: 'JetBrains Mono';
-  font-size: 12px;
+  font-size: 18px;
 }
 
 .modules-left {
@@ -33,8 +33,7 @@
 #cpu,
 #battery,
 #pulseaudio,
-#custom-swarmarchy,
-#custom-update {
+#custom-swarmarchy {
   min-width: 12px;
   margin: 0 7.5px;
 }
@@ -59,11 +58,8 @@ tooltip {
   padding: 2px;
 }
 
-#custom-update {
-  font-size: 10px;
-}
-
-#clock {
+#clock,
+#custom-clock {
   margin-left: 8.75px;
 }
 
@@ -100,4 +96,3 @@ tooltip {
 #custom-notification-silencing-indicator.active {
   color: #a55555;
 }
-
