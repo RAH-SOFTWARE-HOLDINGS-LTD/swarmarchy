@@ -55,7 +55,7 @@
   // misreads tzdata 2026c and renders an hour behind during DST. date(1) uses glibc,
   // which reads the compiled zone files and is correct. Change the format here (man date).
   "custom/clock": {
-    "exec": "date '+%A %d %B %H:%M'",
+    "exec": "date '+%A | %d %B W%V %Y | %H:%M'",
     "interval": 1,
     "tooltip": false,
     "on-click-right": "swarmarchy-launch-floating-terminal-with-presentation swarmarchy-tz-select"
