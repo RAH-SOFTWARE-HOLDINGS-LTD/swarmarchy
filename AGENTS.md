@@ -6,7 +6,7 @@
 - Prefer `(( ))` over numeric operators inside `[[ ]]` (e.g., `(( count < 50 ))`, not `[[ $count -lt 50 ]]`)
 - For strings/paths with spaces, quote them instead of escaping spaces with `\ ` (e.g., `"$APP_DIR/Disk Usage.desktop"`, not `$APP_DIR/Disk\ Usage.desktop`)
 - Shebangs must use `#!/bin/bash` consistently (never `#!/usr/bin/env bash`)
-- Scripts under `install/` and `migrations/` may be sourced and intentionally omit shebangs (no migrations ship by default; the mechanism remains)
+- Scripts under `install/` may be sourced and intentionally omit shebangs
 
 # Command Naming
 
@@ -83,7 +83,7 @@ Use these instead of raw shell commands:
 - `swarmarchy-pkg-add` - install packages (handles both pacman and AUR)
 - `swarmarchy-hw-match` - match the machine's DMI product name (and similar `hw-*` commands)
 
-Exceptions are allowed for bootstrap, preflight, migration, and package-helper scripts where the helper may not be available yet, where the helper itself is being implemented, or where direct package-manager behavior is required.
+Exceptions are allowed for bootstrap, preflight, and package-helper scripts where the helper may not be available yet, where the helper itself is being implemented, or where direct package-manager behavior is required.
 
 # Config Structure
 
@@ -104,25 +104,3 @@ swarmarchy-refresh-config swaylock/config
 ```
 
 This copies `~/.local/share/swarmarchy/config/swaylock/config` to `~/.config/swaylock/config`.
-
-# Migrations
-
-To create a new migration, run `swarmarchy-dev-add-migration --no-edit`. This creates a migration file named after the unix timestamp of the last commit.
-
-New migration format:
-- File permissions must be `0644` (`-rw-r--r--`); migrations are sourced, not executed directly
-- No shebang line
-- Start with an `echo` describing what the migration does
-- Use `$SWARMARCHY_PATH` to reference the swarmarchy directory
-- Prefer helper commands such as `swarmarchy-cmd-present`, `swarmarchy-cmd-missing`, `swarmarchy-pkg-present`, and `swarmarchy-pkg-missing`
-
-Migrations may use raw `pacman`, `command -v`, or direct config edits when needed for one-off repair work.
-
-Example:
-```bash
-echo "Ensure swaylock indicator radius is set"
-
-if [[ -f ~/.config/swaylock/config ]] && ! grep -q '^indicator-radius=' ~/.config/swaylock/config; then
-  echo 'indicator-radius=100' >> ~/.config/swaylock/config
-fi
-```
