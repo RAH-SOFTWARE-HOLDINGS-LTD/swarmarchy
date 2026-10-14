@@ -96,6 +96,7 @@ Matches the `swarmarchy-remove-preinstalls` list and your keep-list. Re-install 
 | `gnome-calculator` | Walker has a calculator module — redundant |
 | `eza` | Not wanted. Only used by guarded `ls`/`lt` aliases in `default/bash/aliases` → falls back to plain `ls`. **Strip those alias lines during config conversion.** |
 | `fcitx5`, `fcitx5-gtk`, `fcitx5-qt` | CJK/international input method — not needed (no non-Latin typing) |
+| `kvantum-qt5` | Qt theme engine — no `theme-set` bridge in this fork and no Qt GUI apps installed (only qt5/qt6 runtime libs) |
 | `ruby` | Only used by optional `swarmarchy-install-dev-env`; add via `mise` later |
 | `luarocks` | Not needed by base Neovim; only certain plugins pull rocks — `pacman -S` on demand |
 | `plymouth` | Boot splash — "no fancy UI" + complicates a custom ARM initramfs |

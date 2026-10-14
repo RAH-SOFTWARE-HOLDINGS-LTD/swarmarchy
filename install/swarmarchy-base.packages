@@ -48,7 +48,6 @@ noto-fonts-cjk             # Chinese/Japanese/Korean glyph rendering (~300MB)
 woff2-font-awesome         # Font Awesome icon set (Waybar glyphs)
 fontconfig                 # system font configuration/management
 gnome-themes-extra         # provides the Adwaita-dark GTK theme (dark GTK apps)
-kvantum-qt5                # Qt theming engine (keeps Qt apps matching the dark look)
 
 # ─── Audio (your Bose headphones ride on PipeWire) ───
 wireplumber                # PipeWire session/policy manager (routes audio streams)
