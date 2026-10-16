@@ -3,4 +3,5 @@
 # swarmarchy:summary=Overwrite the user tmux config with the Swarmarchy default and reload tmux.
 
 swarmarchy-refresh-config tmux/tmux.conf
+swarmarchy-refresh-config tmux/tmux.conf.local
 swarmarchy-restart-tmux

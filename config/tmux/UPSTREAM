@@ -1,0 +1,10 @@
+tmux.conf         vendored verbatim, do not edit
+                  https://github.com/gpakosz/.tmux ("Oh my tmux!")
+                  upstream commit 58a3dcc (2026-08-08)
+                  licence: MIT or WTFPL v2 (see LICENSE.MIT and LICENSE.WTFPLv2 here)
+
+tmux.conf.local   gpakosz's default .tmux.conf.local with this fork's customizations applied
+                  (look under "user customizations" and the status-right / battery / clipboard options)
+
+To update: replace tmux.conf with upstream's .tmux.conf, then diff upstream's
+.tmux.conf.local against ours for new options.
