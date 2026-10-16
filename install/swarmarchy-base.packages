@@ -29,6 +29,7 @@ grim                       # screenshot capture backend
 slurp                      # screen-region selector (pairs with grim, OCR, recorder)
 satty                      # screenshot annotation editor (arrows, blur, crop)
 wl-clipboard               # clipboard from the CLI (wl-copy / wl-paste)
+wtype                      # synthesises keystrokes (Mac-style SUPER shortcuts in Sway)
 wlsunset                   # night-light (warms screen colour temperature)
 xdg-desktop-portal-wlr     # screenshare/screencast portal for wlroots compositors
 xdg-desktop-portal-gtk     # file-picker + settings portal (GTK side)

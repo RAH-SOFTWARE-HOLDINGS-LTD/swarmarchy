@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# swarmarchy:summary=Inject CTRL+<key> for a Mac-style SUPER shortcut, skipping terminals.
+# swarmarchy:args=[modifier...] <key>
+# swarmarchy:examples=swarmarchy-key-mac w | swarmarchy-key-mac shift t
+# swarmarchy:hidden=true
+
+# SUPER carries the app-level editing commands (see default/sway/bindings.conf) so CTRL
+# keeps its terminal meaning. For most of them the app expects CTRL+<key>, but that same
+# chord is a live control code in a terminal: CTRL+w erases a word, CTRL+z suspends the
+# job, CTRL+a jumps to the start of the line, CTRL+s sends XOFF and looks like a hang.
+#
+# So when a terminal has focus we inject nothing and exit quietly, leaving CTRL alone.
+# Copy and paste are NOT routed through here — CTRL+Insert / SHIFT+Insert are safe in both
+# worlds and are bound directly in the Sway config.
+
+# CTRL is always held; any extra modifiers are given before the key, so SUPER+SHIFT+t
+# becomes `swarmarchy-key-mac shift t` -> CTRL+SHIFT+t. wtype accepts shift, capslock,
+# ctrl, logo, win, alt and altgr.
+if (( $# == 0 )); then
+  echo "Usage: swarmarchy-key-mac [modifier...] <key>" >&2
+  exit 1
+fi
+
+key="${*: -1}"
+mods=(ctrl "${@:1:$#-1}")
+
+# Terminals keep CTRL for themselves. foot is the stock terminal; the TUI launchers run
+# in foot under org.swarmarchy.<tui> (see swarmarchy-launch-or-focus-tui).
+focused_app_id() {
+  swaymsg -t get_tree |
+    jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.focused == true) | .app_id // ""'
+}
+
+# Fail CLOSED: inject only when a non-terminal app is positively identified. A missed
+# shortcut is a minor annoyance; injecting CTRL+w or CTRL+s into a terminal destroys input
+# or appears to hang it. So an empty/unknown app_id means do nothing.
+case "$(focused_app_id)" in
+"" | foot | org.swarmarchy.*) exit 0 ;;
+esac
+
+# Press the modifiers in order, tap the key, release them in reverse order.
+args=()
+for mod in "${mods[@]}"; do args+=(-M "$mod"); done
+args+=(-P "$key" -p "$key")
+for (( i = ${#mods[@]} - 1; i >= 0; i-- )); do args+=(-m "${mods[i]}"); done
+
+exec wtype "${args[@]}"
