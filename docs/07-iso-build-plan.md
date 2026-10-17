@@ -26,6 +26,9 @@ more can be proven without running it.
   ~100 GiB recommended. Do it from the swarmarchy ISO's own shell — see Step 5, "Freeing the space".
 - **Then:** flash the ISO, boot it, pick "install alongside", and see what breaks.
 
+Before each ISO build, `swarmarchy-iso-make` runs `swarmarchy dev upstream-check` (read-only; warns only): it
+flags R2 packages older than the AUR and a stale vendored gpakosz `tmux.conf`. Refreshing them is a manual decision.
+
 Known-unfixed, worth reading before trusting a run:
 
 - **The wipe path's Limine install is probably broken on aarch64.** archinstall's

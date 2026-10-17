@@ -1,0 +1,134 @@
+#!/bin/bash
+
+# swarmarchy:summary=Report stale R2 packages and the vendored gpakosz tmux config (read-only)
+# swarmarchy:examples=swarmarchy dev upstream-check
+
+# Read-only: compares what the ISO ships against upstream. Writes nothing, uploads nothing,
+# needs no credentials. Exit 0 = all current, 1 = something stale, 2 = a source was unreachable.
+#
+#   R2 packages  the [swarmarchy] repo in swarmarchy-iso/configs/pacman-online-stable.conf
+#                (public swarmarchy.db) vs the AUR (RPC), compared with vercmp
+#   gpakosz      config/tmux/tmux.conf vs upstream gpakosz/.tmux, pinned in config/tmux/UPSTREAM
+#
+# Overrides: SWARMARCHY_REPO (default ~/.local/share/swarmarchy), SWARMARCHY_ISO_DIR
+# (default ~/.local/share/swarmarchy-iso).
+
+set -uo pipefail
+
+REPO=${SWARMARCHY_REPO:-$HOME/.local/share/swarmarchy}
+ISO_DIR=${SWARMARCHY_ISO_DIR:-$HOME/.local/share/swarmarchy-iso}
+PACMAN_CONF=$ISO_DIR/configs/pacman-online-stable.conf
+UPSTREAM_FILE=$REPO/config/tmux/UPSTREAM
+GPAKOSZ_REPO=https://github.com/gpakosz/.tmux
+
+stale=0
+unreachable=0
+
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+check_packages() {
+  echo "R2 packages:"
+
+  local url
+  url=$(sed -n '/^\[swarmarchy\]/,/^\[/{s/^Server *= *//p}' "$PACMAN_CONF" 2>/dev/null | head -1)
+  url=${url//\$arch/aarch64}
+  if [[ -z $url ]]; then
+    echo "  cannot find the [swarmarchy] Server in $PACMAN_CONF"
+    unreachable=1
+    return
+  fi
+
+  if ! curl -fsS --max-time 30 -o "$work/swarmarchy.db" "$url/swarmarchy.db" 2>"$work/err"; then
+    echo "  cannot fetch $url/swarmarchy.db: $(head -1 "$work/err")"
+    unreachable=1
+    return
+  fi
+
+  mkdir "$work/db"
+  tar -xf "$work/swarmarchy.db" -C "$work/db"
+
+  # name<TAB>version for every package the repo serves
+  local desc name ver
+  declare -A shipped=()
+  for desc in "$work"/db/*/desc; do
+    name=$(sed -n '/^%NAME%$/{n;p}' "$desc")
+    ver=$(sed -n '/^%VERSION%$/{n;p}' "$desc")
+    shipped[$name]=$ver
+  done
+
+  local query=() n
+  for n in "${!shipped[@]}"; do query+=(--data-urlencode "arg[]=$n"); done
+  if ! curl -fsS --max-time 30 -A "swarmarchy-upstream-check" -G "${query[@]}" \
+    -o "$work/aur.json" "https://aur.archlinux.org/rpc/v5/info" 2>"$work/err"; then
+    echo "  cannot query the AUR: $(head -1 "$work/err")"
+    unreachable=1
+    return
+  fi
+
+  local aur_ver row base
+  declare -A stale_base=()
+  while IFS=$'\t' read -r name aur_ver base; do
+    local have=${shipped[$name]}
+    if (( $(vercmp "$have" "$aur_ver") < 0 )); then
+      printf '  stale    %-32s %s -> %s\n' "$name" "$have" "$aur_ver"
+      stale=1
+      stale_base[$base]=1
+    else
+      printf '  current  %-32s %s\n' "$name" "$have"
+    fi
+  done < <(jq -r '.results[] | [.Name, .Version, .PackageBase] | @tsv' "$work/aur.json" | sort)
+
+  for n in "${!shipped[@]}"; do
+    jq -e --arg n "$n" '.results[] | select(.Name == $n)' "$work/aur.json" >/dev/null ||
+      printf '  skipped  %-32s not in the AUR\n' "$n"
+  done
+
+  # walker and elephant ship together; a mismatch breaks the launcher
+  if [[ -n ${stale_base[walker]:-} && -z ${stale_base[elephant]:-} ]] ||
+    [[ -z ${stale_base[walker]:-} && -n ${stale_base[elephant]:-} ]]; then
+    echo "  warning  walker and elephant must be rebuilt together; only one is stale"
+  fi
+}
+
+check_gpakosz() {
+  echo "gpakosz tmux.conf:"
+
+  local pinned head
+  pinned=$(sed -n 's/.*upstream commit \([0-9a-f]\{7,\}\).*/\1/p' "$UPSTREAM_FILE" 2>/dev/null | head -1)
+  if [[ -z $pinned ]]; then
+    echo "  cannot read the pinned commit from $UPSTREAM_FILE"
+    unreachable=1
+    return
+  fi
+
+  head=$(git ls-remote "$GPAKOSZ_REPO" HEAD 2>/dev/null | cut -f1)
+  if [[ -z $head ]]; then
+    echo "  cannot reach $GPAKOSZ_REPO"
+    unreachable=1
+    return
+  fi
+
+  if ! curl -fsS --max-time 30 -o "$work/tmux.conf" \
+    "https://raw.githubusercontent.com/gpakosz/.tmux/$head/.tmux.conf" 2>"$work/err"; then
+    echo "  cannot fetch upstream .tmux.conf: $(head -1 "$work/err")"
+    unreachable=1
+    return
+  fi
+
+  if cmp -s "$work/tmux.conf" "$REPO/config/tmux/tmux.conf"; then
+    echo "  current  tmux.conf matches upstream (pinned ${pinned}, upstream HEAD ${head:0:7})"
+  else
+    echo "  stale    tmux.conf differs from upstream HEAD ${head:0:7} (pinned ${pinned})"
+    echo "           to update: replace config/tmux/tmux.conf with upstream's .tmux.conf, bump the"
+    echo "           commit in config/tmux/UPSTREAM, diff upstream's .tmux.conf.local for new options"
+    stale=1
+  fi
+}
+
+check_packages
+check_gpakosz
+
+(( unreachable )) && exit 2
+(( stale )) && exit 1
+exit 0
