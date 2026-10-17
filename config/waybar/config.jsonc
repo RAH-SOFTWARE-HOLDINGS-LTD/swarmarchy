@@ -49,7 +49,7 @@
     "interval": 5,
     "format": "󰍛",
     "on-click": "swarmarchy-launch-or-focus-tui btop",
-    "on-click-right": "alacritty"
+    "on-click-right": "foot"
   },
   // Driven by date(1) instead of Waybar's built-in clock: libstdc++'s tzdb parser
   // misreads tzdata 2026c and renders an hour behind during DST. date(1) uses glibc,
