@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# swarmarchy:summary=Apply the current theme color to Chromium, Chrome, Edge, and Brave
+# swarmarchy:summary=Apply the current theme color to Chrome, Edge, and Brave
 # swarmarchy:hidden=true
 
-CHROMIUM_THEME=~/.config/swarmarchy/current/theme/chromium.theme
+BROWSER_THEME=~/.config/swarmarchy/current/theme/browser.theme
 
-if [[ -f $CHROMIUM_THEME ]]; then
-  THEME_RGB_COLOR=$(<$CHROMIUM_THEME)
+if [[ -f $BROWSER_THEME ]]; then
+  THEME_RGB_COLOR=$(<$BROWSER_THEME)
   THEME_HEX_COLOR=$(printf '#%02x%02x%02x' ${THEME_RGB_COLOR//,/ })
 else
   # Use a default, neutral grey if theme doesn't have a color
@@ -30,8 +30,6 @@ refresh_running_browser() {
   fi
 }
 
-set_browser_policy /etc/chromium/policies/managed
-refresh_running_browser chromium chromium
 
 set_browser_policy /etc/opt/chrome/policies/managed
 refresh_running_browser chrome google-chrome-stable || refresh_running_browser chrome google-chrome

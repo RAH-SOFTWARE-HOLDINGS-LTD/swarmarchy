@@ -91,7 +91,6 @@ exfatprogs                 # exFAT tools (large USB drives, SD cards)
                            # Install post-install: yay -S localsend
 
 # ─── Browser & media ───
-chromium                   # web browser (also hosts the web-apps via swarmarchy-launch-webapp)
 mpv                        # video/audio player
 imv                        # lightweight image viewer
 # obsidian                 # OPTIONAL on aarch64 — heavy Electron AUR build, not in the swarmarchy repo yet.

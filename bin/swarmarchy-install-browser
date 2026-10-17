@@ -14,11 +14,6 @@ announce_browser_installed() {
   echo "$1 browser installed. Make it the default via Setup > Defaults > Browser."
 }
 
-copy_chromium_flags() {
-  mkdir -p ~/.config
-  cp -f "${SWARMARCHY_PATH:-/usr/share/swarmarchy}/config/chromium-flags.conf" "$1"
-}
-
 setup_firefox_preferences() {
   local distribution_dir="$1"
 
@@ -40,7 +35,6 @@ chrome)
   swarmarchy-pkg-aur-add google-chrome || exit 1
 
   setup_policy_directory /etc/opt/chrome/policies/managed
-  copy_chromium_flags ~/.config/chrome-flags.conf
   swarmarchy-theme-set-browser
   announce_browser_installed "Chrome"
   ;;
@@ -49,7 +43,6 @@ edge)
   swarmarchy-pkg-aur-add microsoft-edge-stable-bin || exit 1
 
   setup_policy_directory /etc/opt/edge/policies/managed
-  copy_chromium_flags ~/.config/microsoft-edge-stable-flags.conf
   swarmarchy-theme-set-browser
   announce_browser_installed "Edge"
   ;;
@@ -58,7 +51,6 @@ brave)
   swarmarchy-pkg-aur-add brave-bin || exit 1
 
   setup_policy_directory /etc/brave/policies/managed
-  copy_chromium_flags ~/.config/brave-flags.conf
   swarmarchy-theme-set-browser
   announce_browser_installed "Brave"
   ;;
@@ -67,9 +59,6 @@ brave-origin)
   swarmarchy-pkg-aur-add brave-origin-beta-bin || exit 1
 
   setup_policy_directory /etc/brave/policies/managed
-  mkdir -p ~/.config
-  # FIXME: Use normal chromium flags when Brave Origin wrapper has been fixed
-  echo "--load-extension=/usr/share/swarmarchy/default/chromium/extensions/copy-url" > ~/.config/brave-origin-beta-flags.conf
   swarmarchy-theme-set-browser
   announce_browser_installed "Brave Origin"
   ;;

@@ -12,13 +12,13 @@ xdg-mime default imv.desktop image/webp
 xdg-mime default imv.desktop image/bmp
 xdg-mime default imv.desktop image/tiff
 
-# Open PDFs with the Chromium's built-in pdf viewer
-xdg-mime default chromium.desktop application/pdf
+# Open PDFs with Brave's built-in pdf viewer
+xdg-mime default brave-browser.desktop application/pdf
 
-# Use Chromium as the default browser
-xdg-settings set default-web-browser chromium.desktop
-xdg-mime default chromium.desktop x-scheme-handler/http
-xdg-mime default chromium.desktop x-scheme-handler/https
+# Use Brave as the default browser
+xdg-settings set default-web-browser brave-browser.desktop
+xdg-mime default brave-browser.desktop x-scheme-handler/http
+xdg-mime default brave-browser.desktop x-scheme-handler/https
 
 # Open video files with mpv
 xdg-mime default mpv.desktop video/mp4

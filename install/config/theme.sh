@@ -3,13 +3,13 @@
 # Setup user theme folder
 mkdir -p ~/.config/swarmarchy/themes
 
-# Chromium policy directory for theme
-sudo mkdir -p /etc/chromium/policies/managed
-sudo chmod a+rw /etc/chromium/policies/managed
+# Brave policy directory for theme. swarmarchy-theme-set-browser writes color.json here,
+# but skips any policy dir that doesn't exist — so without this, Brave is never themed.
+sudo mkdir -p /etc/brave/policies/managed
+sudo chmod a+rw /etc/brave/policies/managed
 
 # Set initial theme
 swarmarchy-theme-set "Tokyo Night"
-rm -rf ~/.config/chromium/SingletonLock # otherwise archiso will own the chromium singleton
 
 # Set specific app links for current theme
 mkdir -p ~/.config/btop/themes
@@ -17,6 +17,3 @@ ln -snf ~/.config/swarmarchy/current/theme/btop.theme ~/.config/btop/themes/curr
 
 mkdir -p ~/.config/mako
 ln -snf ~/.config/swarmarchy/current/theme/mako.ini ~/.config/mako/config
-
-# Default Chromium to follow system appearance ("device") instead of dark
-echo '{"browser":{"theme":{"color_scheme":0,"color_scheme2":0}}}' | sudo tee /usr/lib/chromium/initial_preferences >/dev/null

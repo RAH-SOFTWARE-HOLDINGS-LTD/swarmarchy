@@ -321,7 +321,6 @@ browser_desktop_exists() {
 
 show_setup_default_browser_menu() {
   local options=""
-  browser_desktop_exists chromium.desktop && options="$options  Chromium"
   browser_desktop_exists google-chrome.desktop && options="${options:+$options\n}󰊯  Chrome"
   browser_desktop_exists brave-browser.desktop && options="${options:+$options\n}󰖟  Brave"
   browser_desktop_exists brave-origin-beta.desktop && options="${options:+$options\n}󰖟  Brave Origin"
@@ -331,7 +330,6 @@ show_setup_default_browser_menu() {
 
   local current=""
   case "$(swarmarchy-default-browser)" in
-  chromium) current="  Chromium" ;;
   chrome) current="󰊯  Chrome" ;;
   brave) current="󰖟  Brave" ;;
   brave-origin) current="󰖟  Brave Origin" ;;
@@ -341,7 +339,6 @@ show_setup_default_browser_menu() {
   esac
 
   case $(menu "Default Browser" "$options" "" "$current") in
-  *Chromium*) swarmarchy-default-browser chromium ;;
   *Chrome*) swarmarchy-default-browser chrome ;;
   *"Brave Origin"*) swarmarchy-default-browser brave-origin ;;
   *Brave*) swarmarchy-default-browser brave ;;
@@ -476,9 +473,8 @@ show_install_browser_menu() {
 }
 
 show_install_service_menu() {
-  case $(menu "Install" "󰟵  Bitwarden\n  Chromium Account") in
+  case $(menu "Install" "󰟵  Bitwarden") in
   *Bitwarden*) install_and_launch "Bitwarden" "bitwarden bitwarden-cli" "bitwarden" ;;
-  *Chromium*) present_terminal swarmarchy-install-chromium-google-account ;;
   *) show_install_menu ;;
   esac
 }
