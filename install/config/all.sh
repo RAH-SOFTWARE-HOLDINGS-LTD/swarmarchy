@@ -9,7 +9,6 @@ run_logged $SWARMARCHY_INSTALL/config/fix-powerprofilesctl-shebang.sh
 run_logged $SWARMARCHY_INSTALL/config/docker.sh
 run_logged $SWARMARCHY_INSTALL/config/mimetypes.sh
 run_logged $SWARMARCHY_INSTALL/config/user-dirs.sh
-run_logged $SWARMARCHY_INSTALL/config/nautilus-python.sh
 run_logged $SWARMARCHY_INSTALL/config/localdb.sh
 run_logged $SWARMARCHY_INSTALL/config/walker-elephant.sh
 run_logged $SWARMARCHY_INSTALL/config/kernel-modules-hook.sh
