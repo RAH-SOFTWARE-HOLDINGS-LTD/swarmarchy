@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# swarmarchy:summary=Inject CTRL+<key> for a Mac-style SUPER shortcut, skipping terminals.
-# swarmarchy:args=[modifier...] <key>
-# swarmarchy:examples=swarmarchy-key-mac w | swarmarchy-key-mac shift t
+# swarmarchy:summary=Inject <modifier>+<key> for a Mac-style SUPER shortcut, skipping terminals.
+# swarmarchy:args=<modifier...> <key>
+# swarmarchy:examples=swarmarchy-key-mac ctrl w | swarmarchy-key-mac alt Left
 # swarmarchy:hidden=true
 
 # SUPER carries the app-level editing commands (see default/sway/bindings.conf) so CTRL
@@ -14,16 +14,18 @@
 # Copy and paste are NOT routed through here — CTRL+Insert / SHIFT+Insert are safe in both
 # worlds and are bound directly in the Sway config.
 
-# CTRL is always held; any extra modifiers are given before the key, so SUPER+SHIFT+t
-# becomes `swarmarchy-key-mac shift t` -> CTRL+SHIFT+t. wtype accepts shift, capslock,
-# ctrl, logo, win, alt and altgr.
-if (( $# == 0 )); then
-  echo "Usage: swarmarchy-key-mac [modifier...] <key>" >&2
+# The last argument is the key; everything before it is a modifier, held in the order
+# given. So SUPER+SHIFT+t becomes `swarmarchy-key-mac ctrl shift t` -> CTRL+SHIFT+t,
+# and browser Back becomes `swarmarchy-key-mac alt Left` -> ALT+Left. The modifiers are
+# explicit because not every Mac shortcut maps onto CTRL: Back/Forward are ALT+arrow on
+# Linux. wtype accepts shift, capslock, ctrl, logo, win, alt and altgr.
+if (( $# < 2 )); then
+  echo "Usage: swarmarchy-key-mac <modifier...> <key>" >&2
   exit 1
 fi
 
 key="${*: -1}"
-mods=(ctrl "${@:1:$#-1}")
+mods=("${@:1:$#-1}")
 
 # Terminals keep CTRL for themselves. foot is the stock terminal; the TUI launchers run
 # in foot under org.swarmarchy.<tui> (see swarmarchy-launch-or-focus-tui).
