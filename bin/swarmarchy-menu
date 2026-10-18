@@ -351,21 +351,18 @@ show_setup_default_browser_menu() {
 
 show_setup_default_terminal_menu() {
   local options=""
-  swarmarchy-cmd-present alacritty && options="$options  Alacritty"
   swarmarchy-cmd-present foot && options="${options:+$options\n}  Foot"
   swarmarchy-cmd-present ghostty && options="${options:+$options\n}  Ghostty"
   swarmarchy-cmd-present kitty && options="${options:+$options\n}  Kitty"
 
   local current=""
   case "$(swarmarchy-default-terminal)" in
-  alacritty) current="  Alacritty" ;;
   foot) current="  Foot" ;;
   ghostty) current="  Ghostty" ;;
   kitty) current="  Kitty" ;;
   esac
 
   case $(menu "Default Terminal" "$options" "" "$current") in
-  *Alacritty*) swarmarchy-default-terminal alacritty ;;
   *Foot*) swarmarchy-default-terminal foot ;;
   *Ghostty*) swarmarchy-default-terminal ghostty ;;
   *Kitty*) swarmarchy-default-terminal kitty ;;
@@ -490,8 +487,7 @@ show_install_editor_menu() {
 }
 
 show_install_terminal_menu() {
-  case $(menu "Install" "  Alacritty\n  Foot\n  Ghostty\n  Kitty") in
-  *Alacritty*) install_terminal "alacritty" ;;
+  case $(menu "Install" "  Foot\n  Ghostty\n  Kitty") in
   *Foot*) install_terminal "foot" ;;
   *Ghostty*) install_terminal "ghostty" ;;
   *Kitty*) install_terminal "kitty" ;;

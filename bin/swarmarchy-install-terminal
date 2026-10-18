@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # swarmarchy:summary=Install one of the approved terminals and set it as the default for Swarmarchy (Super + Return etc).
-# swarmarchy:args=<alacritty|foot|ghostty|kitty>
+# swarmarchy:args=<foot|ghostty|kitty>
 # swarmarchy:requires-sudo=true
 
 if (($# == 0)); then
-  echo "Usage: swarmarchy-install-terminal [alacritty|foot|ghostty|kitty]"
+  echo "Usage: swarmarchy-install-terminal [foot|ghostty|kitty]"
   exit 1
 fi
 
@@ -13,7 +13,6 @@ package="$1"
 
 # Map package name to desktop entry ID
 case "$package" in
-alacritty) desktop_id="Alacritty.desktop" ;;
 foot) desktop_id="foot.desktop" ;;
 ghostty) desktop_id="com.mitchellh.ghostty.desktop" ;;
 kitty) desktop_id="kitty.desktop" ;;
@@ -28,10 +27,7 @@ echo "Installing $package..."
 # Install package
 if swarmarchy-pkg-add $package; then
   # Copy custom desktop entries with X-TerminalArg* keys
-  if [[ $package == "alacritty" ]]; then
-    mkdir -p ~/.local/share/applications
-    cp "$SWARMARCHY_PATH/applications/$desktop_id" ~/.local/share/applications/
-  elif [[ $package == "foot" ]]; then
+  if [[ $package == "foot" ]]; then
     mkdir -p ~/.local/share/applications
     cp "$SWARMARCHY_PATH/default/foot/$desktop_id" ~/.local/share/applications/
   fi
