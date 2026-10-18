@@ -54,7 +54,6 @@ if pgrep -x waybar >/dev/null; then
   swarmarchy-restart-waybar
 fi
 swarmarchy-restart-swayosd
-swarmarchy-restart-terminal
 swarmarchy-restart-sway
 swarmarchy-restart-btop
 swarmarchy-restart-mako

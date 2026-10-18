@@ -22,7 +22,7 @@ and use `/etc/skel` (via `swarmarchy refresh`) to reset something you broke.
 | `~/.config/sway/*` | `swaymsg reload` |
 | `~/.config/waybar/*` | `swarmarchy restart waybar` |
 | `~/.config/walker/*` | `swarmarchy restart walker` |
-| `~/.config/foot/foot.ini` | `swarmarchy restart terminal` (or open a new window) |
+| `~/.config/foot/foot.ini` | open a new window |
 | `~/.config/mako/*` | `swarmarchy restart mako` |
 
 ## The main customization points

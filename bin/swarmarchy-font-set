@@ -9,16 +9,6 @@ font_name="$1"
 if [[ -n $font_name ]]; then
   if fc-list | grep -iq "$font_name"; then
 
-    if [[ -f ~/.config/kitty/kitty.conf ]]; then
-      sed -i "s/^font_family .*/font_family $font_name/g" ~/.config/kitty/kitty.conf
-      pkill -USR1 kitty
-    fi
-
-    if [[ -f ~/.config/ghostty/config ]]; then
-      sed -i "s/font-family = \".*\"/font-family = \"$font_name\"/g" ~/.config/ghostty/config
-      pkill -SIGUSR2 ghostty
-    fi
-
     if [[ -f ~/.config/foot/foot.ini ]]; then
       sed -i "s/^font=.*/font=$font_name:size=9/g" ~/.config/foot/foot.ini
     fi
@@ -33,10 +23,6 @@ if [[ -n $font_name ]]; then
 
     swarmarchy-restart-waybar
     swarmarchy-restart-swayosd
-
-    if pgrep -x ghostty; then
-      notify-send -u low "    You must restart Ghostty to see font change"
-    fi
 
     if pgrep -x foot; then
       notify-send -u low "    You must restart Foot to see font change"

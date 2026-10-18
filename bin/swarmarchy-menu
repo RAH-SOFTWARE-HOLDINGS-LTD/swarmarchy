@@ -68,10 +68,6 @@ install_font() {
   present_terminal "echo 'Installing $1...'; swarmarchy-pkg-add $2 && sleep 2 && swarmarchy-font-set '$3'"
 }
 
-install_terminal() {
-  present_terminal "swarmarchy-install-terminal $1"
-}
-
 aur_install() {
   present_terminal "echo 'Installing $1 from AUR...'; swarmarchy-pkg-aur-add $2"
 }
@@ -307,9 +303,8 @@ show_setup_security_menu() {
 }
 
 show_setup_default_menu() {
-  case $(menu "Default" "  Browser\n  Terminal\n  Editor") in
+  case $(menu "Default" "  Browser\n  Editor") in
   *Browser*) show_setup_default_browser_menu ;;
-  *Terminal*) show_setup_default_terminal_menu ;;
   *Editor*) show_setup_default_editor_menu ;;
   *) show_setup_menu ;;
   esac
@@ -345,27 +340,6 @@ show_setup_default_browser_menu() {
   *Edge*) swarmarchy-default-browser edge ;;
   *Firefox*) swarmarchy-default-browser firefox ;;
   *Zen*) swarmarchy-default-browser zen ;;
-  *) show_setup_default_menu ;;
-  esac
-}
-
-show_setup_default_terminal_menu() {
-  local options=""
-  swarmarchy-cmd-present foot && options="${options:+$options\n}  Foot"
-  swarmarchy-cmd-present ghostty && options="${options:+$options\n}  Ghostty"
-  swarmarchy-cmd-present kitty && options="${options:+$options\n}  Kitty"
-
-  local current=""
-  case "$(swarmarchy-default-terminal)" in
-  foot) current="  Foot" ;;
-  ghostty) current="  Ghostty" ;;
-  kitty) current="  Kitty" ;;
-  esac
-
-  case $(menu "Default Terminal" "$options" "" "$current") in
-  *Foot*) swarmarchy-default-terminal foot ;;
-  *Ghostty*) swarmarchy-default-terminal ghostty ;;
-  *Kitty*) swarmarchy-default-terminal kitty ;;
   *) show_setup_default_menu ;;
   esac
 }
@@ -441,7 +415,7 @@ show_setup_system_menu() {
 }
 
 show_install_menu() {
-  case $(menu "Install" "󰣇  Package\n󰣇  AUR\n  Web App\n  TUI\n  Service\n  Style\n󰵮  Development\n  Editor\n  Terminal\n  Browser\n󱚤  AI") in
+  case $(menu "Install" "󰣇  Package\n󰣇  AUR\n  Web App\n  TUI\n  Service\n  Style\n󰵮  Development\n  Editor\n  Browser\n󱚤  AI") in
   *Package*) terminal swarmarchy-pkg-install ;;
   *AUR*) terminal swarmarchy-pkg-aur-install ;;
   *Web*) present_terminal swarmarchy-webapp-install ;;
@@ -450,7 +424,6 @@ show_install_menu() {
   *Style*) show_install_style_menu ;;
   *Development*) show_install_development_menu ;;
   *Editor*) show_install_editor_menu ;;
-  *Terminal*) show_install_terminal_menu ;;
   *Browser*) show_install_browser_menu ;;
   *AI*) show_install_ai_menu ;;
   *) show_main_menu ;;
@@ -482,15 +455,6 @@ show_install_editor_menu() {
   *Sublime*) install_and_launch "Sublime Text" "sublime-text-4" "sublime_text" ;;
   *Vim*) install "Vim" "vim" ;;
   *Emacs*) install "Emacs" "emacs-wayland" && systemctl --user enable --now emacs.service ;;
-  *) show_install_menu ;;
-  esac
-}
-
-show_install_terminal_menu() {
-  case $(menu "Install" "  Foot\n  Ghostty\n  Kitty") in
-  *Foot*) install_terminal "foot" ;;
-  *Ghostty*) install_terminal "ghostty" ;;
-  *Kitty*) install_terminal "kitty" ;;
   *) show_install_menu ;;
   esac
 }
