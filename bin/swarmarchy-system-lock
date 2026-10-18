@@ -20,8 +20,6 @@ if pgrep -x "1password" >/dev/null; then
   1password --lock &
 fi
 
-# Avoid running screensaver when locked
-pkill -f org.swarmarchy.screensaver
 
 if [[ ${SWARMARCHY_LOCK_ONLY:-false} != "true" ]]; then
   (
