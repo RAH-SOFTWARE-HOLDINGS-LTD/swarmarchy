@@ -1,4 +1,4 @@
-# (Yaru icon theme dropped on aarch64 — Nautilus uses Adwaita's action icons directly, no patch needed.)
+# (Yaru icon theme dropped on aarch64 — GTK apps use Adwaita directly, no patch needed.)
 
 # Setup user theme folder
 mkdir -p ~/.config/swarmarchy/themes

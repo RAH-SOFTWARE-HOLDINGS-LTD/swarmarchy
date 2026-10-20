@@ -70,10 +70,7 @@ bluetui                    # pair/manage Bluetooth (your headphones) from a TUI
 #  SWARMARCHY_PRINTING prompt in install/preflight/printing.sh.)
 
 # ─── Files, storage & file manager ───
-nautilus                   # GNOME graphical file manager
-nautilus-python            # Python extension support for Nautilus
-sushi                      # spacebar quick-preview inside Nautilus
-ffmpegthumbnailer          # generates video thumbnails in the file manager
+yazi                       # the file manager (TUI); ships yazi.desktop, so it handles inode/directory
 gnome-disk-utility         # GUI for disks/partitions/format
 gvfs-mtp                   # mount phones/cameras (MTP) in the file manager
 gvfs-nfs                   # mount NFS network shares
