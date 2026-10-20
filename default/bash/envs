@@ -1,4 +1,6 @@
-# Editor used by CLI
+# Editor used by CLI. Deferred with :- so a real EDITOR from the session wins.
+export EDITOR="${EDITOR:-nvim}"
+export VISUAL="${VISUAL:-$EDITOR}"
 export SUDO_EDITOR="$EDITOR"
 export BAT_THEME=ansi
 

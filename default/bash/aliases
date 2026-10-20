@@ -4,6 +4,9 @@ if command -v eza &> /dev/null; then
   alias lsa='ls -a'
   alias lt='eza --tree --level=2 --long --icons --git'
   alias lta='lt -a'
+else
+  alias ls='ls --color=auto'
+  alias lsa='ls -a'
 fi
 
 alias ff="fzf --preview 'bat --style=numbers --color=always {}'"
