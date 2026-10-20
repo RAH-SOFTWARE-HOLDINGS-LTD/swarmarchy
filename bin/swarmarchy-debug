@@ -37,7 +37,7 @@ fi
 cat > "$LOG_FILE" <<EOF
 Date: $(date)
 Hostname: $(hostname)
-Swarmarchy Branch: $(git -C "$SWARMARCHY_PATH" branch --show-current 2>/dev/null || echo "unknown")
+Swarmarchy Version: $(cat "$SWARMARCHY_PATH/version" 2>/dev/null || echo "unknown")
 
 =========================================
 SYSTEM INFORMATION

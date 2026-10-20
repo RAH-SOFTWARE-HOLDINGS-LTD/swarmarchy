@@ -93,10 +93,31 @@ fi
 # install/ ships because parts of it run long after install:
 # swarmarchy-first-run sources install/first-run/, swarmarchy-refresh-applications
 # sources install/packaging/.
-for dir in default themes applications install; do
+SHARE_DIRS=(default themes applications install)
+for dir in "${SHARE_DIRS[@]}"; do
   [[ -d $SRC/$dir ]] || continue
   "${SUDO[@]}" "${RSYNC[@]}" "$SRC/$dir/" "$SHARE/$dir/"
 done
+
+# rsync --delete only prunes *inside* each directory it is given, so a top-level
+# directory we used to ship lingers forever once it leaves the source tree (this is
+# how /usr/share/swarmarchy/migrations outlived migrations/). Remove any top-level
+# entry in $SHARE that is no longer ours to ship.
+if [[ -d $SHARE ]]; then
+  for path in "$SHARE"/*/; do
+    [[ -d $path ]] || continue
+    name=$(basename "$path")
+    for keep in "${SHARE_DIRS[@]}"; do
+      [[ $name == "$keep" ]] && continue 2
+    done
+    if $DRY_RUN; then
+      echo "would remove stale deployed directory: $SHARE/$name"
+    else
+      echo "Removing stale deployed directory: $SHARE/$name"
+      "${SUDO[@]}" rm -rf "$SHARE/$name"
+    fi
+  done
+fi
 
 if ! $DRY_RUN; then
   for file in logo.txt icon.txt icon.png version LICENSE; do

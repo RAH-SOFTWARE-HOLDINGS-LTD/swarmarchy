@@ -103,4 +103,5 @@ To copy a default config to user config with automatic backup:
 swarmarchy-refresh-config swaylock/config
 ```
 
-This copies `~/.local/share/swarmarchy/config/swaylock/config` to `~/.config/swaylock/config`.
+This copies `/etc/skel/.config/swaylock/config` to `~/.config/swaylock/config`. It reads the
+deployed skeleton, not the repo — an installed system carries no checkout.
