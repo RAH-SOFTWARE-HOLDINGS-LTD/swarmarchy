@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# swarmarchy:summary=Ensure all default .desktop, web apps, TUIs, and npx wrappers are installed.
+# swarmarchy:summary=Ensure all default .desktop, web apps, and TUIs are installed.
 
 mkdir -p ~/.local/share/icons/hicolor/48x48/apps/
 cp /usr/share/swarmarchy/applications/icons/*.png ~/.local/share/icons/hicolor/48x48/apps/
@@ -15,10 +15,9 @@ if swarmarchy-cmd-present foot; then
   cp /usr/share/swarmarchy/default/foot/foot.desktop ~/.local/share/applications/
 fi
 
-# Refresh the webapps, TUIs, and npx wrappers
+# Refresh the webapps and TUIs
 bash $SWARMARCHY_PATH/install/packaging/icons.sh
 bash $SWARMARCHY_PATH/install/packaging/webapps.sh
 bash $SWARMARCHY_PATH/install/packaging/tuis.sh
-bash $SWARMARCHY_PATH/install/packaging/npx.sh
 
 update-desktop-database ~/.local/share/applications

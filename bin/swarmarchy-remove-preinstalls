@@ -13,10 +13,6 @@ if gum confirm "Are you sure you want to remove all preinstalled web apps, TUI w
   # config/sway/bindings.conf.
   swaymsg reload
 
-  # Remove npx stubs
-  rm -f ~/.local/bin/codex ~/.local/bin/gemini ~/.local/bin/copilot \
-       ~/.local/bin/opencode ~/.local/bin/playwright-cli ~/.local/bin/pi
-
   swarmarchy-pkg-drop \
     aether \
     cliamp \
