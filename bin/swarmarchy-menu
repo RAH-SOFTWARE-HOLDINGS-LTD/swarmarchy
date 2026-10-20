@@ -352,7 +352,6 @@ show_setup_default_editor_menu() {
   swarmarchy-cmd-present zeditor && options="${options:+$options\n}  Zed"
   swarmarchy-cmd-present sublime_text && options="${options:+$options\n}  Sublime Text"
   swarmarchy-cmd-present helix && options="${options:+$options\n}  Helix"
-  swarmarchy-cmd-present vim && options="${options:+$options\n}  Vim"
   swarmarchy-cmd-present emacs && options="${options:+$options\n}  Emacs"
 
   local current=""
@@ -363,7 +362,6 @@ show_setup_default_editor_menu() {
   zed | zeditor) current="  Zed" ;;
   sublime_text) current="  Sublime Text" ;;
   helix) current="  Helix" ;;
-  vim) current="  Vim" ;;
   emacs) current="  Emacs" ;;
   esac
 
@@ -374,7 +372,6 @@ show_setup_default_editor_menu() {
   *Zed*) swarmarchy-default-editor zed ;;
   *Sublime*) swarmarchy-default-editor sublime_text ;;
   *Helix*) swarmarchy-default-editor helix ;;
-  *Vim*) swarmarchy-default-editor vim ;;
   *Emacs*) swarmarchy-default-editor emacs ;;
   *) show_setup_default_menu ;;
   esac
@@ -450,10 +447,9 @@ show_install_service_menu() {
 }
 
 show_install_editor_menu() {
-  case $(menu "Install" "  Cursor\n  Sublime Text\n  Vim\n  Emacs") in
+  case $(menu "Install" "  Cursor\n  Sublime Text\n  Emacs") in
   *Cursor*) install_and_launch "Cursor" "cursor-bin" "cursor" ;;
   *Sublime*) install_and_launch "Sublime Text" "sublime-text-4" "sublime_text" ;;
-  *Vim*) install "Vim" "vim" ;;
   *Emacs*) install "Emacs" "emacs-wayland" && systemctl --user enable --now emacs.service ;;
   *) show_install_menu ;;
   esac

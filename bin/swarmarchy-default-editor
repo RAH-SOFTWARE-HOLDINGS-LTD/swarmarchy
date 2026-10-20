@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # swarmarchy:summary=Set the default editor for $EDITOR
-# swarmarchy:args=[code|cursor|zed|sublime_text|helix|vim|emacs|nvim]
+# swarmarchy:args=[code|cursor|zed|sublime_text|helix|emacs|nvim]
 # swarmarchy:examples=swarmarchy default editor | swarmarchy default editor code | swarmarchy default editor helix
 
 if (($# == 0)); then
@@ -15,11 +15,10 @@ cursor) editor="cursor"; name="Cursor"; glyph="" ;;
 zed | zeditor) editor="zeditor"; name="Zed"; glyph="" ;;
 sublime_text) editor="sublime_text"; name="Sublime Text"; glyph="" ;;
 helix) editor="helix"; name="Helix"; glyph="" ;;
-vim) editor="vim"; name="Vim"; glyph="" ;;
 emacs) editor="emacs"; name="Emacs"; glyph="" ;;
 nvim) editor="nvim"; name="Neovim"; glyph="" ;;
 *)
-  echo "Usage: swarmarchy-default-editor <code|cursor|zed|sublime_text|helix|vim|emacs|nvim>"
+  echo "Usage: swarmarchy-default-editor <code|cursor|zed|sublime_text|helix|emacs|nvim>"
   exit 1
   ;;
 esac
