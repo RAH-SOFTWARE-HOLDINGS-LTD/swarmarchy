@@ -1,0 +1,12 @@
+# Optional printing stack. Installed by install/packaging/printing.sh only when
+# install/preflight/printing.sh set SWARMARCHY_PRINTING=1.
+#
+# avahi and nss-mdns are deliberately NOT here: they live in
+# swarmarchy-base.packages because .local name resolution on the LAN is useful
+# with or without a printer.
+
+cups                       # the print server
+cups-browsed               # auto-discovers network printers
+cups-filters               # converts documents to printer formats
+cups-pdf                   # adds a "Print to PDF" virtual printer
+system-config-printer      # GUI to add/configure printers
