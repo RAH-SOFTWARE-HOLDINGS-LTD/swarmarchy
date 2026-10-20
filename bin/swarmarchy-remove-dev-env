@@ -73,8 +73,9 @@ zig)
   mise rm -g zls
   ;;
 rust)
-  echo -e "Removing Rust...\n"
-  rustup self uninstall -y 2>/dev/null || true
+  echo -e "Removing Rust...
+"
+  mise rm -g rust
   ;;
 java)
   echo -e "Removing Java...\n"

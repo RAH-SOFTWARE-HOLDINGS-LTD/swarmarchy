@@ -118,8 +118,9 @@ phoenix)
   echo -e "\nYou can now run: mix phx.new my_app"
   ;;
 rust)
-  echo -e "Installing Rust...\n"
-  bash -c "$(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs)" -- -y
+  echo -e "Installing Rust...
+"
+  mise use --global rust@latest
   ;;
 java)
   echo -e "Installing Java...\n"

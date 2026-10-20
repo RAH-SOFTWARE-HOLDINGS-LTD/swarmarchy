@@ -36,7 +36,7 @@ xdg-desktop-portal-gtk     # file-picker + settings portal (GTK side)
 xdg-terminal-exec          # launches your chosen default terminal per the XDG spec
 qt5-wayland                # Wayland backend for Qt5 apps
 polkit-gnome               # graphical "enter password" prompts for privileged actions
-gnome-keyring              # stores secrets (passwords, SSH keys) for the session
+oo7                        # Secret Service provider: stores passwords/keys for the session
 libsecret                  # client library apps use to talk to the keyring
 python-gobject             # GTK/GObject Python bindings (used by waybar scripts etc.)
 
@@ -45,8 +45,6 @@ ttf-jetbrains-mono-nerd    # the Nerd Font: monospace + icon glyphs (bar, termin
 ttf-ia-writer              # iA Writer font for documents / markdown
 noto-fonts                 # broad Unicode text coverage
 noto-fonts-emoji           # colour emoji
-noto-fonts-cjk             # Chinese/Japanese/Korean glyph rendering (~300MB)
-woff2-font-awesome         # Font Awesome icon set (Waybar glyphs)
 fontconfig                 # system font configuration/management
 gnome-themes-extra         # provides the Adwaita-dark GTK theme (dark GTK apps)
 
@@ -86,15 +84,12 @@ gvfs-nfs                   # mount NFS network shares
 gvfs-smb                   # mount Windows / Samba shares
 dosfstools                 # FAT/EFI filesystem tools (needed for the EFI partition)
 exfatprogs                 # exFAT tools (large USB drives, SD cards)
-# localsend                # OPTIONAL on aarch64 — heavy Flutter AUR build, not in the swarmarchy repo yet.
-                           # Nautilus "send via localsend" degrades gracefully when absent (shutil.which).
-                           # Install post-install: yay -S localsend
+localsend-bin              # AUR; repacks the official linux-arm-64 .deb, so no Flutter build
 
 # ─── Browser & media ───
 mpv                        # video/audio player
 imv                        # lightweight image viewer
-# obsidian                 # OPTIONAL on aarch64 — heavy Electron AUR build, not in the swarmarchy repo yet.
-                           # Install post-install: yay -S obsidian
+obsidian-appimage          # AUR; extracts the official arm64 AppImage, so no Electron build
 
 # ─── Capture & OCR ───
 tesseract                  # OCR engine (screen region → text)
@@ -108,7 +103,6 @@ btop                       # system resource monitor (TUI)
 tree-sitter-cli            # builds Neovim syntax parsers on demand
 clang                      # C/C++ compiler (LLVM) — needed by some builds
 llvm                       # LLVM toolchain (pairs with clang)
-rust                       # Rust toolchain (also builds some AUR packages)
 mise-bin                   # runtime version manager (add node/python/ruby on demand); -bin = prebuilt (no Rust build on aarch64)
 usage                      # CLI-spec parser that mise relies on
 github-cli                 # the `gh` GitHub command-line tool
@@ -139,7 +133,6 @@ inxi                       # one-shot hardware/system info report
 fastfetch                  # the system-info banner (handy to confirm kernel/GPU)
 expac                      # query the pacman package database
 plocate                    # fast file-name search (`locate`)
-socat                      # socket relay/bridge (used for IPC in a few scripts)
 xmlstarlet                 # edit XML from scripts (e.g. fontconfig changes)
 gum                        # pretty TUI prompts — powers swarmarchy's menu/setup scripts
 libyaml                    # YAML parsing library (dependency)
