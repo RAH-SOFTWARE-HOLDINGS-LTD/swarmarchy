@@ -55,7 +55,7 @@ Elite)**. It is **two repositories**:
 | `default/` | **shipped** defaults → `~/.local/share/swarmarchy/default/` (the read-only layer the user configs `include`) | `sway/` defaults (bindings/appearance/input/autostart), `bash/`, `limine/`, `snapper/`, `wayland-sessions/` |
 | `applications/` | `.desktop` launchers + **`icons/`** (incl. web-app icons like `GitHub.png`) + **`hidden/`** (NoDisplay entries that hide clutter from the launcher) | app launchers + their PNG icons |
 | `themes/` | theme folders (colours + wallpapers) — only `tokyo-night` now | one folder per theme |
-| `boot.sh` / `install.sh` | entry points (curl-bootstrap / the installer itself) | the top-level run scripts |
+| `install.sh` | the installer entry point; the ISO sources it with `SWARMARCHY_PATH` pointing at its transient staging dir | the top-level run script |
 | `docs/` | this documentation, numbered in the order it was created | — |
 
 > **Why `applications/icons/GitHub.png` exists:** `install/packaging/webapps.sh` installs

@@ -61,7 +61,7 @@ Example:
 
 # Install Scripts
 
-Install entry points (`install.sh`, `boot.sh`) use `#!/bin/bash`. Many scripts under `install/` are sourced via `run_logged` and intentionally do not have shebangs.
+Install entry point (`install.sh`) uses `#!/bin/bash`. Many scripts under `install/` are sourced via `run_logged` and intentionally do not have shebangs.
 
 Install stage files follow this pattern:
 
