@@ -71,6 +71,7 @@ bluetui                    # pair/manage Bluetooth (your headphones) from a TUI
 
 # ─── Files, storage & file manager ───
 yazi                       # the file manager (TUI); ships yazi.desktop, so it handles inode/directory
+ouch                       # archive (de)compression; backs the ouch.yazi preview plugin
 gnome-disk-utility         # GUI for disks/partitions/format
 gvfs-mtp                   # mount phones/cameras (MTP) in the file manager
 gvfs-nfs                   # mount NFS network shares

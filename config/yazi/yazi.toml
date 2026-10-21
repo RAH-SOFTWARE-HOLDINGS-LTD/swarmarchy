@@ -1,0 +1,9 @@
+# Personal yazi settings. See: https://yazi-rs.github.io/docs/configuration/yazi
+# Shipped defaults live in /usr/share/yazi/config/; anything set here overrides them.
+
+# Preview archive contents with the ouch.yazi plugin (installed by
+# install/config/yazi.sh). Needs the `ouch` package, which is in
+# install/swarmarchy-base.packages.
+[[plugin.prepend_previewers]]
+mime = "application/{*zip,tar,bzip2,7z*,rar,xz,zstd,java-archive}"
+run  = "ouch"

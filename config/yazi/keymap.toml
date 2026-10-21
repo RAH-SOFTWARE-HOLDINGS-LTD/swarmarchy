@@ -1,0 +1,8 @@
+# Personal yazi keybindings. See: https://yazi-rs.github.io/docs/configuration/keymap
+
+# Compress the selection with ouch. Defaults to zip; the format follows the
+# extension you give the output file.
+[[mgr.prepend_keymap]]
+on = ["C"]
+run = "plugin ouch"
+desc = "Compress with ouch"
