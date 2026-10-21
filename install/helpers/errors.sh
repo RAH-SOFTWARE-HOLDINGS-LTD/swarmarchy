@@ -92,7 +92,7 @@ catch_errors() {
       options+=("Retry installation")
     fi
 
-    # Add upload option if an endpoint is configured and the internet is reachable
+    # Add upload option if uploading is possible and the internet is reachable
     if swarmarchy-upload-file --check 2>/dev/null && ping -c 1 -W 1 1.1.1.1 >/dev/null 2>&1; then
       options+=("Upload log for support")
     fi

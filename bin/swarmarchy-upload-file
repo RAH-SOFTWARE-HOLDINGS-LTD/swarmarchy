@@ -1,27 +1,36 @@
 #!/bin/bash
 
-# swarmarchy:summary=Upload a file to the configured log endpoint and print its URL
+# swarmarchy:summary=Paste a file to dpaste.org and print its URL
 # swarmarchy:args=<file> | --check
 # swarmarchy:hidden=true
 
-# Posts a file to the user's own log endpoint (see swarmarchy-iso/log-worker) and prints
-# the URL it returns. Configuration, in order of precedence:
-#   SWARMARCHY_LOG_UPLOAD_URL    endpoint (not a secret)
-#   SWARMARCHY_LOG_UPLOAD_TOKEN  bearer token; if unset, asked for with a masked prompt
-# Both can also be set in ~/.config/swarmarchy/log-upload.conf (plain KEY=value lines).
-# On the installer ISO they are baked in at build time and forwarded into the chroot.
+# Uploads a text file to dpaste.org and prints the URL it returns.
 #
-# `--check` exits 0 when an endpoint is configured, so callers can hide their upload
-# option instead of offering something that cannot work.
+# dpaste needs no account, no token and no infrastructure, which is the point: the
+# previous endpoint was a self-hosted Cloudflare Worker whose bearer token had to be
+# baked into every ISO, and whose absence made the ISO refuse to build at all.
+#
+# API: https://docs.dpaste.org/api/
+#   content   (required) the text, sent as a form field
+#   format    url  -> respond with the bare URL plus a newline
+#   lexer     _text -> no syntax highlighting
+#   expires   seconds; the server only accepts onetime | never | 3600 | 604800 |
+#             2592000, so a week is the closest thing to a short retention.
+#
+# Override the endpoint with SWARMARCHY_PASTE_URL to use another dpaste instance.
+#
+# `--check` exits 0 when uploading is possible at all, so callers can hide the option
+# rather than offer something that cannot work. Callers test reachability themselves.
 
-CONF="$HOME/.config/swarmarchy/log-upload.conf"
-if [[ -z ${SWARMARCHY_LOG_UPLOAD_URL:-} && -r $CONF ]]; then
-  # shellcheck disable=SC1090
-  source "$CONF"
-fi
+PASTE_URL="${SWARMARCHY_PASTE_URL:-https://dpaste.org/api/}"
+EXPIRES="${SWARMARCHY_PASTE_EXPIRES:-604800}"
+
+# dpaste caps the content it accepts and the end of a log is where the failure is, so
+# send the tail rather than risk a rejection on a long log.
+MAX_BYTES="${SWARMARCHY_PASTE_MAX_BYTES:-204800}"
 
 if [[ ${1-} == "--check" ]]; then
-  [[ -n ${SWARMARCHY_LOG_UPLOAD_URL:-} ]]
+  command -v curl &>/dev/null
   exit
 fi
 
@@ -31,34 +40,36 @@ if [[ ! -f $file ]]; then
   exit 1
 fi
 
-if [[ -z ${SWARMARCHY_LOG_UPLOAD_URL:-} ]]; then
-  echo "No log upload endpoint configured (set SWARMARCHY_LOG_UPLOAD_URL)." >&2
+if ! command -v curl &>/dev/null; then
+  echo "curl is required to upload." >&2
   exit 2
 fi
 
-token="${SWARMARCHY_LOG_UPLOAD_TOKEN:-}"
-if [[ -z $token && -r /dev/tty ]]; then
-  read -r -s -p "Upload token: " token </dev/tty >/dev/tty 2>&1
-  echo >/dev/tty
+payload=$(mktemp) || exit 1
+trap 'rm -f "$payload"' EXIT
+
+size=$(stat -c %s "$file")
+if (( size > MAX_BYTES )); then
+  printf '[truncated: showing the last %s of %s bytes]\n\n' "$MAX_BYTES" "$size" >"$payload"
+  tail -c "$MAX_BYTES" "$file" >>"$payload"
+else
+  cat "$file" >"$payload"
 fi
 
-if [[ -z $token ]]; then
-  echo "No upload token provided." >&2
-  exit 2
-fi
-
-# The token goes to curl on stdin (`--header @-`), never on the command line, so it
-# does not show up in `ps` or /proc/<pid>/cmdline.
-response=$(curl -sS --max-time 60 -w '\n%{http_code}' -F "file=@$file" \
-  --header @- "$SWARMARCHY_LOG_UPLOAD_URL" <<<"Authorization: Bearer $token") || exit 1
-unset token
+response=$(curl -sS --max-time 60 -w '\n%{http_code}' \
+  -F "format=url" \
+  -F "lexer=_text" \
+  -F "expires=$EXPIRES" \
+  -F "content=<$payload" \
+  "$PASTE_URL") || exit 1
 
 code="${response##*$'\n'}"
 body="${response%$'\n'*}"
 
 case "$code" in
-200) printf '%s\n' "$body" ;;
-401) echo "Upload rejected: wrong upload token." >&2; exit 1 ;;
-413) echo "Upload rejected: file too large." >&2; exit 1 ;;
+200 | 201) printf '%s\n' "${body//[$'\r\n']/}" ;;
+400) echo "Upload rejected: dpaste did not accept the request ($body)." >&2; exit 1 ;;
+413) echo "Upload rejected: log too large for dpaste." >&2; exit 1 ;;
+429) echo "Upload rejected: rate limited by dpaste; try again shortly." >&2; exit 1 ;;
 *) echo "Upload failed (HTTP $code)." >&2; exit 1 ;;
 esac
