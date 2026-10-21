@@ -15,7 +15,7 @@
 #   format    url  -> respond with the bare URL plus a newline
 #   lexer     _text -> no syntax highlighting
 #   expires   seconds; the server only accepts onetime | never | 3600 | 604800 |
-#             2592000, so a week is the closest thing to a short retention.
+#             2592000. An hour is the shortest real option.
 #
 # Override the endpoint with SWARMARCHY_PASTE_URL to use another dpaste instance.
 #
@@ -23,7 +23,7 @@
 # rather than offer something that cannot work. Callers test reachability themselves.
 
 PASTE_URL="${SWARMARCHY_PASTE_URL:-https://dpaste.org/api/}"
-EXPIRES="${SWARMARCHY_PASTE_EXPIRES:-604800}"
+EXPIRES="${SWARMARCHY_PASTE_EXPIRES:-3600}"
 
 # dpaste caps the content it accepts and the end of a log is where the failure is, so
 # send the tail rather than risk a rejection on a long log.

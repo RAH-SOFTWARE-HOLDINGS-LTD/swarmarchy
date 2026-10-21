@@ -56,6 +56,41 @@ restore_outputs() {
   fi
 }
 
+# Paste the log straight away, so the URL is on screen without anyone choosing a menu
+# item. The early phases of install_base_system write the log to the live ISO's tmpfs,
+# so a reboot before this point destroys it -- uploading unprompted is the only thing
+# that reliably gets it off the machine.
+#
+# Sets UPLOADED_LOG_URL when it works. Never fails the handler: no network, a rate
+# limit or a dead endpoint must not stop the menu from appearing.
+UPLOADED_LOG_URL=""
+upload_log_automatically() {
+  if ! swarmarchy-upload-file --check 2>/dev/null; then
+    return 0
+  fi
+
+  if ! ping -c 1 -W 2 1.1.1.1 >/dev/null 2>&1; then
+    gum style --foreground 3 "No network, so the log was not uploaded."
+    return 0
+  fi
+
+  gum style --foreground 8 "Uploading the log..."
+  # swarmarchy-upload-log prints the URL indented under a heading, so match the URL
+  # itself rather than trusting the last line to be bare.
+  UPLOADED_LOG_URL=$(swarmarchy-upload-log install 2>/dev/null |
+    grep -oE 'https?://[^[:space:]]+' | tail -n 1) || UPLOADED_LOG_URL=""
+
+  if [[ $UPLOADED_LOG_URL == http* ]]; then
+    echo
+    gum style --foreground 2 "Log uploaded -- open this on any computer (expires in an hour):"
+    gum style --foreground 2 "  $UPLOADED_LOG_URL"
+  else
+    UPLOADED_LOG_URL=""
+    gum style --foreground 3 "Could not upload the log; use the menu to retry."
+  fi
+  echo
+}
+
 # Error handler
 catch_errors() {
   # Prevent recursive error handling
@@ -83,6 +118,8 @@ catch_errors() {
   echo
   gum style --foreground 8 "Full log: $SWARMARCHY_INSTALL_LOG_FILE"
 
+  upload_log_automatically
+
   # Offer options menu
   while true; do
     options=()
@@ -92,8 +129,9 @@ catch_errors() {
       options+=("Retry installation")
     fi
 
-    # Add upload option if uploading is possible and the internet is reachable
-    if swarmarchy-upload-file --check 2>/dev/null && ping -c 1 -W 1 1.1.1.1 >/dev/null 2>&1; then
+    # Only offer the upload when the automatic attempt above did not already produce
+    # a URL -- otherwise it is on screen and re-pasting just makes a second copy.
+    if [[ -z $UPLOADED_LOG_URL ]] && swarmarchy-upload-file --check 2>/dev/null; then
       options+=("Upload log for support")
     fi
 
