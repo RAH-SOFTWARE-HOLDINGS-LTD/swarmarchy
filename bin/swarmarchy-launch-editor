@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# swarmarchy:summary=Launch the default editor as determined by $EDITOR (set via ~/.config/uwsm/default) (or nvim if missing).
+# swarmarchy:summary=Launch the default editor from $EDITOR, or nvim if it is unset or missing.
 # swarmarchy:args=<path>
 
 swarmarchy-cmd-present "$EDITOR" || EDITOR=nvim

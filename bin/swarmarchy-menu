@@ -276,7 +276,7 @@ show_setup_menu() {
   *Monitors*) open_in_editor ~/.config/sway/monitors.conf ;;
   *Keybindings*) open_in_editor ~/.config/sway/bindings.conf ;;
   *Input*) open_in_editor ~/.config/sway/input.conf ;;
-  *Defaults*) show_setup_default_menu ;;
+  *Defaults*) show_setup_default_browser_menu ;;
   *DNS*) present_terminal swarmarchy-setup-dns ;;
   *Security*) show_setup_security_menu ;;
   *Config*) show_setup_config_menu ;;
@@ -298,14 +298,6 @@ show_setup_security_menu() {
   case $(menu "Setup" "󰈷  Fingerprint\n  Fido2") in
   *Fingerprint*) present_terminal swarmarchy-setup-security-fingerprint ;;
   *Fido2*) present_terminal swarmarchy-setup-security-fido2 ;;
-  *) show_setup_menu ;;
-  esac
-}
-
-show_setup_default_menu() {
-  case $(menu "Default" "  Browser\n  Editor") in
-  *Browser*) show_setup_default_browser_menu ;;
-  *Editor*) show_setup_default_editor_menu ;;
   *) show_setup_menu ;;
   esac
 }
@@ -340,40 +332,7 @@ show_setup_default_browser_menu() {
   *Edge*) swarmarchy-default-browser edge ;;
   *Firefox*) swarmarchy-default-browser firefox ;;
   *Zen*) swarmarchy-default-browser zen ;;
-  *) show_setup_default_menu ;;
-  esac
-}
-
-show_setup_default_editor_menu() {
-  local options=""
-  swarmarchy-cmd-present nvim && options="$options  Neovim"
-  swarmarchy-cmd-present code && options="${options:+$options\n}  VSCode"
-  swarmarchy-cmd-present cursor && options="${options:+$options\n}  Cursor"
-  swarmarchy-cmd-present zeditor && options="${options:+$options\n}  Zed"
-  swarmarchy-cmd-present sublime_text && options="${options:+$options\n}  Sublime Text"
-  swarmarchy-cmd-present helix && options="${options:+$options\n}  Helix"
-  swarmarchy-cmd-present emacs && options="${options:+$options\n}  Emacs"
-
-  local current=""
-  case "$(swarmarchy-default-editor)" in
-  nvim) current="  Neovim" ;;
-  code) current="  VSCode" ;;
-  cursor) current="  Cursor" ;;
-  zed | zeditor) current="  Zed" ;;
-  sublime_text) current="  Sublime Text" ;;
-  helix) current="  Helix" ;;
-  emacs) current="  Emacs" ;;
-  esac
-
-  case $(menu "Default Editor" "$options" "" "$current") in
-  *Neovim*) swarmarchy-default-editor nvim ;;
-  *VSCode*) swarmarchy-default-editor code ;;
-  *Cursor*) swarmarchy-default-editor cursor ;;
-  *Zed*) swarmarchy-default-editor zed ;;
-  *Sublime*) swarmarchy-default-editor sublime_text ;;
-  *Helix*) swarmarchy-default-editor helix ;;
-  *Emacs*) swarmarchy-default-editor emacs ;;
-  *) show_setup_default_menu ;;
+  *) show_setup_menu ;;
   esac
 }
 
