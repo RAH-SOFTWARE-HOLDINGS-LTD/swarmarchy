@@ -1,4 +1,7 @@
-# (Yaru icon theme dropped on aarch64 — GTK apps use Adwaita directly, no patch needed.)
+# (themes/*/icons.theme is fed straight to gsettings by swarmarchy-theme-set-gnome, so it
+#  must name an icon theme we actually install. Adwaita comes with gnome-themes-extra;
+#  the previous Yaru-magenta was only ever present on the maintainer's machine as a
+#  hand-built package that exists in no repo, so a fresh install set a missing theme.)
 
 # Setup user theme folder
 mkdir -p ~/.config/swarmarchy/themes
