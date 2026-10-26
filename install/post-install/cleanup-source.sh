@@ -1,7 +1,7 @@
 # Delete the source tree. An installed system must carry NO copy of the repo.
 #
 # The repo is a source tree you build/deploy FROM, not a runtime dependency:
-# config/deploy.sh has already shipped the output to /usr and /etc/skel, and
+# config/system-files.sh has already shipped the output to /usr and /etc/skel, and
 # nothing on the running machine reads SWARMARCHY_PATH afterwards. Leaving a
 # checkout behind (especially a git one in the user's home) is exactly what this
 # install must not do.

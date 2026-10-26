@@ -92,7 +92,7 @@ fi
 
 # install/ ships because parts of it run long after install:
 # swarmarchy-first-run sources install/first-run/, swarmarchy-refresh-applications
-# sources install/packaging/.
+# runs install/packaging/applications.sh.
 SHARE_DIRS=(default themes applications install)
 for dir in "${SHARE_DIRS[@]}"; do
   [[ -d $SRC/$dir ]] || continue

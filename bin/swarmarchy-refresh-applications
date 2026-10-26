@@ -16,8 +16,6 @@ if swarmarchy-cmd-present foot; then
 fi
 
 # Refresh the webapps and TUIs
-bash $SWARMARCHY_PATH/install/packaging/icons.sh
-bash $SWARMARCHY_PATH/install/packaging/webapps.sh
-bash $SWARMARCHY_PATH/install/packaging/tuis.sh
+bash $SWARMARCHY_PATH/install/packaging/applications.sh
 
 update-desktop-database ~/.local/share/applications

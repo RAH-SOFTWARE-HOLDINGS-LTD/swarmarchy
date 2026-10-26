@@ -14,3 +14,7 @@ export SWARMARCHY_PATH=/usr/share/swarmarchy
 if [[ ":$PATH:" != *":/usr/lib/swarmarchy/bin:"* ]]; then
   export PATH=/usr/lib/swarmarchy/bin:$PATH:$HOME/.local/bin
 fi
+
+# Point docker-compose and other Docker-API clients at the rootless podman socket
+# (enabled by install/first-run/session.sh).
+export DOCKER_HOST="unix://${XDG_RUNTIME_DIR:-/run/user/$UID}/podman/podman.sock"

@@ -91,7 +91,7 @@ export SWARMARCHY_PATH="$HOME/swarmarchy"; export PATH="$SWARMARCHY_PATH/bin:$PA
 mkdir -p ~/.local/share/swarmarchy ~/.config/swarmarchy/current
 ln -sfn "$SWARMARCHY_PATH/default" ~/.local/share/swarmarchy/default
 ln -sfn "$SWARMARCHY_PATH/bin"     ~/.local/share/swarmarchy/bin
-cp -r "$SWARMARCHY_PATH/config/"* ~/.config/        # ALL configs (matches install/config/config.sh)
+cp -r "$SWARMARCHY_PATH/config/"* ~/.config/        # ALL configs (matches install/config/home.sh)
 swarmarchy-theme-set "Tokyo Night"                  # GENERATES current/theme/{waybar.css,foot.ini,mako.ini,...} from templates
 
 sway                                             # launch from THIS shell so it inherits SWARMARCHY_PATH/PATH

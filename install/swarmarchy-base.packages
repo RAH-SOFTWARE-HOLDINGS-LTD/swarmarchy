@@ -101,13 +101,13 @@ llvm                       # LLVM toolchain (pairs with clang)
 mise-bin                   # runtime version manager (add node/python/ruby on demand); -bin = prebuilt (no Rust build on aarch64)
 usage                      # CLI-spec parser that mise relies on
 github-cli                 # the `gh` GitHub command-line tool
-docker                     # containers
-docker-buildx              # extended `docker build` engine
-docker-compose             # multi-container orchestration
+podman                     # rootless, daemonless containers
+podman-docker              # `docker` command that runs podman, plus the Docker-compatible API socket
+passt                      # pasta: rootless container networking (ports published in userspace, so UFW applies)
+docker-compose             # compose files; talks to podman.socket via DOCKER_HOST (see default/bash/envs)
 
 # ─── Security & firewall ───
 ufw                        # simple firewall front-end
-ufw-docker                 # makes UFW rules actually apply to Docker containers
 
 # ─── Shell & command-line basics ───
 bash-completion            # tab-completion for bash
