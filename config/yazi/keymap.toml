@@ -6,3 +6,19 @@
 on = ["C"]
 run = "plugin ouch"
 desc = "Compress with ouch"
+
+# Transcode the selection (or the hovered file) with swarmarchy-transcode, in the
+# floating terminal. This replaces the "Transcode" Nautilus right-click action.
+# Paths are re-quoted with ${f@Q} because the terminal wrapper joins its arguments
+# into one command string.
+[[mgr.prepend_keymap]]
+on = ["<A-t>"]
+run = '''shell --orphan -- bash -c 'cmd=""; for f in "$@"; do cmd+="swarmarchy-transcode ${f@Q} || true; "; done; exec swarmarchy-launch-floating-terminal-with-presentation "$cmd"' _ %s'''
+desc = "Transcode with swarmarchy-transcode"
+
+# Send the selection (or the hovered file) with LocalSend. This replaces the
+# "Send via LocalSend" Nautilus right-click action.
+[[mgr.prepend_keymap]]
+on = ["<A-l>"]
+run = "shell --orphan -- localsend --headless send %s"
+desc = "Send via LocalSend"
