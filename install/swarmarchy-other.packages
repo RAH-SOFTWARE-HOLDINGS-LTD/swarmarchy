@@ -33,13 +33,10 @@ gst-plugin-pipewire        # GStreamer ↔ PipeWire bridge (audio in screenshare
 libpulse                   # PulseAudio client libraries (for apps that expect pulse)
 
 # ─── Wayland / GUI foundation ───
-qt6-wayland                # Wayland backend for Qt6 apps
 gtk4-layer-shell           # lets GTK4 apps draw bars/overlays (layer-shell surfaces)
-webp-pixbuf-loader         # render .webp images in GTK apps and thumbnails
 
 # ─── GPU — Qualcomm Adreno X1-85 ───
 mesa                       # OpenGL + the "freedreno" driver for Adreno
-vulkan-freedreno           # Vulkan ("turnip") driver for the Adreno GPU
 
 # ── AARCH64 / SNAPDRAGON-X TODO (not resolvable from the offline mirror yet) ──
 # These are required but live in the AUR or need a Snapdragon-specific source, so

@@ -8,7 +8,7 @@
 # installed) and let the phase that owns it handle it. `--needed` (inside
 # swarmarchy-pkg-add) makes the already-present base packages no-ops, so the net
 # effect on a normal install is: pull in the userland the base phase didn't
-# (pipewire-alsa/jack, gst-plugin-pipewire, qt6-wayland, webp-pixbuf-loader, ...).
+# (pipewire-alsa/jack, gst-plugin-pipewire, ...).
 
 manifest="$SWARMARCHY_INSTALL/swarmarchy-other.packages"
 mapfile -t wanted < <(grep -vE '^[[:space:]]*#|^[[:space:]]*$' "$manifest" | awk '{print $1}')
