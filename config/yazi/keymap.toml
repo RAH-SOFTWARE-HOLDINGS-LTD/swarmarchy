@@ -22,3 +22,11 @@ desc = "Transcode with swarmarchy-transcode"
 on = ["<A-l>"]
 run = "shell --orphan -- localsend --headless send %s"
 desc = "Send via LocalSend"
+
+# Extract the selection (or the hovered archive) with ouch, next to the archive. Yazi's
+# own extract action needs 7zip, which we don't install. --block so ouch can ask
+# before overwriting anything.
+[[mgr.prepend_keymap]]
+on = ["<A-e>"]
+run = "shell --block -- ouch decompress %s"
+desc = "Extract with ouch"
