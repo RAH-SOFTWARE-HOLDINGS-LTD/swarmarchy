@@ -1,9 +1,15 @@
 #!/bin/bash
 
-# swarmarchy:summary=Show the 3-day weather forecast for the configured location
+# swarmarchy:summary=Show the 3-day weather forecast for each configured location
 # swarmarchy:group=weather
 # swarmarchy:name=forecast
 #
 # Uses wttr.in's narrow layout: the default table is 125 columns wide.
 
-exec curl -fsS "wttr.in/$(swarmarchy-weather-location)?nF"
+mapfile -t cities < <(swarmarchy-weather-location --all)
+(( ${#cities[@]} )) || cities=("")
+
+for city in "${cities[@]}"; do
+  curl -fsS "wttr.in/$city?nF"
+  echo
+done

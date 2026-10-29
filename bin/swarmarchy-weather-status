@@ -2,7 +2,10 @@
 
 # swarmarchy:summary=Returns a formatted weather status string with temperature and wind speed.
 
-weather=$(curl -fsS --max-time 4 "https://wttr.in/$(swarmarchy-weather-location)?format=%l|%t|%w" 2>/dev/null | tr -d '\n')
+# Optional first argument: a location to use instead of the main one (URL-encoded).
+location=${1-$(swarmarchy-weather-location)}
+
+weather=$(curl -fsS --max-time 4 "https://wttr.in/$location?format=%l|%t|%w" 2>/dev/null | tr -d '\n')
 
 if [[ -z $weather ]]; then
   echo "Weather unavailable"
@@ -14,4 +17,4 @@ place=${place%%,*}
 place=${place^}
 temperature=${temperature#+}
 
-echo "$(swarmarchy-weather-icon)    $place  ·  Temp $temperature  ·  Wind $wind"
+echo "$(swarmarchy-weather-icon "$location")    $place  ·  Temp $temperature  ·  Wind $wind"
