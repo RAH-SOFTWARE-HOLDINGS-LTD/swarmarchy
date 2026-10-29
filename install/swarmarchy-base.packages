@@ -27,22 +27,21 @@ elephant-websearch         # walker provider: web search
 libnotify                  # provides notify-send (used by ~21 swarmarchy-* scripts)
 grim                       # screenshot capture backend
 slurp                      # screen-region selector (pairs with grim, OCR, recorder)
+wf-recorder                # screen-recording backend (wlroots); Alt+Print
 satty                      # screenshot annotation editor (arrows, blur, crop)
 wl-clipboard               # clipboard from the CLI (wl-copy / wl-paste)
 wtype                      # synthesises keystrokes (Mac-style SUPER shortcuts in Sway)
 wlsunset                   # night-light (warms screen colour temperature)
 xdg-desktop-portal-wlr     # screenshare/screencast portal for wlroots compositors
 xdg-desktop-portal-gtk     # file-picker + settings portal (GTK side)
+xdg-utils                  # xdg-open / xdg-mime / xdg-settings — used by ~6 swarmarchy-* scripts and config/mimetypes.sh
 xdg-terminal-exec          # launches your chosen default terminal per the XDG spec
-qt5-wayland                # Wayland backend for Qt5 apps
 polkit-gnome               # graphical "enter password" prompts for privileged actions
 oo7                        # Secret Service provider: stores passwords/keys for the session
 libsecret                  # client library apps use to talk to the keyring
-python-gobject             # GTK/GObject Python bindings (used by waybar scripts etc.)
 
 # ─── Fonts & theming ───
 ttf-jetbrains-mono-nerd    # the Nerd Font: monospace + icon glyphs (bar, terminal)
-ttf-ia-writer              # iA Writer font for documents / markdown
 noto-fonts                 # broad Unicode text coverage
 noto-fonts-emoji           # colour emoji
 fontconfig                 # system font configuration/management
@@ -50,7 +49,6 @@ gnome-themes-extra         # provides the Adwaita-dark GTK theme (dark GTK apps)
 
 # ─── Audio (your Bose headphones ride on PipeWire) ───
 wireplumber                # PipeWire session/policy manager (routes audio streams)
-alsa-utils                 # low-level ALSA sound tools (alsamixer, aplay, speaker-test)
 pamixer                    # CLI volume control (driven by the media keys)
 playerctl                  # play/pause/next for media players (MPRIS)
 wiremix                    # PipeWire mixer as a TUI
@@ -72,10 +70,6 @@ bluetui                    # pair/manage Bluetooth (your headphones) from a TUI
 # ─── Files, storage & file manager ───
 yazi                       # the file manager (TUI); ships yazi.desktop, so it handles inode/directory
 ouch                       # archive (de)compression; backs the ouch.yazi preview plugin
-gnome-disk-utility         # GUI for disks/partitions/format
-gvfs-mtp                   # mount phones/cameras (MTP) in the file manager
-gvfs-nfs                   # mount NFS network shares
-gvfs-smb                   # mount Windows / Samba shares
 rclone                     # sync/mount cloud storage — the OneDrive mount, and the R2 package repo (docs/07)
 fuse3                      # fusermount3, which rclone's FUSE mount needs to unmount
 xdg-user-dirs              # xdg-user-dirs-update; install/config/user-dirs.sh calls it
@@ -98,8 +92,6 @@ tmux                       # terminal multiplexer
 lazygit                    # git terminal UI
 btop                       # system resource monitor (TUI)
 tree-sitter-cli            # builds Neovim syntax parsers on demand
-clang                      # C/C++ compiler (LLVM) — needed by some builds
-llvm                       # LLVM toolchain (pairs with clang)
 mise-bin                   # runtime version manager (add node/python/ruby on demand); -bin = prebuilt (no Rust build on aarch64)
 usage                      # CLI-spec parser that mise relies on
 podman                     # rootless, daemonless containers
@@ -124,7 +116,6 @@ man-db                     # man pages
 tldr                       # short, example-first man pages
 whois                      # domain / IP lookups
 inetutils                  # hostname, ping, telnet, etc.
-inxi                       # one-shot hardware/system info report
 fastfetch                  # the system-info banner (handy to confirm kernel/GPU)
 expac                      # query the pacman package database
 plocate                    # fast file-name search (`locate`)
