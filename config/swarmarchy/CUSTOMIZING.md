@@ -82,3 +82,36 @@ swarmarchy                 # top-level command groups
 swarmarchy <group> --help  # commands in a group (e.g. swarmarchy refresh --help)
 swarmarchy commands        # every command with a one-line summary
 ```
+
+## After an install: things to do by hand
+
+Optional, in any order.
+
+- **OneDrive** — the installer asks whether to sync it. If you said yes, a setup window opens
+  at first login. If you skipped it, run `swarmarchy setup onedrive` any time; it mounts at
+  `~/Onedrive`.
+- **Weather cities** — put one city per line in `~/.config/swarmarchy/weather-location`
+  (e.g. `Vancouver` then `New York`). The first is shown in the bar, hovering lists every
+  city, and clicking shows each forecast. Delete the file to guess from your IP.
+- **SSH and GPG keys** — restore `~/.ssh` and `~/.gnupg` first; the clones below need them.
+- **Neovim** — `git clone git@github.com:ralphie02/LazyVimRah.git ~/.config/nvim`
+- **Obsidian** — clone or copy your vault. *(TODO: add the vault's repo URL or location.)*
+- **Dev tools** — `mise use -g node@latest ruby@latest`. Ruby is set to use prebuilt
+  binaries (`[settings.ruby] compile = false`).
+- **Package publishing** — only if you publish to R2: `rclone config` for a `Swarmarchy:`
+  remote. The token can't create buckets, so pass `--s3-no-check-bucket` to `rclone copy`.
+
+### Local overrides a fresh install won't have
+
+These live in `~/.config` on the Yoga and differ from the shipped defaults. Back them up
+before reinstalling, or re-create them:
+
+| File | What it does |
+|---|---|
+| `sway/monitors.conf` | `output * scale 1` plus custom modes and positions for the dock's DP outputs (the default is scale 2) |
+| `environment.d/sway.conf` | `WLR_RENDERER=vulkan` for the Adreno Vulkan driver (needs `vulkan-freedreno`, so don't uninstall it) |
+| `sway/swayidle.sh` and `systemd/user/swayidle.service` | custom idle daemon: 5-minute lock, blanks only the internal display |
+| `sway/looknfeel.conf` | fully opaque windows |
+| `sway/autostart.conf` | starts only `elephant`, not a persistent Walker service |
+
+Your git name and email are set by the installer's prompts.
