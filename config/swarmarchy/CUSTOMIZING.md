@@ -108,10 +108,9 @@ before reinstalling, or re-create them:
 
 | File | What it does |
 |---|---|
-| `sway/monitors.conf` | `output * scale 1` plus custom modes and positions for the dock's DP outputs (the default is scale 2) |
+| `sway/monitors.conf` | `output * scale 1` plus the layout for two external monitors above the laptop (the default is scale 2). The `--custom` modes were forced for a KVM/adapter with no EDID; they may be unneeded now |
 | `environment.d/sway.conf` | `WLR_RENDERER=vulkan` for the Adreno Vulkan driver (needs `vulkan-freedreno`, so don't uninstall it) |
-| `sway/swayidle.sh` and `systemd/user/swayidle.service` | custom idle daemon: 5-minute lock, blanks only the internal display |
-| `sway/looknfeel.conf` | fully opaque windows |
-| `sway/autostart.conf` | starts only `elephant`, not a persistent Walker service |
+| `sway/swayidle.sh` and `systemd/user/swayidle.service` | custom idle daemon: 5-minute lock, blanks only the internal display (the shipped lock script can do this on its own with `SWARMARCHY_IDLE_BLANK_OUTPUT=eDP-1`) |
+| `sway/looknfeel.conf` | the only difference from the shipped file is fully opaque windows (`opacity 1`) |
 
 Your git name and email are set by the installer's prompts.
