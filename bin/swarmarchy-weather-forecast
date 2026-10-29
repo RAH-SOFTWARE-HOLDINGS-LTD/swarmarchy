@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# swarmarchy:summary=Show the 3-day weather forecast for the configured location
+# swarmarchy:group=weather
+# swarmarchy:name=forecast
+#
+# Uses wttr.in's narrow layout: the default table is 125 columns wide.
+
+exec curl -fsS "wttr.in/$(swarmarchy-weather-location)?nF"

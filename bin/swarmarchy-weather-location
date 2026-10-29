@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# swarmarchy:summary=Print the weather location for wttr.in URLs (empty means auto-detect from the IP)
+# swarmarchy:group=weather
+# swarmarchy:name=location
+#
+# To pin a city, write it to ~/.config/swarmarchy/weather-location, e.g.
+#   echo "New York" > ~/.config/swarmarchy/weather-location
+# Delete the file to go back to guessing from your IP.
+
+location=$(head -n1 ~/.config/swarmarchy/weather-location 2>/dev/null)
+echo "${location// /+}"
