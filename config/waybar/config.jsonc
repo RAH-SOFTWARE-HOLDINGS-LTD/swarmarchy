@@ -64,7 +64,8 @@
     "exec": "$SWARMARCHY_PATH/default/waybar/weather.sh",
     "return-type": "json",
     "interval": 600,
-    "tooltip": true
+    "tooltip": true,
+    "on-click": "swarmarchy-launch-floating-terminal-with-presentation 'curl -fsS "wttr.in?nF"'"
   },
   "network": {
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
