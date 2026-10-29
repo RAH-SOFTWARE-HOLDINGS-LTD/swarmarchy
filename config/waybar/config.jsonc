@@ -64,8 +64,7 @@
     "exec": "$SWARMARCHY_PATH/default/waybar/weather.sh",
     "return-type": "json",
     "interval": 600,
-    "tooltip": true,
-    "on-click": "notify-send -u low \"$(swarmarchy-weather-status)\""
+    "tooltip": true
   },
   "network": {
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
