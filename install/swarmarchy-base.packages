@@ -122,7 +122,6 @@ jq                         # JSON processor — used heavily by the sway/* scrip
 less                       # the pager
 man-db                     # man pages
 tldr                       # short, example-first man pages
-unzip                      # extract .zip archives
 whois                      # domain / IP lookups
 inetutils                  # hostname, ping, telnet, etc.
 inxi                       # one-shot hardware/system info report
