@@ -430,8 +430,7 @@ show_install_ai_menu() {
 }
 
 show_install_style_menu() {
-  case $(menu "Install" "󰸌  Theme\n  Background\n  Font") in
-  *Theme*) present_terminal swarmarchy-theme-install ;;
+  case $(menu "Install" "  Background\n  Font") in
   *Background*) swarmarchy-theme-bg-install ;;
   *Font*) show_install_font_menu ;;
   *) show_install_menu ;;
@@ -497,12 +496,11 @@ show_install_elixir_menu() {
 }
 
 show_remove_menu() {
-  case $(menu "Remove" "󰣇  Package\n  Web App\n  TUI\n󰵮  Development\n󰸌  Theme\n  Browser\n󰏓  Preinstalls\n  Security") in
+  case $(menu "Remove" "󰣇  Package\n  Web App\n  TUI\n󰵮  Development\n  Browser\n󰏓  Preinstalls\n  Security") in
   *Package*) terminal swarmarchy-pkg-remove ;;
   *Web*) present_terminal swarmarchy-webapp-remove ;;
   *TUI*) present_terminal swarmarchy-tui-remove ;;
   *Development*) show_remove_development_menu ;;
-  *Theme*) present_terminal swarmarchy-theme-remove ;;
   *Browser*) show_remove_browser_menu ;;
   *Preinstalls*) present_terminal swarmarchy-remove-preinstalls ;;
   *Security*) show_remove_security_menu ;;
@@ -576,8 +574,7 @@ show_remove_elixir_menu() {
 }
 
 show_maintain_menu() {
-  case $(menu "Maintain" "  Config\n󰸌  Extra Themes\n  Process\n󰇅  Hardware\n  Password\n  Timezone") in
-  *Themes*) present_terminal swarmarchy-theme-update ;;
+  case $(menu "Maintain" "  Config\n  Process\n󰇅  Hardware\n  Password\n  Timezone") in
   *Config*) show_maintain_config_menu ;;
   *Process*) show_maintain_process_menu ;;
   *Hardware*) show_maintain_hardware_menu ;;
