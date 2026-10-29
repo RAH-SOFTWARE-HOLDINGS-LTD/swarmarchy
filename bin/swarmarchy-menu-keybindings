@@ -33,6 +33,13 @@ output_keybindings() {
       key = line; sub(/[[:space:]].*$/, "", key)          # first token = key combo
       cmd = line; sub(/^[^[:space:]]+[[:space:]]+/, "", cmd)
 
+      # Mac-style SUPER+<key> shortcuts only re-send CTRL+<key> (copy, paste, new tab, ...).
+      # They stay bound but are left out of the list.
+      if (cmd ~ /swarmarchy-key-mac/ || cmd ~ /wtype -M (ctrl|shift)[[:space:]]+-P Insert/) {
+        desc = ""
+        next
+      }
+
       action = (desc != "" ? desc : cmd)
       sub(/^exec[[:space:]]+/, "", action)
       gsub(/\$mod/, "SUPER", key)
