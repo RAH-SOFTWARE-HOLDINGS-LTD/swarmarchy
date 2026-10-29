@@ -127,8 +127,25 @@ if ! grep -q "^/" /boot/limine.conf; then
   fi
 
   cmdline="root=UUID=${root_uuid} rootflags=subvol=${root_subvol:-@} rw"
-  [[ -f /etc/default/limine ]] &&
-    cmdline="$(sed -n 's/^KERNEL_CMDLINE\[default\]+="\(.*\)"$/\1/p' /etc/default/limine | tr '\n' ' ')"
+
+  # /etc/default/limine carries the complete option list -- the root= this script
+  # scraped out of the ISO's limine.conf, the fixed quiet/splash set from
+  # default/limine/default.conf, and any /etc/limine-entry-tool.d drop-ins the
+  # hardware fix scripts wrote -- so it is the better source and wins when usable.
+  #
+  # But root= reaches that file from exactly one place: the `cmdline:` line in the
+  # ISO's limine.conf. If that scrape came back empty, the file holds only the fixed
+  # options, and the entry below would name no root device. That entry is unbootable
+  # yet still satisfies the `grep "^/"` checks, so the install would report success
+  # on a machine that cannot start. Fall back to the computed value in that case.
+  if [[ -f /etc/default/limine ]]; then
+    extracted=$(sed -n 's/^KERNEL_CMDLINE\[default\]+="\(.*\)"$/\1/p' /etc/default/limine | tr '\n' ' ')
+    if [[ $extracted == *root=* ]]; then
+      cmdline="$extracted"
+    else
+      echo "Warning: /etc/default/limine names no root device; using the computed cmdline." >&2
+    fi
+  fi
 
   sudo tee -a /boot/limine.conf >/dev/null <<ENTRY
 
