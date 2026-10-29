@@ -65,7 +65,7 @@
     "return-type": "json",
     "interval": 600,
     "tooltip": true,
-    "on-click": "notify-send -u low -t 10000 \"$(swarmarchy-weather-status)\""
+    "on-click": "notify-send -u low \"$(swarmarchy-weather-status)\""
   },
   "network": {
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
