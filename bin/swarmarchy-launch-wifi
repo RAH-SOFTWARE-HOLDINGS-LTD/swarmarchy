@@ -3,4 +3,22 @@
 # swarmarchy:summary=Launch the Swarmarchy wifi controls (provided by the Impala TUI).
 
 rfkill unblock wifi
+
+# Reap orphaned impala processes before launching.
+#
+# impala 0.7.4 does not exit when you press q: the terminal window closes after
+# ~6s but the process stays alive indefinitely -- 16 threads parked in
+# futex_wait, no CPU, still holding its iwd D-Bus connection and ~17 fds. They
+# accumulate across sessions, and a long-lived one degrades until quitting the
+# *next* one takes ~13s, which reads as "the wifi menu is slow".
+#
+# An impala process with no Sway window is orphaned by definition:
+# swarmarchy-launch-tui always starts it inside one. When a window does exist we
+# touch nothing, because launch-or-focus is about to focus it.
+if ! swaymsg -t get_tree 2>/dev/null | jq -e '
+  recurse(.nodes[]?, .floating_nodes[]?)
+  | select(.app_id == "org.swarmarchy.impala")' >/dev/null; then
+  pkill -x impala 2>/dev/null
+fi
+
 swarmarchy-launch-or-focus-tui impala
