@@ -1,6 +1,5 @@
 source /usr/share/swarmarchy/default/bash/envs
 source /usr/share/swarmarchy/default/bash/shell
-source /usr/share/swarmarchy/default/bash/aliases
 source /usr/share/swarmarchy/default/bash/functions
 source /usr/share/swarmarchy/default/bash/init
 [[ $- == *i* ]] && bind -f /usr/share/swarmarchy/default/bash/inputrc
