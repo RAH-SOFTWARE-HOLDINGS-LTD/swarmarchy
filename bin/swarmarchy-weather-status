@@ -2,7 +2,12 @@
 
 # swarmarchy:summary=Returns a formatted weather status string with temperature and wind speed.
 
-weather=$(curl -fsS --max-time 4 "https://wttr.in?format=%l|%t|%w" 2>/dev/null | tr -d '\n')
+# Optional fixed location (a city name); empty means wttr.in guesses from your IP.
+# Set SWARMARCHY_WEATHER_LOCATION, or write the city to ~/.config/swarmarchy/weather-location.
+location=${SWARMARCHY_WEATHER_LOCATION:-$(cat ~/.config/swarmarchy/weather-location 2>/dev/null)}
+location=${location// /+}
+
+weather=$(curl -fsS --max-time 4 "https://wttr.in/$location?format=%l|%t|%w" 2>/dev/null | tr -d '\n')
 
 if [[ -z $weather ]]; then
   echo "Weather unavailable"
