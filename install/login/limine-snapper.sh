@@ -27,6 +27,23 @@ EOF
 
   CMDLINE=$(grep "^[[:space:]]*cmdline:" "$limine_config" | head -1 | sed 's/^[[:space:]]*cmdline:[[:space:]]*//')
 
+  # Every downstream consumer of root= gets it through this one value: it is
+  # substituted into /etc/default/limine below, which the UKI bakes in and
+  # limine-update reads, and which the ALARM fallback near the end reads back.
+  # So an empty $CMDLINE yields unbootable UKIs *and* an unbootable fallback
+  # entry, while every "does an entry exist" check still passes and the install
+  # reports success. Derive it from the live system rather than carry on empty.
+  if [[ $CMDLINE != *root=* ]]; then
+    derived_uuid=$(findmnt -no UUID /)
+    derived_subvol=$(findmnt -no FSROOT / | sed 's|^/||')
+    if [[ -z $derived_uuid ]]; then
+      echo "Error: $limine_config has no usable cmdline and / has no readable UUID" >&2
+      exit 1
+    fi
+    CMDLINE="root=UUID=${derived_uuid} rootflags=subvol=${derived_subvol:-@} rw"
+    echo "Warning: no root= in $limine_config; derived it from the live system" >&2
+  fi
+
   # Write /etc/default/limine *before* installing limine-mkinitcpio-hook, whose
   # post-transaction deploy hook runs limine-install and reads this file. Without
   # it, ESP_PATH falls back to bootctl, which in a chroot prints a warning that
