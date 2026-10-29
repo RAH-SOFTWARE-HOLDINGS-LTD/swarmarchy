@@ -76,6 +76,8 @@ gnome-disk-utility         # GUI for disks/partitions/format
 gvfs-mtp                   # mount phones/cameras (MTP) in the file manager
 gvfs-nfs                   # mount NFS network shares
 gvfs-smb                   # mount Windows / Samba shares
+rclone                     # sync/mount cloud storage — the OneDrive mount, and the R2 package repo (docs/07)
+fuse3                      # fusermount3, which rclone's FUSE mount needs to unmount
 xdg-user-dirs              # xdg-user-dirs-update; install/config/user-dirs.sh calls it
 dosfstools                 # FAT/EFI filesystem tools (needed for the EFI partition)
 exfatprogs                 # exFAT tools (large USB drives, SD cards)

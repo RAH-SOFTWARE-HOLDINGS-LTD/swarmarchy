@@ -18,6 +18,7 @@ if [[ -f $FIRST_RUN_MODE ]]; then
 
   bash "$SWARMARCHY_PATH/install/first-run/battery-monitor.sh"
   bash "$SWARMARCHY_PATH/install/first-run/session.sh"
+  bash "$SWARMARCHY_PATH/install/first-run/onedrive.sh"
   bash "$SWARMARCHY_PATH/install/first-run/firewall.sh"
   bash "$SWARMARCHY_PATH/install/first-run/wifi.sh"
 fi

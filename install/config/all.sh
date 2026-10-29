@@ -1,5 +1,6 @@
 run_logged $SWARMARCHY_INSTALL/config/system-files.sh
 run_logged $SWARMARCHY_INSTALL/config/home.sh
+run_logged $SWARMARCHY_INSTALL/config/onedrive.sh
 run_logged $SWARMARCHY_INSTALL/config/theme.sh
 run_logged $SWARMARCHY_INSTALL/config/git.sh
 run_logged $SWARMARCHY_INSTALL/config/mimetypes.sh

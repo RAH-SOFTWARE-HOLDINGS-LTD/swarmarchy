@@ -265,7 +265,7 @@ show_setup_menu() {
   local options="  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n  System Sleep\n󰍹  Monitors"
   [[ -f ~/.config/sway/bindings.conf ]] && options="$options\n  Keybindings"
   [[ -f ~/.config/sway/input.conf ]] && options="$options\n  Input"
-  options="$options\n  Defaults\n󰱔  DNS\n  Security\n  Config"
+  options="$options\n  Defaults\n󰱔  DNS\n  OneDrive\n  Security\n  Config"
 
   case $(menu "Setup" "$options") in
   *Audio*) swarmarchy-launch-audio ;;
@@ -278,6 +278,7 @@ show_setup_menu() {
   *Input*) open_in_editor ~/.config/sway/input.conf ;;
   *Defaults*) show_setup_default_browser_menu ;;
   *DNS*) present_terminal swarmarchy-setup-dns ;;
+  *OneDrive*) present_terminal swarmarchy-setup-onedrive ;;
   *Security*) show_setup_security_menu ;;
   *Config*) show_setup_config_menu ;;
   *) show_main_menu ;;
