@@ -65,7 +65,7 @@
     "return-type": "json",
     "interval": 600,
     "tooltip": true,
-    "on-click": "swarmarchy-launch-floating-terminal-with-presentation 'curl -fsS \"wttr.in?nF\"'"
+    "on-click": "swarmarchy-launch-floating-terminal-with-presentation 'curl -fsS wttr.in/?nF'"
   },
   "network": {
     "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
