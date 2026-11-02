@@ -3,3 +3,5 @@ only_search_title = true
 history = false
 # Picking an app that is already open focuses its window instead of starting a new one
 window_integration = true
+# Open apps keep their full score, so they rank above menu entries in the Swarmarchy Menu
+score_open_windows = false

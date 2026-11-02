@@ -20,6 +20,11 @@ default = [
   "websearch",
 ]
 
+# The Swarmarchy Menu: only its top level shows until you type, then every level and all apps are searched
+[providers.sets.swarmarchymenu]
+default = ["menus:swarmarchymenutop", "menus:swarmarchymenuall", "desktopapplications"]
+empty = ["menus:swarmarchymenutop"]
+
 [[providers.prefixes]]
 prefix = "/"
 provider = "providerlist"

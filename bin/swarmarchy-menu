@@ -18,10 +18,126 @@ back_to() {
 }
 
 toggle_existing_menu() {
-  if pgrep -f "walker.*--dmenu" >/dev/null; then
+  if pgrep -f "walker.*(--dmenu|-s swarmarchymenu)" >/dev/null; then
     walker --close >/dev/null 2>&1
     exit 0
   fi
+}
+
+# Search across every level from the top menu. The index is read from the
+# menu functions' own definitions and never runs them. Elephant menus list it
+# (default/elephant/swarmarchy_menu_*.lua), and picking an entry replays its
+# path through the normal menus (see menu()).
+MENU_PATH_FILE=""
+MENU_INDEX_LINES=""
+MENU_TOP_LINES=""
+declare -A MENU_INDEX=()
+
+# Read menu function $1 into MENU_OPTIONS (from its string literals) and
+# MENU_PATTERNS/MENU_ACTIONS (its case branches: pattern and first command).
+menu_parse() {
+  local fn="$1" line literal state=before
+  local menu_re='menu "[^"]*" "([^$"][^"]*)"'
+  local options_re='options="([^"]*)"'
+  local -a body dispatch
+
+  MENU_OPTIONS=() MENU_PATTERNS=() MENU_ACTIONS=()
+  mapfile -t body < <(declare -f "$fn")
+  # The top menu hands its choice to go_to_menu, which holds the case.
+  if [[ $fn == show_main_menu ]]; then
+    mapfile -t dispatch < <(declare -f go_to_menu)
+  else
+    dispatch=("${body[@]}")
+  fi
+
+  for line in "${body[@]}"; do
+    if [[ $line =~ $menu_re ]]; then
+      literal="${BASH_REMATCH[1]}"
+      mapfile -t MENU_OPTIONS <<<"${literal//\\n/$'\n'}"
+      break
+    elif [[ $line =~ $options_re ]]; then
+      literal="${BASH_REMATCH[1]}"
+      literal="${literal#'${options:+$options\n}'}"
+      literal="${literal#'$options'}"
+      literal="${literal#'\n'}"
+      [[ -n $literal ]] && mapfile -t -O "${#MENU_OPTIONS[@]}" MENU_OPTIONS <<<"${literal//\\n/$'\n'}"
+    fi
+  done
+
+  for line in "${dispatch[@]}"; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+
+    case $state in
+    before)
+      [[ $line == case* && ($line == *'$(menu '* || $fn == show_main_menu) ]] && state=pattern
+      ;;
+    pattern)
+      [[ $line == esac ]] && return
+      [[ $line == *')' ]] && MENU_PATTERNS+=("${line%)}") && state=action
+      ;;
+    action)
+      MENU_ACTIONS+=("$line")
+      state=skip
+      ;&
+    skip)
+      [[ $line == ';;' ]] && state=pattern
+      ;;
+    esac
+  done
+}
+
+menu_index_walk() {
+  local fn="$1" crumbs="$2" path="$3" depth="$4"
+  local option match icon label here here_path display child i
+  local -a options patterns actions
+
+  ((depth > 6)) && return
+
+  menu_parse "$fn"
+  options=("${MENU_OPTIONS[@]}") patterns=("${MENU_PATTERNS[@]}") actions=("${MENU_ACTIONS[@]}")
+
+  for option in "${options[@]}"; do
+    [[ -z ${option//[[:space:]]/} ]] && continue
+
+    icon="${option%%[[:alnum:].]*}"
+    label="${option#"$icon"}"
+    label="${label%"${label##*[![:space:]]}"}"
+    icon="${icon//[[:space:]]/}"
+
+    here="${crumbs:+$crumbs › }$label"
+    here_path="${path:+$path$'\x1f'}$option"
+
+    display="${icon:+$icon  }$here"
+    MENU_INDEX[$display]="$here_path"
+    if ((depth > 0)); then
+      MENU_INDEX_LINES+="\n$display"
+    else
+      MENU_TOP_LINES+="\n$display"
+    fi
+
+    # Follow the first branch this option matches, as the case would.
+    [[ $fn == show_main_menu ]] && match="${option,,}" || match="$option"
+    child=""
+    for i in "${!patterns[@]}"; do
+      [[ ${patterns[i]} == '*' ]] && break
+      if eval "[[ \$match == ${patterns[i]} ]]"; then
+        [[ ${actions[i]} =~ ^show_[a-z_]+$ ]] && child="${actions[i]}"
+        break
+      fi
+    done
+    [[ -n $child ]] && menu_index_walk "$child" "$here" "$here_path" $((depth + 1))
+  done
+}
+
+menu_index_build() {
+  [[ -n $MENU_INDEX_LINES ]] || menu_index_walk show_main_menu "" "" 0
+}
+
+menu_path_start() {
+  MENU_PATH_FILE=$(mktemp) || return 1
+  trap 'rm -f "$MENU_PATH_FILE"' EXIT
+  printf '%s\n' "${1//$'\x1f'/$'\n'}" >"$MENU_PATH_FILE"
 }
 
 menu() {
@@ -29,6 +145,19 @@ menu() {
   local options="$2"
   local extra="$3"
   local preselect="$4"
+
+  # Replaying a search result: answer from the recorded path instead of asking.
+  # The path lives in a file because menu() runs inside $(...) subshells.
+  if [[ -s $MENU_PATH_FILE ]]; then
+    local pick
+    pick=$(head -n 1 "$MENU_PATH_FILE")
+    sed -i 1d "$MENU_PATH_FILE"
+    if echo -e "$options" | grep -qxF -- "$pick"; then
+      printf '%s\n' "$pick"
+      return
+    fi
+    : >"$MENU_PATH_FILE"
+  fi
 
   read -r -a args <<<"$extra"
 
@@ -649,7 +778,15 @@ show_system_menu() {
 }
 
 show_main_menu() {
-  go_to_menu "$(menu "Go" "󰀻  Apps\n󰧑  Learn\n󱓞  Trigger\n  Style\n  Setup\n󰉉  Install\n󰭌  Remove\n  Maintain\n  About\n  System")"
+  local options="󰀻  Apps\n󰧑  Learn\n󱓞  Trigger\n  Style\n  Setup\n󰉉  Install\n󰭌  Remove\n  Maintain\n  About\n  System"
+
+  # Replaying a picked entry walks the dmenu levels; otherwise open the walker
+  # set that shows these items and searches every level once you type.
+  if [[ -s $MENU_PATH_FILE ]]; then
+    go_to_menu "$(menu "Go" "$options")"
+  else
+    swarmarchy-launch-walker -s swarmarchymenu --minheight 1 --maxheight 630 -p "Go…"
+  fi
 }
 
 go_to_menu() {
@@ -680,6 +817,26 @@ go_to_menu() {
 # Allow user extensions and overrides
 USER_EXTENSIONS="$HOME/.config/swarmarchy/extensions/menu.sh"
 [[ -f $USER_EXTENSIONS ]] && source "$USER_EXTENSIONS"
+
+# Entry points for the Elephant menus: print the index, or replay a picked entry.
+case $1 in
+--index)
+  menu_index_build
+  if [[ $2 == --top ]]; then
+    echo -e "${MENU_TOP_LINES#\\n}"
+  else
+    echo -e "${MENU_INDEX_LINES#\\n}"
+  fi
+  exit 0
+  ;;
+--pick)
+  # No toggle check here: the menu's own walker may still be closing.
+  menu_index_build
+  [[ -n ${MENU_INDEX[$2]+x} ]] || exit 1
+  menu_path_start "${MENU_INDEX[$2]}" && show_main_menu
+  exit
+  ;;
+esac
 
 toggle_existing_menu
 
