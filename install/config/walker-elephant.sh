@@ -15,6 +15,5 @@ cp $SWARMARCHY_PATH/default/walker/restart.conf ~/.config/systemd/user/app-walke
 mkdir -p ~/.config/elephant/menus
 ln -snf $SWARMARCHY_PATH/default/elephant/swarmarchy_themes.lua ~/.config/elephant/menus/swarmarchy_themes.lua
 ln -snf $SWARMARCHY_PATH/default/elephant/swarmarchy_background_selector.lua ~/.config/elephant/menus/swarmarchy_background_selector.lua
-ln -snf $SWARMARCHY_PATH/default/elephant/swarmarchy_unlocks.lua ~/.config/elephant/menus/swarmarchy_unlocks.lua
 ln -snf $SWARMARCHY_PATH/default/elephant/swarmarchy_menu_top.lua ~/.config/elephant/menus/swarmarchy_menu_top.lua
 ln -snf $SWARMARCHY_PATH/default/elephant/swarmarchy_menu_all.lua ~/.config/elephant/menus/swarmarchy_menu_all.lua

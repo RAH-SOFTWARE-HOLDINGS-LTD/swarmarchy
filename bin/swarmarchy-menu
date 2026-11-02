@@ -206,9 +206,8 @@ aur_install_and_launch() {
 }
 
 show_learn_menu() {
-  case $(menu "Learn" "  Keybindings\n  Swarmarchy\n  Sway\n󰣇  Arch\n  Neovim\n󱆃  Bash") in
+  case $(menu "Learn" "  Keybindings\n  Sway\n󰣇  Arch\n  Neovim\n󱆃  Bash") in
   *Keybindings*) swarmarchy-menu-keybindings ;;
-  *Swarmarchy*) swarmarchy-launch-webapp "https://learn.omacom.io/2/the-swarmarchy-manual" ;;
   *Sway*) swarmarchy-launch-webapp "https://github.com/swaywm/sway/wiki" ;;
   *Arch*) swarmarchy-launch-webapp "https://wiki.archlinux.org/title/Main_page" ;;
   *Bash*) swarmarchy-launch-webapp "https://devhints.io/bash" ;;
@@ -363,9 +362,8 @@ show_hardware_menu() {
 }
 
 show_style_menu() {
-  case $(menu "Style" "󰸌  Theme\n󰟵  Unlock\n  Font\n  Background\n  Sway") in
+  case $(menu "Style" "󰸌  Theme\n  Font\n  Background\n  Sway") in
   *Theme*) show_theme_menu ;;
-  *Unlock*) swarmarchy-launch-walker -m menus:swarmarchyunlocks --width 800 --minheight 400 ;;
   *Font*) show_font_menu ;;
   *Background*) show_background_menu ;;
   *Sway*) open_in_editor ~/.config/sway/looknfeel.conf ;;

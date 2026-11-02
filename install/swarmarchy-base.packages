@@ -41,8 +41,8 @@ oo7                        # Secret Service provider: stores passwords/keys for 
 libsecret                  # client library apps use to talk to the keyring
 
 # ─── Fonts & theming ───
-ttf-jetbrains-mono-nerd    # the Nerd Font: monospace + icon glyphs (bar, terminal)
-noto-fonts                 # broad Unicode text coverage
+ttf-jetbrains-mono         # monospace font (terminal, bar, lock screen); noto-fonts comes with sway
+ttf-nerd-fonts-symbols-mono # Nerd Font icon glyphs, used as fallback for the monospace font
 noto-fonts-emoji           # colour emoji
 fontconfig                 # system font configuration/management
 gnome-themes-extra         # provides the Adwaita-dark GTK theme (dark GTK apps)

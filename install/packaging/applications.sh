@@ -9,7 +9,6 @@ mkdir -p "$ICON_DIR"
 cp "$SWARMARCHY_PATH"/applications/icons/*.png "$ICON_DIR/"
 
 # ─── Web apps ─────────────────────────────────────────────────────────────────
-swarmarchy-webapp-install "GitHub" https://github.com/ GitHub.png
 swarmarchy-webapp-install "Zoom" https://app.zoom.us/wc/home Zoom.png "swarmarchy-webapp-handler-zoom %u" "x-scheme-handler/zoommtg;x-scheme-handler/zoomus"
 
 # ─── TUIs ─────────────────────────────────────────────────────────────────────
