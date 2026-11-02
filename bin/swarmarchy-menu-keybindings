@@ -25,6 +25,13 @@ output_keybindings() {
     }
 
     /^[[:space:]]*(bindsym|bindswitch)[[:space:]]/ {
+      # Hardware keys (volume, brightness, media, power, lid ...) do what the key
+      # says. They stay bound but are left out of the list.
+      if ($0 ~ /^[[:space:]]*bindswitch[[:space:]]/ || $0 ~ /XF86/) {
+        desc = ""
+        next
+      }
+
       line = $0
       sub(/^[[:space:]]*/, "", line)
       sub(/^(bindsym|bindswitch)[[:space:]]+/, "", line)
