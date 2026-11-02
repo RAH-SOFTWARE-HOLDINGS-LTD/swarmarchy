@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # swarmarchy:summary=Set and show lightweight desktop notification reminders
-# swarmarchy:args=<minutes> [message] | show | clear
-# swarmarchy:examples=swarmarchy reminder 5 | swarmarchy reminder 30 "Check the oven" | swarmarchy reminder show | swarmarchy reminder clear
+# swarmarchy:args=<minutes> [message] | show | cancel | clear
+# swarmarchy:examples=swarmarchy reminder 5 | swarmarchy reminder 30 "Check the oven" | swarmarchy reminder show | swarmarchy reminder cancel | swarmarchy reminder clear
 
 set -euo pipefail
 
@@ -40,10 +40,10 @@ parse_systemd_timespan() {
   echo "$total"
 }
 
-show_reminders() {
-  local timers timer next next_seconds uptime remaining body=""
+# Prints one tab-separated line per pending reminder: <unit> <seconds left> <description> <due time>
+pending_reminders() {
+  local timers timer next next_seconds uptime unit reminder set_at reminder_minutes description
   local reminder_dir="${XDG_RUNTIME_DIR:-/tmp}/swarmarchy-reminders"
-  local reminder_message=""
 
   timers=$(systemctl --user list-timers --all --no-legend --no-pager "swarmarchy-reminder-*.timer" 2>/dev/null | awk '{ print $(NF - 1) }')
   uptime=${SECONDS_SINCE_BOOT:-$(awk '{ print int($1) }' /proc/uptime)}
@@ -55,26 +55,64 @@ show_reminders() {
     next_seconds=$(parse_systemd_timespan "$next")
     ((next_seconds <= uptime)) && continue
 
-    remaining=$((next_seconds - uptime))
-    reminder=${timer%.timer}
-    reminder=${reminder#swarmarchy-reminder-}
+    unit=${timer%.timer}
+    reminder=${unit#swarmarchy-reminder-}
     set_at=${reminder##*-}
     reminder_minutes=${reminder%%m-*}
-    reminder_message=""
-    [[ -f $reminder_dir/${timer%.timer}.message ]] && reminder_message=$(<"$reminder_dir/${timer%.timer}.message")
+    description="${reminder_minutes}-min reminder"
+    [[ -f $reminder_dir/$unit.message ]] && description=$(<"$reminder_dir/$unit.message")
 
-    if [[ -n $reminder_message ]]; then
-      body+="$reminder_message in $(format_remaining $remaining) ($(date -d "@$((set_at + reminder_minutes * 60))" +%-H:%M))"$'\n'
-    else
-      body+="${reminder_minutes}-min reminder in $(format_remaining $remaining) ($(date -d "@$((set_at + reminder_minutes * 60))" +%-H:%M))"$'\n'
-    fi
+    printf '%s\t%s\t%s\t%s\n' "$unit" "$((next_seconds - uptime))" "$description" \
+      "$(date -d "@$((set_at + reminder_minutes * 60))" +%-H:%M)"
   done
+}
+
+show_reminders() {
+  local unit remaining description due body=""
+
+  while IFS=$'\t' read -r unit remaining description due; do
+    body+="$description in $(format_remaining "$remaining") ($due)"$'\n'
+  done < <(pending_reminders)
 
   if [[ -z $body ]]; then
     swarmarchy-notification-send "󰔛" "Upcoming reminders" "No outstanding reminders" -u low
   else
     swarmarchy-notification-send "󰔛" "Upcoming reminders" "${body%$'\n'}" -u low
   fi
+}
+
+# Pick one pending reminder with Walker and stop its timer before it fires
+cancel_reminder() {
+  local unit remaining description due label base n choice
+  local reminder_dir="${XDG_RUNTIME_DIR:-/tmp}/swarmarchy-reminders"
+  local -A units descriptions
+  local options=()
+
+  while IFS=$'\t' read -r unit remaining description due; do
+    base="$description at $due"
+    label=$base
+    n=2
+    while [[ -n ${units[$label]:-} ]]; do
+      label="$base ($n)"
+      ((n++))
+    done
+    units[$label]=$unit
+    descriptions[$label]=$description
+    options+=("$label")
+  done < <(pending_reminders)
+
+  if ((${#options[@]} == 0)); then
+    swarmarchy-notification-send "󰔛" "No outstanding reminders" -u low
+    return
+  fi
+
+  choice=$(swarmarchy-menu-select "Cancel reminder" "${options[@]}" -- --width 400) || true
+  [[ -z $choice || -z ${units[$choice]:-} ]] && return
+
+  unit=${units[$choice]}
+  systemctl --user stop "$unit.timer" || true
+  rm -f "$reminder_dir/$unit.message"
+  swarmarchy-notification-send "󰔛" "Reminder cancelled" "${descriptions[$choice]}" -u low
 }
 
 clear_reminders() {
@@ -96,6 +134,10 @@ show | list)
   show_reminders
   exit 0
   ;;
+cancel)
+  cancel_reminder
+  exit 0
+  ;;
 clear)
   clear_reminders
   exit 0
@@ -110,6 +152,7 @@ custom_message="$message"
 if [[ -z $minutes ]] || [[ ! $minutes =~ ^[0-9]+$ ]] || ((minutes == 0)); then
   echo "Usage: swarmarchy-reminder <minutes> [message]"
   echo "       swarmarchy-reminder show"
+  echo "       swarmarchy-reminder cancel"
   echo "       swarmarchy-reminder clear"
   exit 1
 fi
