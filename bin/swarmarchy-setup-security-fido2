@@ -43,7 +43,7 @@ echo -e "\e[32mSetting up FIDO2 device for authentication.\n\e[0m"
 
 # Install required packages
 echo "Installing required packages..."
-swarmarchy-pkg-add libfido2 pam-u2f
+swarmarchy-pkg-add --confirm libfido2 pam-u2f
 
 if ! check_fido2_hardware; then
   exit 1

@@ -32,7 +32,7 @@ setup_firefox_wayland() {
 case $1 in
 chrome)
   echo "Installing Chrome..."
-  swarmarchy-pkg-aur-add google-chrome || exit 1
+  swarmarchy-pkg-aur-add --confirm google-chrome || exit 1
 
   setup_policy_directory /etc/opt/chrome/policies/managed
   swarmarchy-theme-set-browser
@@ -40,7 +40,7 @@ chrome)
   ;;
 edge)
   echo "Installing Edge..."
-  swarmarchy-pkg-aur-add microsoft-edge-stable-bin || exit 1
+  swarmarchy-pkg-aur-add --confirm microsoft-edge-stable-bin || exit 1
 
   setup_policy_directory /etc/opt/edge/policies/managed
   swarmarchy-theme-set-browser
@@ -48,7 +48,7 @@ edge)
   ;;
 brave)
   echo "Installing Brave..."
-  swarmarchy-pkg-aur-add brave-bin || exit 1
+  swarmarchy-pkg-aur-add --confirm brave-bin || exit 1
 
   setup_policy_directory /etc/brave/policies/managed
   swarmarchy-theme-set-browser
@@ -56,7 +56,7 @@ brave)
   ;;
 brave-origin)
   echo "Installing Brave Origin..."
-  swarmarchy-pkg-aur-add brave-origin-beta-bin || exit 1
+  swarmarchy-pkg-aur-add --confirm brave-origin-beta-bin || exit 1
 
   setup_policy_directory /etc/brave/policies/managed
   swarmarchy-theme-set-browser
@@ -64,7 +64,7 @@ brave-origin)
   ;;
 firefox)
   echo "Installing Firefox..."
-  swarmarchy-pkg-add firefox || exit 1
+  swarmarchy-pkg-add --confirm firefox || exit 1
 
   setup_firefox_preferences /usr/lib/firefox/distribution
   setup_firefox_wayland
@@ -72,7 +72,7 @@ firefox)
   ;;
 zen)
   echo "Installing Zen..."
-  swarmarchy-pkg-aur-add zen-browser-bin || exit 1
+  swarmarchy-pkg-aur-add --confirm zen-browser-bin || exit 1
 
   setup_firefox_preferences /opt/zen-browser/distribution
   setup_firefox_wayland

@@ -1,9 +1,16 @@
 #!/bin/bash
 
 # swarmarchy:summary=Install Arch (repo) and AUR packages if they are missing
-# swarmarchy:args=<packages...>
+# swarmarchy:args=[--confirm] <packages...>
 # swarmarchy:examples=swarmarchy pkg add jq ripgrep
 # swarmarchy:requires-sudo=true
+
+# --confirm: list what is missing and ask before installing (used by the menu;
+# the OS installer calls this without it and stays unattended).
+if [[ $1 == --confirm ]]; then
+  shift
+  swarmarchy-pkg-confirm "$@" || exit 1
+fi
 
 if swarmarchy-pkg-missing "$@"; then
   # Split into repo packages (pacman) and AUR packages (yay). Going generic means

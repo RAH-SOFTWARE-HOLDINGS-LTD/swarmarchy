@@ -1,7 +1,14 @@
 #!/bin/bash
 
 # swarmarchy:summary=Add the named packages to the system from the AUR if they're missing. Returns false if it couldn't be done.
-# swarmarchy:args=<packages...>
+# swarmarchy:args=[--confirm] <packages...>
+
+# --confirm: list what is missing and ask before installing (used by the menu;
+# the OS installer calls this without it and stays unattended).
+if [[ $1 == --confirm ]]; then
+  shift
+  swarmarchy-pkg-confirm "$@" || exit 1
+fi
 
 if swarmarchy-pkg-missing "$@"; then
   yay -S --noconfirm --needed "$@" || exit 1

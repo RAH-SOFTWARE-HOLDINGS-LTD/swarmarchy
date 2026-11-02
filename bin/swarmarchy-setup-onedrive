@@ -30,7 +30,7 @@ fi
 
 # Both ship in swarmarchy-base.packages, so this is a no-op (--needed) on a normal
 # install; it recovers a machine where they were removed.
-swarmarchy-pkg-add rclone fuse3
+swarmarchy-pkg-add --confirm rclone fuse3
 
 if [[ ! -f "$HOME/.config/systemd/user/$UNIT" ]]; then
   echo "Missing ~/.config/systemd/user/$UNIT." >&2

@@ -55,6 +55,12 @@ echo "Installing required packages..."
 # with -Rdd so the install goes silent. -Rdd (not swarmarchy-pkg-drop's
 # -Rns) is required because fprintd requires libfprint; the dep is
 # re-satisfied immediately by libfprint-git's provides=libfprint.
+# Ask first: declining must leave libfprint untouched, so this comes before the removal.
+if swarmarchy-pkg-present libfprint; then
+  echo "libfprint will be replaced by libfprint-git."
+fi
+swarmarchy-pkg-confirm libfprint-git fprintd usbutils || exit 1
+
 if swarmarchy-pkg-present libfprint; then
   sudo pacman -Rdd --noconfirm libfprint
 fi

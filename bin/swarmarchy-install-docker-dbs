@@ -10,6 +10,11 @@ else
   choices="$@"
 fi
 
+if [[ -n $choices ]] && ! gum confirm --default=false "Install ${choices//$'\n'/, } (downloads the container image)?"; then
+  echo "Installation cancelled."
+  exit 1
+fi
+
 if [[ -n $choices ]]; then
   for db in $choices; do
     echo "Installing $db..."

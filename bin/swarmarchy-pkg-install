@@ -18,6 +18,7 @@ fzf_args=(
 pkg_names=$(pacman -Slq | fzf "${fzf_args[@]}")
 
 if [[ -n $pkg_names ]]; then
+  swarmarchy-pkg-confirm $pkg_names || exit 1
   source swarmarchy-sudo-keepalive
 
   # Convert newline-separated selections to space-separated for pacman

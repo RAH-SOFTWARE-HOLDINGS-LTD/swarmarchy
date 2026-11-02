@@ -11,6 +11,12 @@ if [[ -z $1 ]]; then
   exit 1
 fi
 
+# Installs packages (pacman) and runtimes (mise), so ask first.
+if [[ ! -t 0 ]] || ! gum confirm --default=false "Install the $1 development environment? This installs its packages and runtimes."; then
+  echo "Installation cancelled."
+  exit 1
+fi
+
 install_php() {
   swarmarchy-pkg-add php composer php-sqlite xdebug
 

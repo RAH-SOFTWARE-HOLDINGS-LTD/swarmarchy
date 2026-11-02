@@ -20,6 +20,7 @@ fzf_args=(
 pkg_names=$(yay -Slqa | fzf "${fzf_args[@]}")
 
 if [[ -n $pkg_names ]]; then
+  swarmarchy-pkg-confirm $pkg_names || exit 1
   # Add aur/ prefix to each package name and convert to space-separated for yay
   source swarmarchy-sudo-keepalive
 

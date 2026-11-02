@@ -186,23 +186,23 @@ open_in_editor() {
 }
 
 install() {
-  present_terminal "echo 'Installing $1...'; swarmarchy-pkg-add $2"
+  present_terminal "echo 'Installing $1...'; swarmarchy-pkg-add --confirm $2"
 }
 
 install_and_launch() {
-  present_terminal "echo 'Installing $1...'; swarmarchy-pkg-add $2 && setsid gtk-launch $3"
+  present_terminal "echo 'Installing $1...'; swarmarchy-pkg-add --confirm $2 && setsid gtk-launch $3"
 }
 
 install_font() {
-  present_terminal "echo 'Installing $1...'; swarmarchy-pkg-add $2 && sleep 2 && swarmarchy-font-set '$3'"
+  present_terminal "echo 'Installing $1...'; swarmarchy-pkg-add --confirm $2 && sleep 2 && swarmarchy-font-set '$3'"
 }
 
 aur_install() {
-  present_terminal "echo 'Installing $1 from AUR...'; swarmarchy-pkg-aur-add $2"
+  present_terminal "echo 'Installing $1 from AUR...'; swarmarchy-pkg-aur-add --confirm $2"
 }
 
 aur_install_and_launch() {
-  present_terminal "echo 'Installing $1 from AUR...'; swarmarchy-pkg-aur-add $2 && setsid gtk-launch $3"
+  present_terminal "echo 'Installing $1 from AUR...'; swarmarchy-pkg-aur-add --confirm $2 && setsid gtk-launch $3"
 }
 
 show_learn_menu() {

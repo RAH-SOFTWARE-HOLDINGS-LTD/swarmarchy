@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# swarmarchy:summary=Ask before installing packages: lists the ones that are missing and asks y/N. Exits 1 if declined or there is no terminal to ask in.
+# swarmarchy:args=<packages...>
+# swarmarchy:examples=swarmarchy pkg confirm fprintd libfprint-git
+
+missing=()
+for pkg in "$@"; do
+  pacman -Q "$pkg" &>/dev/null || missing+=("$pkg")
+done
+
+# Nothing to install, nothing to ask.
+((${#missing[@]})) || exit 0
+
+if [[ ! -t 0 ]] || ! command -v gum &>/dev/null; then
+  echo "Not installing ${missing[*]}: confirmation needs a terminal." >&2
+  exit 1
+fi
+
+echo "These packages will be installed:"
+printf '  %s\n' "${missing[@]}"
+echo
+
+if ! gum confirm --default=false "Install ${#missing[@]} package(s)?"; then
+  echo "Installation cancelled."
+  exit 1
+fi
