@@ -43,10 +43,10 @@ and use `/etc/skel` (via `swarmarchy refresh`) to reset something you broke.
 
 ## Keybindings (hotkeys)
 
-- **Press `Super+K`** to see all keybindings (searchable). It reads *both* the
+- **Press `Super+M`** to see all keybindings (searchable). It reads *both* the
   defaults and your `~/.config/sway/bindings.conf`.
 - To add/change one: edit `~/.config/sway/bindings.conf`. Put a `## My label`
-  comment on the line above your `bindsym` and it shows up in the `Super+K` list.
+  comment on the line above your `bindsym` and it shows up in the `Super+M` list.
   The last matching `bindsym` wins, so just add yours below the includes to
   override a default.
 

@@ -43,7 +43,7 @@
     "format": "<span font='swarmarchy'>\ue900</span>",
     "on-click": "swarmarchy-menu",
     "on-click-right": "xdg-terminal-exec",
-    "tooltip-format": "Swarmarchy Menu\n\nSuper + Alt + Space"
+    "tooltip-format": "Swarmarchy Menu\n\nSuper + Space"
   },
   "cpu": {
     "interval": 5,

@@ -28,7 +28,7 @@ stop_recording() {
   [[ -n $filename && -f $filename ]] || exit 0
   echo "$filename"
   (
-    ACTION=$(notify-send "Screen recording saved" "Open with Super + Alt + , (or click this)" -t 10000 -i "$filename" -A "default=open")
+    ACTION=$(notify-send "Screen recording saved" "Open with Super + Ctrl + Shift + , (or click this)" -t 10000 -i "$filename" -A "default=open")
     [[ $ACTION == "default" ]] && mpv "$filename"
   ) >/dev/null 2>&1 &
 }

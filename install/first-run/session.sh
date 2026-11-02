@@ -42,4 +42,4 @@ systemctl --user enable --now podman.socket
 systemctl --user enable podman-restart.service
 
 # ─── Welcome ──────────────────────────────────────────────────────────────────
-notify-send "    Learn Keybindings" "Super + K for cheatsheet.\nSuper + Space for application launcher.\nSuper + Alt + Space for Swarmarchy Menu." -u critical
+notify-send "    Learn Keybindings" "Super + M for keybindings.\nSuper + Space for the Swarmarchy menu." -u critical
