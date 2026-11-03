@@ -79,6 +79,7 @@ localsend-bin              # AUR; repacks the official linux-arm-64 .deb, so no 
 
 # ─── Browser & media ───
 mpv                        # video/audio player
+cmus                       # terminal music player (C, ~1.9 MiB; plays via the existing ffmpeg/flac/vorbis libs)
 imv                        # lightweight image viewer
 mtpaint                    # basic image editor (native C, ~2.5 MiB)
 signal-desktop             # Signal messenger (Arch Linux ARM builds it for aarch64)
