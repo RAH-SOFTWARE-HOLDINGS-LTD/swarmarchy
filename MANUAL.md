@@ -24,15 +24,16 @@ Open this any time from **Super+Space → Learn → Swarmarchy**. It is installe
 | **Super+Alt+Return** | Browser (add Shift for a private window). |
 | **Super+E** | File manager (yazi). |
 | **Super+Ctrl+V** | Clipboard history. |
-| **Super+Shift+Space** | Hide or show the top bar. |
 
 ### Mac-style shortcuts
 
 Super works like the Mac's Command key: **Super+C / V / X** copy, paste and cut, and
 **Super+T, W, Z, Y, A, S, F, R, N, P, L** send the usual Ctrl shortcut (new tab, close tab, undo,
 redo, select all, save, find, reload, new window, print, address bar). **Super+[ / ]** go back and
-forward, **Super+Shift+[ / ]** switch tabs, **Super+Left / Right** jump to the start or end of the
-line (add Shift to select).
+forward, **Super+Shift+[ / ]** switch tabs, **Super+9** jumps to the last tab, **Super+= / − / 0**
+zoom in, out and back to normal in a terminal (font size); in the browser only **Super+0** works,
+so use Ctrl+= / Ctrl+− there. **Super+Left / Right** jump to the start or end of the line (add
+Shift to select).
 
 In a terminal these are skipped (except copy, paste and Home/End), so **Ctrl keeps its terminal
 meaning**: Ctrl+C interrupts, Ctrl+A / Ctrl+E move along the line. Super+M hides these
@@ -59,7 +60,6 @@ New windows **tile**: they split the screen instead of overlapping.
 |---|---|
 | **Super+Alt+H / J / K / L** | Focus the window left / down / up / right |
 | **Super+Shift+H / J / K / L** | Move the window left / down / up / right |
-| **Alt+Tab** | Next window |
 | **Super+Alt+Q** | Close the window |
 | **Super+Alt+F** | Fullscreen |
 | **Super+Alt+T** | Float the window (free-moving) or tile it again |
@@ -68,7 +68,7 @@ New windows **tile**: they split the screen instead of overlapping.
 | **Super + left-drag / right-drag** | Move / resize with the mouse |
 
 **Tabbed layout** (**Super+Alt+G**) stacks the windows in the current area on top of each other with
-a row of tabs, like browser tabs. Switch tabs with **Super+Alt+H / L** or Alt+Tab. Press Super+Alt+G
+a row of tabs, like browser tabs. Switch tabs with **Super+Alt+H / L**. Press Super+Alt+G
 again to go back to side by side.
 
 **Scratchpad**: a hidden floating layer for windows you want now and then (music, notes).
@@ -78,17 +78,16 @@ again to go back to side by side.
 
 | Keys | What it does |
 |---|---|
-| **Super+1 … 0** | Go to workspace 1–10 |
-| **Super+Shift+1 … 0** | Send the window to that workspace |
+| **Super+1 … 8** | Go to workspace 1–8 |
+| **Super+Shift+1 … 8** | Send the window to that workspace |
 | **Super+Tab / Super+Shift+Tab** | Next / previous workspace (or Super + scroll wheel) |
 | **Super+Alt+Shift+H / J / K / L** | Move the whole workspace to another monitor |
 | **Super+Alt+= / −** | Change the monitor's scaling |
-| **Super+Ctrl+Delete** | Turn the laptop screen off or on |
 
 **How numbering works.** Workspaces are created when you go to them and disappear when empty and
 left. At startup each monitor takes the lowest free number in the order the monitors are found.
 The bar always shows 1–5; higher numbers appear while they hold windows. A common habit is one
-number per task (1 browser, 2 code, 3 chat, 0 music).
+number per task (1 browser, 2 code, 3 chat).
 
 **Monitor names.** The laptop screen is `eDP-1`; external screens are `DP-1`, `DP-2`, … To see
 which is which:
@@ -98,9 +97,14 @@ swaymsg -t get_outputs | jq -r '.[] | "\(.name)  ws=\(.current_workspace)  at \(
 swaymsg -t get_outputs | jq -r '.[] | select(.focused).name'   # the screen you're on
 ```
 
-**Layout and pinning.** Positions, resolution and scale go in `~/.config/sway/monitors.conf`. To
-keep a workspace on one screen, add `workspace 3 output DP-1 eDP-1` there (first connected screen in
-the list wins, and the workspace moves back when that screen returns). Apply with `swaymsg reload`.
+**Layout and pinning.** Positions, resolution and scale go in `~/.config/sway/monitors.conf`; its
+comments explain how positions are worked out, with a three-screen example. To keep a workspace on
+one screen, add `workspace 3 output DP-1 eDP-1` there (first connected screen in the list wins, and
+the workspace moves back when that screen returns). Apply with `swaymsg reload`. Pinning applies
+when a workspace is created, so one that already exists stays put. To renumber without moving
+any windows, rename: `swaymsg 'rename workspace 1 to tmp; rename workspace 3 to 1; rename workspace tmp to 3'`.
+
+**Laptop screen.** Turn it off or on from **Super+Space → Trigger → Hardware → Laptop Display**.
 
 **Lid.** Closing the lid with an external monitor connected turns the laptop screen off; opening it
 turns it back on.
@@ -146,7 +150,6 @@ LocalSend, **Alt+E** extracts an archive, **C** compresses.
 | **Super+Ctrl+I** | Stop or allow auto-lock |
 | **Super+Ctrl+M** | System monitor (btop) |
 | **Super+Ctrl+Q** | Lock |
-| **Super+Shift+Ctrl+Space** | Theme menu |
 | **Super+Mute** | Switch audio output (speakers, headphones, monitor) |
 
 Media keys work as labelled, also on the lock screen.
@@ -177,7 +180,7 @@ to reset something. Every file you can customize: `ls /etc/skel/.config/`
 | To change… | Edit | Default to copy from |
 |---|---|---|
 | Keybindings | `~/.config/sway/bindings.conf` | `/usr/share/swarmarchy/default/sway/bindings.conf` |
-| Monitors, resolution, workspace pinning | `~/.config/sway/monitors.conf` | — |
+| Monitors, resolution, workspace pinning | `~/.config/sway/monitors.conf` | `/etc/skel/.config/sway/monitors.conf` |
 | Gaps, borders, opacity | `~/.config/sway/looknfeel.conf` | `/etc/skel/.config/sway/looknfeel.conf` |
 | Startup apps | `~/.config/sway/autostart.conf` | `/usr/share/swarmarchy/default/sway/autostart.conf` |
 | Keyboard, touchpad | `~/.config/sway/input.conf` | `/etc/skel/.config/sway/input.conf` |
@@ -203,14 +206,14 @@ Add or change one in `~/.config/sway/bindings.conf`. Put a `## Label` comment on
 it, so Sway doesn't show a "duplicate binding" error bar:
 
 ```
-unbindsym $mod+Ctrl+q
-## Lock
-bindsym $mod+Ctrl+q exec ~/.config/sway/lock.sh
+unbindsym $mod+e
+## File manager
+bindsym $mod+e exec foot -e yazi ~/Documents
 ```
 
 ### Themes
 
-- `swarmarchy theme list`, `swarmarchy theme set "Tokyo Night"`, or **Super+Shift+Ctrl+Space**.
+- `swarmarchy theme list`, `swarmarchy theme set "Tokyo Night"`, or **Super+Space → Style → Theme**.
 - Next wallpaper: `swarmarchy theme bg next`.
 - Your own theme: copy one from `/usr/share/swarmarchy/themes/<name>/` to
   `~/.config/swarmarchy/themes/<your-name>/`, edit its `colors.toml` and app files, then
@@ -242,28 +245,15 @@ swarmarchy commands        # every command with a one-line summary
 
 Things to do by hand, in any order.
 
-- **OneDrive**: if you skipped it during install, run `swarmarchy setup onedrive`; it mounts at
-  `~/Onedrive`.
+- **OneDrive**: sign in when asked at first login; it mounts at `~/Onedrive`. To redo it later:
+  `swarmarchy setup onedrive`.
 - **Weather cities**: see [Bar and launcher](#bar-and-launcher).
 - **SSH and GPG keys**: restore `~/.ssh` and `~/.gnupg` first; the clones below need them.
-- **Neovim**: `git clone git@github.com:ralphie02/LazyVimRah.git ~/.config/nvim`
-- **Obsidian**: clone or copy your vault. *(TODO: add the vault's repo URL or location.)*
+- **Neovim**: clone your config, e.g. `git clone git@github.com:<user>/<nvim-config>.git ~/.config/nvim`
+- **Obsidian**: clone or copy your vault.
 - **Dev tools**: `mise use -g node@latest ruby@latest`. Ruby uses prebuilt binaries
   (`[settings.ruby] compile = false`).
 - **Package publishing** (only if you publish to R2): `rclone config` for a `Swarmarchy:` remote.
   The token can't create buckets, so pass `--s3-no-check-bucket` to `rclone copy`.
 
 Your git name and email are set by the installer's prompts.
-
-### Yoga Slim 7x: local overrides a fresh install won't have
-
-These live in `~/.config` on the Yoga and differ from the defaults. Back them up before
-reinstalling, or re-create them.
-
-| File | What it does |
-|---|---|
-| `sway/monitors.conf` | `output * scale 1` and the layout for two external monitors above the laptop (the default is scale 2). The `--custom` modes were forced for a KVM/adapter with no EDID and may be unneeded now. |
-| `environment.d/sway.conf` | `WLR_RENDERER=vulkan` for the Adreno Vulkan driver (needs `vulkan-freedreno`, so don't uninstall it). |
-| `sway/lock.sh` and its `Super+Ctrl+Q` override in `sway/bindings.conf` | Lock with a short screen blank that wakes on a keypress. |
-| `sway/swayidle.sh` and `systemd/user/swayidle.service` | Custom idle daemon: lock after 5 minutes, then blank the screens. On this chip, turning off an external screen can freeze the GPU; `SWARMARCHY_IDLE_BLANK_OUTPUT=eDP-1` limits the shipped lock to the laptop screen. |
-| `sway/looknfeel.conf` | Fully opaque windows (`opacity 1`). |

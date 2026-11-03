@@ -1,8 +1,8 @@
 # Swarmarchy
 
-Swarmarchy is a fork of [Omarchy](https://omarchy.org) (a Linux distribution by DHH), re-targeted to Sway on aarch64 (Lenovo Yoga Slim 7x, Snapdragon X Elite).
+Swarmarchy is an Arch Linux setup built around the Sway window manager, for aarch64 (Snapdragon X Elite) laptops.
 
-Read more at [omarchy.org](https://omarchy.org).
+See [MANUAL.md](MANUAL.md) for day-to-day use and customization.
 
 ## License
 
