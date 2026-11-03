@@ -41,7 +41,8 @@
   },
   // The colour logo. The one-colour glyph (\ue900 in swarmarchy.ttf) is for text, e.g. fastfetch.
   "image#swarmarchy": {
-    "path": "/usr/share/swarmarchy/default/waybar/swarmarchy-logo.svg",
+    // exec prints the image path, then the hover text (one line).
+    "exec": "printf '%s\\n%s\\n' /usr/share/swarmarchy/default/waybar/swarmarchy-logo.svg 'Swarmarchy Menu (Super + Space)'",
     "size": 24,
     // Required: without an interval Waybar 0.15 hangs at startup and never draws the bar.
     "interval": "once",
