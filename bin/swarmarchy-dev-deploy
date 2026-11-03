@@ -120,10 +120,54 @@ if [[ -d $SHARE ]]; then
 fi
 
 if ! $DRY_RUN; then
-  for file in logo.txt icon.txt icon.png version LICENSE; do
+  for file in logo.txt icon.txt icon.png version LICENSE MANUAL.md; do
     [[ -f $SRC/$file ]] || continue
     "${SUDO[@]}" install -Dm644 "$SRC/$file" "$SHARE/$file"
   done
+fi
+
+# The manual is opened in the browser (Super+Space → Learn → Swarmarchy), so render
+# it to HTML here, on every deploy, so it can never lag behind MANUAL.md.
+if [[ -f $SRC/MANUAL.md ]] && ! $DRY_RUN; then
+  if command -v comrak >/dev/null; then
+    manual_html=$(mktemp)
+    {
+      cat <<'EOF'
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swarmarchy Manual</title>
+<style>
+  :root { color-scheme: light dark; --fg: #1f2328; --bg: #ffffff; --muted: #59636e; --line: #d1d9e0; --code: #f6f8fa; --link: #0969da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6edf3; --bg: #0d1117; --muted: #9198a1; --line: #3d444d; --code: #151b23; --link: #4493f8; }
+  }
+  body { margin: 0 auto; max-width: 52rem; padding: 2rem 1.25rem 4rem; background: var(--bg); color: var(--fg);
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1, h2 { border-bottom: 1px solid var(--line); padding-bottom: .3em; }
+  h2 { margin-top: 2.5rem; }
+  a { color: var(--link); }
+  code, pre { font-family: ui-monospace, monospace; font-size: .9em; background: var(--code); border-radius: 6px; }
+  code { padding: .15em .35em; }
+  pre { padding: 1rem; overflow-x: auto; }
+  pre code { padding: 0; background: none; }
+  table { border-collapse: collapse; display: block; overflow-x: auto; margin: 1rem 0; }
+  th, td { border: 1px solid var(--line); padding: .4rem .75rem; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+</style>
+</head>
+<body>
+EOF
+      comrak --gfm --header-id-prefix '' "$SRC/MANUAL.md"
+      printf '</body>\n</html>\n'
+    } >"$manual_html"
+    "${SUDO[@]}" install -Dm644 "$manual_html" "$SHARE/MANUAL.html"
+    rm -f "$manual_html"
+  else
+    echo "comrak not installed: skipping $SHARE/MANUAL.html (install comrak and redeploy)" >&2
+  fi
 fi
 
 # ─── Executables ──────────────────────────────────────────────────────────────

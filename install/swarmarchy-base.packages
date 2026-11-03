@@ -106,6 +106,7 @@ ufw                        # simple firewall front-end
 bash-completion            # tab-completion for bash
 starship                   # the shell prompt
 bat                        # `cat` with syntax highlighting + paging
+comrak                     # Markdown → HTML; renders the offline manual at deploy (Learn → Swarmarchy)
 fzf                        # fuzzy finder (Ctrl-R history, file pickers)
 fd                         # fast, friendly `find`
 ripgrep                    # very fast recursive grep (`rg`)
