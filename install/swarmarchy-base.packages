@@ -80,6 +80,8 @@ localsend-bin              # AUR; repacks the official linux-arm-64 .deb, so no 
 # ─── Browser & media ───
 mpv                        # video/audio player
 imv                        # lightweight image viewer
+mtpaint                    # basic image editor (native C, ~2.5 MiB)
+signal-desktop             # Signal messenger (Arch Linux ARM builds it for aarch64)
 obsidian-appimage          # AUR; extracts the official arm64 AppImage, so no Electron build
 
 # ─── Capture & OCR ───

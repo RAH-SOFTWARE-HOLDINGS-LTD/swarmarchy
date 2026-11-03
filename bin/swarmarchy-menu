@@ -327,7 +327,7 @@ show_share_menu() {
 }
 
 show_toggle_menu() {
-  local options="󰔎  Nightlight\n󱫖  Idle Lock\n󰂛  Notifications\n󰍜  Top Bar\n󰍹  Monitor Scaling\n  Direct Boot\n󰟵  Passwordless Sudo"
+  local options="󰔎  Nightlight\n󱫖  Idle Lock\n󰂛  Notifications\n󰍜  Top Bar\n󰍹  Monitor Scaling\n󰟵  Passwordless Sudo"
 
   case $(menu "Toggle" "$options") in
   *Nightlight*) swarmarchy-toggle-nightlight ;;
@@ -335,7 +335,6 @@ show_toggle_menu() {
   *Notifications*) swarmarchy-toggle-notification-silencing ;;
   *Bar*) swarmarchy-toggle-waybar ;;
   *Scaling*) swarmarchy-wm-monitor-scaling-cycle ;;
-  *"Direct Boot"*) present_terminal swarmarchy-config-direct-boot ;;
   *"Passwordless Sudo"*) present_terminal swarmarchy-sudo-passwordless ;;
   *) back_to show_trigger_menu ;;
   esac
@@ -624,13 +623,12 @@ show_install_elixir_menu() {
 }
 
 show_remove_menu() {
-  case $(menu "Remove" "󰣇  Package\n  Web App\n  TUI\n󰵮  Development\n  Browser\n󰏓  Preinstalls\n  Security") in
+  case $(menu "Remove" "󰣇  Package\n  Web App\n  TUI\n󰵮  Development\n  Browser\n  Security") in
   *Package*) terminal swarmarchy-pkg-remove ;;
   *Web*) present_terminal swarmarchy-webapp-remove ;;
   *TUI*) present_terminal swarmarchy-tui-remove ;;
   *Development*) show_remove_development_menu ;;
   *Browser*) show_remove_browser_menu ;;
-  *Preinstalls*) present_terminal swarmarchy-remove-preinstalls ;;
   *Security*) show_remove_security_menu ;;
   *) show_main_menu ;;
   esac
