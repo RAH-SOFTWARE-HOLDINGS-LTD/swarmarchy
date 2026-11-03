@@ -12,7 +12,10 @@ base-devel                 # compilers/make/etc — needed to build AUR packages
 git                        # version control (installer + AUR builds use it)
 linux                      # the kernel (ISO builder rewrites this to linux-aarch64)
 linux-headers              # kernel headers (rewritten to linux-aarch64-headers; for DKMS)
-linux-firmware             # device firmware blobs (Wi-Fi, GPU, etc.)
+linux-firmware             # device firmware blobs (Wi-Fi, GPU, etc.) — a metapackage; see below
+linux-firmware-qcom        # Snapdragon X firmware. NOT pulled in by linux-firmware (its 13 deps omit
+                           # qcom), and this is where docs/05 §GPU gets gen70500_sqe.fw/gen70500_gmu.bin,
+                           # the audio tplg and the board .jsn files. Without it: llvmpipe, no audio.
 dkms                       # builds out-of-tree kernel modules (e.g. DisplayLink's evdi)
 autoconf-archive           # extra autotools macros — helps some AUR packages compile
 
