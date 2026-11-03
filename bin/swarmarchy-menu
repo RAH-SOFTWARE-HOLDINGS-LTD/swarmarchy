@@ -206,7 +206,8 @@ aur_install_and_launch() {
 }
 
 show_learn_menu() {
-  case $(menu "Learn" "  Keybindings\n  Sway\n󰣇  Arch\n  Neovim\n󱆃  Bash") in
+  case $(menu "Learn" "󰈙  Swarmarchy\n  Keybindings\n  Sway\n󰣇  Arch\n  Neovim\n󱆃  Bash") in
+  *Swarmarchy*) show_manual ;;
   *Keybindings*) swarmarchy-menu-keybindings ;;
   *Sway*) swarmarchy-launch-webapp "https://github.com/swaywm/sway/wiki" ;;
   *Arch*) swarmarchy-launch-webapp "https://wiki.archlinux.org/title/Main_page" ;;
@@ -214,6 +215,17 @@ show_learn_menu() {
   *Neovim*) swarmarchy-launch-webapp "https://www.lazyvim.org/keymaps" ;;
   *) show_main_menu ;;
   esac
+}
+
+# MANUAL.html is rendered from MANUAL.md by swarmarchy-dev-deploy.
+show_manual() {
+  local manual=/usr/share/swarmarchy/MANUAL.html
+
+  if [[ -f $manual ]]; then
+    swarmarchy-launch-webapp "file://$manual"
+  else
+    notify-send -u normal "Manual not built" "Install comrak, then run swarmarchy-dev-deploy"
+  fi
 }
 
 show_trigger_menu() {
