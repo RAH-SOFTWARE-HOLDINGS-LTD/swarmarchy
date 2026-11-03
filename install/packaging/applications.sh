@@ -10,7 +10,6 @@ cp "$SWARMARCHY_PATH"/applications/icons/*.png "$ICON_DIR/"
 
 # ─── Web apps ─────────────────────────────────────────────────────────────────
 swarmarchy-webapp-install "Spotify" https://open.spotify.com/ Spotify.png
-swarmarchy-webapp-install "Zoom" https://app.zoom.us/wc/home Zoom.png "swarmarchy-webapp-handler-zoom %u" "x-scheme-handler/zoommtg;x-scheme-handler/zoomus"
 
 # ─── TUIs ─────────────────────────────────────────────────────────────────────
 swarmarchy-tui-install "Disk Usage" "bash -c 'dust -r; read -n 1 -s'" float "$ICON_DIR/Disk Usage.png"

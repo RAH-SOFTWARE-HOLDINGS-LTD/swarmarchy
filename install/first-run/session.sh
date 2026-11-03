@@ -38,8 +38,11 @@ systemctl --user start elephant.service
 # podman.socket is the Docker-compatible API (DOCKER_HOST in default/bash/envs
 # points at it); podman-restart.service brings back containers started with
 # --restart after a reboot.
-systemctl --user enable --now podman.socket
-systemctl --user enable podman-restart.service
+# Only when Podman was chosen at install time.
+if command -v podman &>/dev/null; then
+  systemctl --user enable --now podman.socket
+  systemctl --user enable podman-restart.service
+fi
 
 # ─── Welcome ──────────────────────────────────────────────────────────────────
 notify-send "    Learn Keybindings" "Super + M for keybindings.\nSuper + Space for the Swarmarchy menu." -u critical

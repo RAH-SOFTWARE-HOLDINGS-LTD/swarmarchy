@@ -19,11 +19,13 @@ sudo sed -i '/env python3/ c\#!/bin/python3' /usr/bin/powerprofilesctl
 # user. useradd normally allocates one; ensure it for users created without it.
 # (Short image names resolve via system/etc/containers/registries.conf.d, and the
 # user-level podman.socket is enabled in first-run/session.sh.)
-if ! grep -q "^${USER}:" /etc/subuid; then
-  sudo usermod --add-subuids 100000-165535 "$USER"
-fi
-if ! grep -q "^${USER}:" /etc/subgid; then
-  sudo usermod --add-subgids 100000-165535 "$USER"
+if [[ ${SWARMARCHY_CONTAINERS:-0} == 1 ]]; then
+  if ! grep -q "^${USER}:" /etc/subuid; then
+    sudo usermod --add-subuids 100000-165535 "$USER"
+  fi
+  if ! grep -q "^${USER}:" /etc/subgid; then
+    sudo usermod --add-subgids 100000-165535 "$USER"
+  fi
 fi
 
 # ─── Kernel modules cleanup ───────────────────────────────────────────────────

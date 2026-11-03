@@ -2,6 +2,9 @@
 
 # swarmarchy:summary=Install one of the supported databases in a rootless Podman container with the suitable development options.
 
+# Needs Podman, which is optional at install time; offer it (y/N) if missing.
+swarmarchy-pkg-add --confirm podman podman-docker passt || exit 1
+
 options=("MySQL" "PostgreSQL" "Redis" "MongoDB" "MariaDB" "MSSQL")
 
 if (( $# == 0 )); then

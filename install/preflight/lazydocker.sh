@@ -5,7 +5,10 @@
 # The answer is exported; packaging/lazydocker.sh installs the package when it is 1.
 # Set SWARMARCHY_LAZYDOCKER=1 or =0 beforehand to skip the prompt.
 
-if [[ -z ${SWARMARCHY_LAZYDOCKER:-} ]]; then
+# lazydocker needs a container engine, so it is only offered alongside Podman.
+if [[ ${SWARMARCHY_CONTAINERS:-0} != 1 ]]; then
+  SWARMARCHY_LAZYDOCKER=0
+elif [[ -z ${SWARMARCHY_LAZYDOCKER:-} ]]; then
   if [[ -e /dev/tty ]] && gum confirm \
     --padding "$PADDING" \
     --default=false \

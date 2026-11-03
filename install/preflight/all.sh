@@ -1,5 +1,6 @@
 source $SWARMARCHY_INSTALL/preflight/guard.sh
 source $SWARMARCHY_INSTALL/preflight/printing.sh
+source $SWARMARCHY_INSTALL/preflight/containers.sh
 source $SWARMARCHY_INSTALL/preflight/lazydocker.sh
 source $SWARMARCHY_INSTALL/preflight/onedrive.sh
 source $SWARMARCHY_INSTALL/preflight/begin.sh

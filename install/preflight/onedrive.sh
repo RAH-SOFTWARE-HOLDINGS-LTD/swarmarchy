@@ -1,5 +1,4 @@
-# Ask once whether this machine should sync OneDrive, and remember the answer for the
-# rest of the install.
+# Turn on OneDrive sync for this install, and remember it for the rest of the install.
 #
 # This is sourced from preflight/all.sh rather than run through run_logged, because
 # run_logged executes scripts as `bash -c "source '$script'" </dev/null` with output
@@ -14,21 +13,10 @@
 # rclone itself is unconditional (swarmarchy-base.packages, Files & storage section):
 # docs/07 publishes the package repo with it, so it is not OneDrive's to gate.
 #
-# Set SWARMARCHY_ONEDRIVE=1 or =0 beforehand to skip the prompt on an unattended install.
+# Set SWARMARCHY_ONEDRIVE=0 beforehand to leave it off.
 
-if [[ -z ${SWARMARCHY_ONEDRIVE:-} ]]; then
-  if [[ -e /dev/tty ]] && gum confirm \
-    --padding "$PADDING" \
-    --affirmative "Set up OneDrive" \
-    --negative "Skip OneDrive" \
-    "Set up OneDrive sync at ~/Onedrive? You'll sign in to Microsoft on first login, not now."; then
-    SWARMARCHY_ONEDRIVE=1
-  else
-    # No tty means no way to ask, so take the lean option rather than greet a first
-    # login with a sign-in prompt nobody asked for.
-    SWARMARCHY_ONEDRIVE=0
-  fi
-fi
+# OneDrive is on by default; there is no prompt.
+SWARMARCHY_ONEDRIVE=${SWARMARCHY_ONEDRIVE:-1}
 
 export SWARMARCHY_ONEDRIVE
 
