@@ -2,9 +2,18 @@ if command -v limine &>/dev/null; then
   sudo tee /etc/mkinitcpio.conf.d/swarmarchy_hooks.conf <<EOF >/dev/null
 HOOKS=(base udev keyboard autodetect microcode modconf kms keymap consolefont block encrypt filesystems fsck btrfs-overlayfs)
 EOF
-  sudo tee /etc/mkinitcpio.conf.d/thunderbolt_module.conf <<EOF >/dev/null
+  # thunderbolt is NOT a loadable module in ALARM's aarch64 kernel (it is built in, or
+  # absent). Listing it in MODULES unconditionally makes every single mkinitcpio run end
+  # with "ERROR: module not found: 'thunderbolt'" and "the image may not be complete",
+  # on the installer and on every later kernel upgrade. Only add it when it really is a
+  # module in the target root's module tree (correct both in the chroot and live).
+  if compgen -G "/usr/lib/modules/*/kernel/drivers/thunderbolt/thunderbolt.ko*" >/dev/null; then
+    sudo tee /etc/mkinitcpio.conf.d/thunderbolt_module.conf <<EOF >/dev/null
 MODULES+=(thunderbolt)
 EOF
+  else
+    sudo rm -f /etc/mkinitcpio.conf.d/thunderbolt_module.conf
+  fi
 
   # Detect boot mode
   [[ -d /sys/firmware/efi ]] && EFI=true
@@ -41,6 +50,18 @@ EOF
       exit 1
     fi
     CMDLINE="root=UUID=${derived_uuid} rootflags=subvol=${derived_subvol:-@} rw"
+
+    # Board-gated kernel arguments. The derived cmdline above has ONLY root=, so without
+    # this the Snapdragon X Elite boots but with clocks and power domains gated off:
+    # USB-C hubs do not enumerate and the display stack misbehaves -- while the install
+    # still reports success. Keep this list in step with install_dualboot_bootloader()
+    # in swarmarchy-iso/configs/airootfs/root/.automated_script.sh, which is where these
+    # normally come from.
+    if grep -qa "x1e80100" /sys/firmware/devicetree/base/compatible 2>/dev/null; then
+      CMDLINE+=" pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait"
+      echo "Warning: re-added x1e80100 board kernel arguments to the derived cmdline" >&2
+    fi
+
     echo "Warning: no root= in $limine_config; derived it from the live system" >&2
   fi
 
