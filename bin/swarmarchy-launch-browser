@@ -6,7 +6,13 @@
 default_browser=$(xdg-settings get default-web-browser)
 browser_exec=$(sed -n 's/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr}/share/applications/$default_browser 2>/dev/null | head -1)
 
-if $browser_exec --help | grep -q MOZ_LOG; then
+if [[ -z $browser_exec ]]; then
+  echo "No default browser is set, or its .desktop entry is missing." >&2
+  echo "Install one with: swarmarchy install browser <brave|firefox|chrome|edge|zen>" >&2
+  exit 1
+fi
+
+if "$browser_exec" --help 2>/dev/null | grep -q MOZ_LOG; then
   private_flag="--private-window"
 elif [[ $browser_exec =~ edge ]]; then
   private_flag="--inprivate"

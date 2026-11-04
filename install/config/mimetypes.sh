@@ -12,13 +12,28 @@ xdg-mime default imv.desktop image/webp
 xdg-mime default imv.desktop image/bmp
 xdg-mime default imv.desktop image/tiff
 
-# Open PDFs with Brave's built-in pdf viewer
-xdg-mime default brave-browser.desktop application/pdf
+# Browser-dependent handlers. brave-bin is in swarmarchy-base.packages, so this is
+# normally Brave -- but guard on the desktop entry actually existing. Setting a handler
+# that points at a missing .desktop leaves xdg-settings reporting a browser that cannot
+# be launched, which breaks swarmarchy-launch-browser and every web app.
+browser_desktop="brave-browser.desktop"
+if [[ ! -f "/usr/share/applications/$browser_desktop" &&
+      ! -f "$HOME/.local/share/applications/$browser_desktop" ]]; then
+  browser_desktop=""
+fi
 
-# Use Brave as the default browser
-xdg-settings set default-web-browser brave-browser.desktop
-xdg-mime default brave-browser.desktop x-scheme-handler/http
-xdg-mime default brave-browser.desktop x-scheme-handler/https
+if [[ -n $browser_desktop ]]; then
+  # Open PDFs with Brave's built-in pdf viewer
+  xdg-mime default "$browser_desktop" application/pdf
+
+  # Use Brave as the default browser
+  xdg-settings set default-web-browser "$browser_desktop"
+  xdg-mime default "$browser_desktop" x-scheme-handler/http
+  xdg-mime default "$browser_desktop" x-scheme-handler/https
+else
+  echo "No browser .desktop found; leaving the default browser and PDF handler unset." >&2
+  echo "Install one with: swarmarchy install browser <brave|firefox|chrome|edge|zen>" >&2
+fi
 
 # Open video files with mpv
 xdg-mime default mpv.desktop video/mp4

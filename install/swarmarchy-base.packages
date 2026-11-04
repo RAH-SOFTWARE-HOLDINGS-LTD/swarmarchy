@@ -78,6 +78,7 @@ exfatprogs                 # exFAT tools (large USB drives, SD cards)
 localsend-bin              # AUR; repacks the official linux-arm-64 .deb, so no Flutter build
 
 # ─── Browser & media ───
+brave-bin                  # AUR; repacks Brave's official linux-arm64 zip, so no Chromium build
 mpv                        # video/audio player
 cmus                       # terminal music player (C, ~1.9 MiB; plays via the existing ffmpeg/flac/vorbis libs)
 imv                        # lightweight image viewer
