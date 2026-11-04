@@ -2,10 +2,17 @@
 
 # swarmarchy:summary=Returns true if a battery is present on the system.
 
-for bat in /sys/class/power_supply/BAT*; do
-  [[ -r $bat/present ]] &&
-  [[ $(cat $bat/present) == "1" ]] &&
-  [[ $(cat $bat/type) == "Battery" ]] &&
+# Match on the power-supply TYPE, not on a name glob. The old `BAT*` glob is an
+# ACPI-ism: on the Snapdragon X Elite the battery is `qcom-battmgr-bat`, so the glob
+# matched nothing and this returned false on a laptop that plainly has a battery.
+# That silently disabled every caller -- the wifi-powersave udev rule, the
+# power-profile rules and the battery monitor were never installed.
+# bin/swarmarchy-wifi-powersave already iterates power_supply this way.
+for bat in /sys/class/power_supply/*; do
+  [[ -r $bat/type ]] || continue
+  [[ $(cat "$bat/type") == "Battery" ]] || continue
+  # Some drivers omit `present`; treat its absence as present rather than skipping.
+  [[ ! -r $bat/present ]] || [[ $(cat "$bat/present") == "1" ]] || continue
   exit 0
 done
 

@@ -2,8 +2,16 @@
 
 # swarmarchy:summary=Returns true if AC power is connected.
 
-for ac in /sys/class/power_supply/AC* /sys/class/power_supply/ADP*; do
-  [[ -r $ac/online && $(cat "$ac/online") == "1" ]] && exit 0
+# Match on the power-supply TYPE, not on a name glob. `AC*`/`ADP*` is an ACPI-ism:
+# on the Snapdragon X Elite the supplies are `qcom-battmgr-ac` (Mains) and
+# `qcom-battmgr-usb` / `ucsi-source-psy-*` (USB), so the glob matched nothing and this
+# always returned false. USB-C-only laptops never bring the legacy Mains supply online,
+# so USB counts as AC here -- the same rule bin/swarmarchy-wifi-powersave applies.
+for ps in /sys/class/power_supply/*; do
+  [[ -r $ps/type && -r $ps/online ]] || continue
+  type=$(cat "$ps/type")
+  [[ $type == "Mains" || $type == "USB" ]] || continue
+  [[ $(cat "$ps/online") == "1" ]] && exit 0
 done
 
 exit 1
