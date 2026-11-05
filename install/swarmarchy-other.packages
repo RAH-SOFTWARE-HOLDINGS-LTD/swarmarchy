@@ -20,11 +20,20 @@ linux-headers              # kernel headers (rewritten to linux-aarch64-headers;
 linux-firmware-atheros     # REQUIRED: Wi-Fi. The WCN785x/FastConnect 7800 uses ath12k_wifi7_pci
                            # and this package owns the ath12k/ath11k blobs it loads.
 linux-firmware-cirrus      # REQUIRED: the CS35L41 speaker amps (cs35l41-dsp1-spk-prot-*.wmfw/bin)
-linux-firmware-other       # misc blobs not split out by vendor
-linux-firmware-whence      # the WHENCE licence manifest the others reference
-linux-firmware-qcom        # Snapdragon X firmware. NOT pulled in by linux-firmware (its 13 deps omit
-                           # qcom), and this is where docs/05 §GPU gets gen70500_sqe.fw/gen70500_gmu.bin,
-                           # the audio tplg and the board .jsn files. Without it: llvmpipe, no audio.
+                           # (linux-firmware-whence is a hard dependency of both, so it comes in
+                           # automatically and is not listed. linux-firmware-other was dropped: its
+                           # 44.7 MiB is 3com/Adaptec/DVB-tuner/Myricom/dsp56k-era hardware, nothing
+                           # this board touches, and only the linux-firmware meta ever wanted it.)
+linux-firmware-qcom        # ONLY for gen70500_sqe.fw + gen70500_gmu.bin (Adreno microcode, 156 KiB)
+                           # and X1E80100-LENOVO-Yoga-Slim7x-tplg.bin (audio topology). Everything
+                           # else this board needs -- qcadsp8380.mbn, adsp_dtbs.elf, qccdsp8380.mbn,
+                           # cdsp_dtbs.elf, qcdxkmsuc8380.mbn -- comes from the Windows DriverStore
+                           # via swarmarchy-stage-qcom-firmware and differs from the package's copies.
+                           # MUST be constrained by the NoExtract rules: unrestricted it lands 557 MiB
+                           # of every Snapdragon, and puts cross-SoC PDR maps on the firmware search
+                           # path (x1e80100/battmgr.jsn -> ../qcm6490/, adsp*/cdspr -> ../eliza/) that
+                           # qcom_pd_mapper reads for charger_pd, the USB-C manager. A working install
+                           # has NO .jsn on the search path; pd_mapper uses its built-in x1e80100 table.
 dkms                       # builds out-of-tree kernel modules (e.g. DisplayLink's evdi)
 autoconf-archive           # extra autotools macros — helps some AUR packages compile
 
