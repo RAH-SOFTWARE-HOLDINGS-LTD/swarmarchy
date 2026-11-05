@@ -454,11 +454,28 @@ journalctl -b -p err
 dmesg | grep -iE 'adreno|gpu|zap|gmu'
 ```
 
-- **`gen70500_sqe.fw` / `gen70500_gmu.bin`** ship in `linux-firmware`:
+- **`gen70500_sqe.fw` / `gen70500_gmu.bin`** ship in **`linux-firmware-qcom`**, not
+  `linux-firmware`. Upstream split `linux-firmware` into per-vendor subpackages and the
+  metapackage's dependencies do **not** include qcom:
 
 ```sh
-sudo pacman -Syu linux-firmware && find /lib/firmware -iname 'gen70500*'
+sudo pacman -Syu linux-firmware-qcom && find /lib/firmware -iname 'gen70500*'
 ```
+
+> **Constrain that package.** Unrestricted it lands **557 MiB** under
+> `/usr/lib/firmware/qcom` (every Snapdragon), and — worse — puts cross-SoC
+> protection-domain maps on the firmware search path:
+> `x1e80100/battmgr.jsn -> ../qcm6490/battmgr.jsn` and
+> `x1e80100/{adspr,adsps,adspua,cdspr}.jsn -> ../eliza/`. `qcom_pd_mapper` reads those to
+> build the registry `charger_pd` (the USB-C manager) registers through. A working install
+> has **zero** `.jsn` on the search path and `pd_mapper` uses its built-in `x1e80100`
+> table. The `NoExtract` rules in `swarmarchy-other.packages` / the installer's
+> `limit_target_firmware` cut it to 25 MiB and 0 `.jsn`.
+
+- **audio topology** — `X1E80100-LENOVO-Yoga-Slim7x-tplg.bin`, also from
+  `linux-firmware-qcom`. `copy-qcom-firmware.ps1` does **not** collect it (it matches only
+  `*.mbn`, `*.jsn`, `*dtbs.elf`), so it cannot come from Windows. Without it the sound card
+  will not configure.
 
 - **zap shader** — signed, model-specific `qcdxkmsuc8380.mbn` from Windows; the error path is exact:
 
