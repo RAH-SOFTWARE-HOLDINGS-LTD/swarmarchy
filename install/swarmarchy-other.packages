@@ -12,7 +12,16 @@ base-devel                 # compilers/make/etc — needed to build AUR packages
 git                        # version control (installer + AUR builds use it)
 linux                      # the kernel (ISO builder rewrites this to linux-aarch64)
 linux-headers              # kernel headers (rewritten to linux-aarch64-headers; for DKMS)
-linux-firmware             # device firmware blobs (Wi-Fi, GPU, etc.) — a metapackage; see below
+# Firmware: the explicit splits this board needs, NOT the `linux-firmware` metapackage.
+# That meta depends on 12 splits and lands 1.2 GiB in /usr/lib/firmware -- about 795 MiB
+# of it for hardware a Snapdragon laptop cannot have (intel 403 MiB, nvidia 152, amdgpu 91,
+# mediatek 70, realtek 37, broadcom 20, ti 14, radeon 5, amd 2.6). Nothing depends on the
+# meta by name, so listing the splits is safe and takes ~0.6 GiB off the ISO.
+linux-firmware-atheros     # REQUIRED: Wi-Fi. The WCN785x/FastConnect 7800 uses ath12k_wifi7_pci
+                           # and this package owns the ath12k/ath11k blobs it loads.
+linux-firmware-cirrus      # REQUIRED: the CS35L41 speaker amps (cs35l41-dsp1-spk-prot-*.wmfw/bin)
+linux-firmware-other       # misc blobs not split out by vendor
+linux-firmware-whence      # the WHENCE licence manifest the others reference
 linux-firmware-qcom        # Snapdragon X firmware. NOT pulled in by linux-firmware (its 13 deps omit
                            # qcom), and this is where docs/05 §GPU gets gen70500_sqe.fw/gen70500_gmu.bin,
                            # the audio tplg and the board .jsn files. Without it: llvmpipe, no audio.
