@@ -10,6 +10,24 @@ sudo systemctl enable iwd.service
 sudo systemctl disable systemd-networkd-wait-online.service
 sudo systemctl mask systemd-networkd-wait-online.service
 
+# Hand addressing to iwd and get systemd-networkd out of the way entirely.
+#
+# archinstall is called with "network_config": {"type": "iso"}, which copies the live
+# archiso network setup into the target -- systemd-networkd enabled. Combined with iwd
+# that leaves a hybrid stack (networkd addresses, iwd authenticates) which the
+# hand-built reference system has never had. system/etc/iwd/main.conf sets
+# EnableNetworkConfiguration=true so iwd does its own DHCP and feeds DNS to resolved.
+#
+# Not cosmetic: networkd brings up every link it matches, including a dock's USB
+# ethernet. On the Yoga Slim 7x that adapter shares a USB hub with the keyboard and
+# mouse, and its carrier flapping at boot is followed ~600ms later by the entire hub
+# chain dropping off the bus with -62/-71.
+for unit in systemd-networkd.service systemd-networkd.socket \
+            systemd-networkd-varlink.socket systemd-networkd-varlink-metrics.socket \
+            systemd-networkd-resolve-hook.socket systemd-network-generator.service; do
+  sudo systemctl disable "$unit" 2>/dev/null || true
+done
+
 # The .network file that lets networkd track the wireless link — without which
 # ONLINE_STATE never leaves "offline" and timesyncd never polls — is a file now:
 # system/etc/systemd/network/25-wlan-iwd.network.
