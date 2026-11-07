@@ -24,6 +24,23 @@ case ":$PATH:" in
   *) export PATH="/usr/lib/swarmarchy/bin:$PATH" ;;
 esac
 
+# Keep the session's output off the console.
+#
+# greetd starts this wrapper on a VT, so sway and EVERY process it spawns inherit
+# that tty as stdout and stderr -- waybar, swaybg, mako, the polkit agent, and any
+# app launched from a keybind. None of it is visible while the compositor owns the
+# screen, so it silently piles up and then scrolls past in one burst the moment sway
+# exits and the text console comes back. That burst is what looks like "errors during
+# shutdown"; it is just the session's log, and almost all of it is routine.
+#
+# Send it to a file instead: the console stays clean through logout and reboot, and
+# the output is still there to read afterwards. One previous session is kept.
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/swarmarchy"
+if mkdir -p "$LOG_DIR" 2>/dev/null; then
+  [[ -f $LOG_DIR/session.log ]] && mv -f "$LOG_DIR/session.log" "$LOG_DIR/session.log.1"
+  exec >"$LOG_DIR/session.log" 2>&1
+fi
+
 # Run sway in the foreground (not exec) so the session target can be torn down
 # when it exits. Stopping sway-session.target deactivates graphical-session.target
 # with it, which stops the portals and OSD daemons in order, before the Wayland
