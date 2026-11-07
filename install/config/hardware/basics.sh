@@ -12,11 +12,17 @@ sudo systemctl mask systemd-networkd-wait-online.service
 
 # Hand addressing to iwd and get systemd-networkd out of the way entirely.
 #
-# archinstall is called with "network_config": {"type": "iso"}, which copies the live
-# archiso network setup into the target -- systemd-networkd enabled. Combined with iwd
-# that leaves a hybrid stack (networkd addresses, iwd authenticates) which the
-# hand-built reference system has never had. system/etc/iwd/main.conf sets
+# archinstall now runs with "network_config": {"type": "iwd"} (swarmarchy-iso), so the
+# live archiso 20-wlan.network is no longer copied into the target. This step stays as
+# the backstop: archinstall enables systemd-networkd in EVERY mode except NetworkManager,
+# so even standalone-iwd leaves the units enabled. system/etc/iwd/main.conf sets
 # EnableNetworkConfiguration=true so iwd does its own DHCP and feeds DNS to resolved.
+#
+# Verified by bisect, not assumed: with networkd disabled and main.conf in place, a boot
+# logs 0 USB enumeration errors. Re-enabling networkd and removing main.conf brought back
+# 8 errors on the same kernel and hardware -- "device not accepting address, error -62"
+# retrying every ~11s until "unable to enumerate USB device". Restoring the config cleared
+# them again. Do not drop this loop without repeating that test.
 #
 # Not cosmetic: networkd brings up every link it matches, including a dock's USB
 # ethernet. On the Yoga Slim 7x that adapter shares a USB hub with the keyboard and
