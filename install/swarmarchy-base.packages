@@ -12,7 +12,7 @@ foot                       # default terminal emulator (fast, Wayland-native)
 waybar                     # the top status bar
 mako                       # desktop notification daemon
 greetd                     # login manager (launches the Sway session)
-greetd-tuigreet            # greetd's terminal greeter UI
+greetd-gtkgreet            # greetd's GTK greeter (runs inside Sway; centres per-output)
 yay                        # AUR helper; prebuilt in the swarmarchy repo (building it needs go + network)
 walker                     # application launcher (SUPER+Space)
 elephant                   # walker's data backend
