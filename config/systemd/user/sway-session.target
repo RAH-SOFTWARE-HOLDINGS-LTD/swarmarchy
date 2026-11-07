@@ -1,0 +1,18 @@
+[Unit]
+Description=Sway session
+# Holds graphical-session.target active for as long as Sway is running.
+#
+# graphical-session.target is systemd's handle for "a graphical session exists".
+# It sets RefuseManualStart=yes and StopWhenUnneeded=yes, so it can only go active
+# as a dependency of a session unit that binds it -- it is never started directly.
+# Sway is launched from a shell (swarmarchy-session), not as a unit, so without
+# this target nothing ever holds it and every `WantedBy=graphical-session.target`
+# user service stays dead while the desktop runs.
+#
+# BindsTo means graphical-session.target follows this target in both directions:
+# it activates when Sway starts it, and deactivates when Sway stops it on exit,
+# which gives the portals and OSD daemons an ordered shutdown before the Wayland
+# socket disappears.
+BindsTo=graphical-session.target
+Wants=graphical-session-pre.target
+After=graphical-session-pre.target

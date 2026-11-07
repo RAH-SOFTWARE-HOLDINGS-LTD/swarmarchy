@@ -24,4 +24,14 @@ case ":$PATH:" in
   *) export PATH="/usr/lib/swarmarchy/bin:$PATH" ;;
 esac
 
-exec sway "$@"
+# Run sway in the foreground (not exec) so the session target can be torn down
+# when it exits. Stopping sway-session.target deactivates graphical-session.target
+# with it, which stops the portals and OSD daemons in order, before the Wayland
+# socket goes away -- otherwise they die on a broken pipe and systemd records a
+# failure. It also guarantees the next session starts them with a fresh env.
+sway "$@"
+rc=$?
+
+systemctl --user stop sway-session.target 2>/dev/null
+
+exit $rc
