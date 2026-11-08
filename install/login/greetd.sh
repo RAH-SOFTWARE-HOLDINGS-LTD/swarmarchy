@@ -40,5 +40,60 @@ EOF
 # is a cheap hedge against a lockout if it does not.
 sudo usermod -aG input greeter
 
+# ─── oo7 keyring unlock at login ────────────────────────────────────────────
+#
+# swarmarchy-base.packages ships oo7 as the Secret Service provider, but nothing
+# unlocked it, so org.freedesktop.secrets stayed locked for the whole session.
+# Chromium-based browsers block waiting for their cookie-encryption key and every
+# page navigation is cancelled before it reaches DNS, while the browser's own
+# background traffic and curl work fine -- which makes it look like a network
+# fault for a long time. Firefox is unaffected; it does not use the keyring.
+#
+# The race: pam_oo7 (session phase) makes ONE attempt to connect to
+# /run/user/<uid>/oo7-pam.sock. oo7-daemon.service is started by the user manager
+# in parallel with login and creates that socket ~100ms later, and PAM does not
+# wait for user units. So the stashed password is dropped and the keyring stays
+# locked.
+#
+# Do NOT use `pam_oo7.so auto_start` to work around this: it hard-codes
+# /usr/bin/oo7-daemon while Arch installs the binary at /usr/lib/oo7-daemon, and
+# symlinking the two makes auto_start spawn a second daemon outside systemd that
+# races the enabled unit.
+sudo install -Dm0755 "$SWARMARCHY_PATH/default/oo7/oo7-wait-pam-socket" \
+  /usr/local/lib/oo7-wait-pam-socket
+
+# PAM stack. Every added line is optional or default=ignore, so a keyring failure
+# can never block a login. The success=N jump counts depend on the exact line
+# order below -- do not insert lines between them.
+sudo mkdir -p /etc/pam.d
+[[ -f /etc/pam.d/greetd && ! -f /etc/pam.d/greetd.bak-pre-oo7 ]] &&
+  sudo cp /etc/pam.d/greetd /etc/pam.d/greetd.bak-pre-oo7
+cat <<'PAMEOF' | sudo tee /etc/pam.d/greetd >/dev/null
+#%PAM-1.0
+
+auth       required     pam_securetty.so
+auth       requisite    pam_nologin.so
+auth       include      system-local-login
+# Stash the login password. Must come AFTER the real auth, or PAM_AUTHTOK is unset.
+auth       optional     pam_oo7.so
+
+account    include      system-local-login
+
+password   include      system-local-login
+# Keep the keyring password in step when the login password changes.
+password   optional     pam_oo7.so
+
+session    include      system-local-login
+# Wait for oo7's PAM socket, then up to 3 unlock attempts. After each attempt the
+# check exits 0 if the keyring is unlocked (skipping the rest), else waits and retries.
+session    optional                       pam_exec.so quiet /usr/local/lib/oo7-wait-pam-socket
+session    optional                       pam_oo7.so
+session    [success=3 default=ignore]     pam_exec.so quiet /usr/local/lib/oo7-wait-pam-socket check 2
+session    optional                       pam_oo7.so
+session    [success=1 default=ignore]     pam_exec.so quiet /usr/local/lib/oo7-wait-pam-socket check 3
+session    optional                       pam_oo7.so
+session    optional                       pam_permit.so
+PAMEOF
+
 # Don't use chrootable here as --now will cause issues for manual installs
 sudo systemctl enable greetd.service

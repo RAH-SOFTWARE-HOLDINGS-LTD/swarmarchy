@@ -17,6 +17,16 @@
 
 eval "$(systemctl --user show-environment 2>/dev/null | sed 's/^/export /')" 2>/dev/null
 
+# The previous sway session imported its display sockets into the user manager
+# (autostart.conf: import-environment WAYLAND_DISPLAY SWAYSOCK DISPLAY). After a
+# logout the user manager lives on for a few seconds, so a quick re-login would
+# pull in WAYLAND_DISPLAY=wayland-1 from the dead session. With that set, sway
+# tries to run nested inside a compositor that no longer exists, exits at once
+# ("Could not connect to remote display"), and drops you back to the greeter --
+# which looked like the password being rejected. Never inherit these.
+unset WAYLAND_DISPLAY DISPLAY SWAYSOCK I3SOCK
+systemctl --user unset-environment WAYLAND_DISPLAY DISPLAY SWAYSOCK I3SOCK 2>/dev/null
+
 # Fallback: if the user manager was not up yet, at least guarantee the swarmarchy
 # bin dir resolves, so keybinds work even in the degraded case.
 case ":$PATH:" in
@@ -46,9 +56,14 @@ fi
 # with it, which stops the portals and OSD daemons in order, before the Wayland
 # socket goes away -- otherwise they die on a broken pipe and systemd records a
 # failure. It also guarantees the next session starts them with a fresh env.
-sway "$@"
+# Record what sway inherits, so a failed re-login is diagnosable from the log.
+echo "swarmarchy-session: env before sway: $(env | grep -E '^(WAYLAND_|DISPLAY=|SWAYSOCK=|I3SOCK=|WLR_BACKENDS=)' | tr '\n' ' ')"
+env -u WAYLAND_DISPLAY -u WAYLAND_SOCKET -u DISPLAY -u SWAYSOCK -u I3SOCK sway "$@"
 rc=$?
 
 systemctl --user stop sway-session.target 2>/dev/null
+# Forget this session's sockets so nothing -- a quick re-login, a restarting user
+# service -- is pointed at a compositor that is gone.
+systemctl --user unset-environment WAYLAND_DISPLAY DISPLAY SWAYSOCK I3SOCK 2>/dev/null
 
 exit $rc

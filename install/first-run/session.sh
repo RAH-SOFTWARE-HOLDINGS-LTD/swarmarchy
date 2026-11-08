@@ -30,6 +30,11 @@ gsettings set org.gnome.desktop.interface gtk-enable-primary-paste true
 systemctl --user daemon-reload
 systemctl --user enable --now swayosd-server.service
 systemctl --user enable --now swayidle.service
+# oo7-daemon must already be starting when PAM's session phase runs, so it can
+# hand the stashed login password to the daemon's socket and unlock the keyring.
+# Without this the Secret Service never unlocks and Chromium-based browsers hang
+# on every page load. See install/login/greetd.sh for the full explanation.
+systemctl --user enable oo7-daemon.service
 
 elephant service enable
 systemctl --user start elephant.service

@@ -1,0 +1,24 @@
+#!/bin/sh
+# Helper for pam_oo7 in /etc/pam.d/greetd (session phase, via pam_exec).
+#   (no arg)  wait up to 10s for /run/user/<uid>/oo7-pam.sock, then exit 0.
+#   check N   exit 0 if the default keyring is already unlocked (PAM then skips
+#             the remaining pam_oo7 retries); otherwise sleep N seconds and exit 1
+#             so the next pam_oo7 attempt runs.
+[ -n "$PAM_USER" ] || exit 0
+uid=$(id -u "$PAM_USER" 2>/dev/null) || exit 0
+rt=/run/user/$uid
+if [ "$1" = check ]; then
+  locked=$(runuser -u "$PAM_USER" -- env XDG_RUNTIME_DIR="$rt" DBUS_SESSION_BUS_ADDRESS="unix:path=$rt/bus" \
+    timeout 3 busctl --user get-property org.freedesktop.secrets /org/freedesktop/secrets/aliases/default \
+    org.freedesktop.Secret.Collection Locked 2>/dev/null)
+  [ "$locked" = "b false" ] && exit 0
+  sleep "${2:-1}"
+  exit 1
+fi
+i=0
+while [ $i -lt 100 ]; do
+  [ -S "$rt/oo7-pam.sock" ] && exit 0
+  sleep 0.1
+  i=$((i+1))
+done
+exit 0
