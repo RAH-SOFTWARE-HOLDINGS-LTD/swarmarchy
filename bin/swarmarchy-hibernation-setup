@@ -88,7 +88,10 @@ echo "Adding resume hook to $MKINITCPIO_CONF"
 echo "HOOKS+=(resume)" | sudo tee "$MKINITCPIO_CONF" >/dev/null
 
 # Ensure keyboard backlight doesn't prevent sleep
-sudo cp -p "$SWARMARCHY_PATH/default/systemd/system-sleep/keyboard-backlight" /usr/lib/systemd/system-sleep/
+# Symlink rather than copy: this runs post-install where SWARMARCHY_PATH is
+# /usr/share/swarmarchy, which persists, so the hook tracks the deployed file.
+sudo ln -sfn "$SWARMARCHY_PATH/default/systemd/system-sleep/keyboard-backlight" \
+  /usr/lib/systemd/system-sleep/keyboard-backlight
 
 # Add resume= kernel parameters so the initramfs resume hook knows where to find the
 # hibernation image. Without these, resume happens late (after GPU drivers load) and fails.

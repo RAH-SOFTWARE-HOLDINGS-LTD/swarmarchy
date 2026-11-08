@@ -5,7 +5,8 @@ swarmarchy-pkg-add greetd greetd-gtkgreet
 
 # Make the swarmarchy session discoverable (for greeters that list sessions)
 sudo mkdir -p /usr/share/wayland-sessions
-sudo cp "$SWARMARCHY_PATH/default/wayland-sessions/swarmarchy.desktop" \
+# Symlink: /usr/share/swarmarchy/default persists, $SWARMARCHY_PATH does not.
+sudo ln -sfn /usr/share/swarmarchy/default/wayland-sessions/swarmarchy.desktop \
   /usr/share/wayland-sessions/swarmarchy.desktop
 
 # Session wrapper. greetd runs the session through a non-interactive login shell
@@ -13,7 +14,13 @@ sudo cp "$SWARMARCHY_PATH/default/wayland-sessions/swarmarchy.desktop" \
 # reach the compositor -- leaving swarmarchy-* off PATH (every keybind a silent
 # no-op) and WLR_RENDERER/XDG_CURRENT_DESKTOP unset. Installed system-wide so it
 # resolves by name from the greeter's PATH, and is user-agnostic at runtime.
-sudo install -m 0755 "$SWARMARCHY_PATH/bin/swarmarchy-session" /usr/local/bin/swarmarchy-session
+# Symlink, not a copy. install/config/system-files.sh has already put the real
+# file at /usr/lib/swarmarchy/bin/swarmarchy-session (config/ runs before login/),
+# and that path persists -- unlike $SWARMARCHY_PATH, which post-install deletes.
+# A copy here would silently go stale every time the repo is redeployed, and the
+# stale one is the copy greetd actually runs, because /usr/lib/swarmarchy/bin is
+# not on anyone's PATH while /usr/local/bin is.
+sudo ln -sfn /usr/lib/swarmarchy/bin/swarmarchy-session /usr/local/bin/swarmarchy-session
 
 # greetd config: gtkgreet inside a minimal Sway, launching the session wrapper.
 #
@@ -59,7 +66,10 @@ sudo usermod -aG input greeter
 # /usr/bin/oo7-daemon while Arch installs the binary at /usr/lib/oo7-daemon, and
 # symlinking the two makes auto_start spawn a second daemon outside systemd that
 # races the enabled unit.
-sudo install -Dm0755 "$SWARMARCHY_PATH/default/oo7/oo7-wait-pam-socket" \
+# Symlink for the same reason: /usr/share/swarmarchy/default persists, the source
+# tree does not, and PAM needs an absolute path that stays correct after a redeploy.
+sudo mkdir -p /usr/local/lib
+sudo ln -sfn /usr/share/swarmarchy/default/oo7/oo7-wait-pam-socket \
   /usr/local/lib/oo7-wait-pam-socket
 
 # PAM stack. Every added line is optional or default=ignore, so a keyring failure
