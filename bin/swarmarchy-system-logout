@@ -4,8 +4,20 @@
 # swarmarchy:examples=swarmarchy logout | swarmarchy system logout
 # swarmarchy:aliases=swarmarchy logout
 
-nohup bash -c "sleep 2 && swaymsg exit" >/dev/null 2>&1 &
+# `swaymsg exit` is the actual logout. The complication is that this script is
+# usually reached from the system menu (Super+Escape), so the menu's own window
+# is in the tree that swarmarchy-wm-window-close-all is about to kill -- taking
+# this script's process group with it. `nohup` alone does not survive that: it
+# only ignores SIGHUP, not a kill of the group.
+#
+# So arm a detached safety net first, in its own session (setsid), then do the
+# tidy path. Whichever survives wins; if both run, the second swaymsg is a no-op
+# because sway is already gone.
+setsid --fork bash -c 'sleep 4; swaymsg exit' </dev/null >/dev/null 2>&1
 
-# Now close all windows
+# Close windows so apps like Chrome can shut down cleanly rather than being
+# killed by the compositor exiting underneath them.
 swarmarchy-wm-window-close-all
-sleep 1 # Allow apps like Chrome to shutdown correctly
+sleep 1
+
+swaymsg exit
