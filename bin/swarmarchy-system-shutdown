@@ -6,9 +6,20 @@
 
 swarmarchy-state clear re*-required
 
-# Schedule the shutdown to happen after closing windows (detached from terminal)
-nohup bash -c "sleep 2 && systemctl poweroff --no-wall" >/dev/null 2>&1 &
+# Arm the shutdown in its own session BEFORE closing windows.
+#
+# swarmarchy-wm-window-close-all kills every window with a pid, which includes
+# the menu or terminal this was invoked from -- taking this script's process
+# group with it. `nohup` is not enough: it only makes a process ignore SIGHUP,
+# it does not leave the process group. Measured directly: under a process-group
+# kill a nohup'd child dies and a setsid child survives.
+setsid --fork bash -c 'sleep 4; systemctl poweroff --no-wall' </dev/null >/dev/null 2>&1
 
-# Now close all windows
+# Now close all windows so apps like Chrome shut down cleanly rather than being
+# killed by the session going away underneath them.
 swarmarchy-wm-window-close-all
-sleep 1 # Allow apps like Chrome to shutdown correctly
+sleep 1
+
+# If this script survived the close, act now rather than waiting out the timer
+# above; the armed fallback is then a no-op.
+systemctl poweroff --no-wall
