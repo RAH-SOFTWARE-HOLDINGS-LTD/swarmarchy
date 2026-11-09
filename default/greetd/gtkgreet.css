@@ -1,0 +1,78 @@
+/* Tokyo Night for the gtkgreet login prompt.
+ *
+ * Hardcoded rather than read from the active theme: greetd runs the greeter as
+ * the `greeter` user, which cannot read ~/.config/swarmarchy/current/theme. If
+ * a second theme is ever added, this file does not follow it -- it tracks
+ * themes/tokyo-night/colors.toml by hand.
+ *
+ *   background 1a1b26   selection 7aa2f7   foreground a9b1d6
+ *   surface    24283b   accent    7aa2f7   muted      565f89
+ *   text       c0caf5   error     f7768e
+ */
+
+window {
+  background-color: #1a1b26;
+  color: #c0caf5;
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* The clock gtkgreet draws above the box */
+label {
+  color: #a9b1d6;
+}
+
+box#body {
+  background-color: #24283b;
+  border: 1px solid #414868;
+  border-radius: 10px;
+  padding: 28px 32px;
+}
+
+entry {
+  background-color: #1a1b26;
+  color: #c0caf5;
+  caret-color: #c0caf5;
+  border: 1px solid #414868;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 4px 0;
+}
+
+entry:focus {
+  border-color: #7aa2f7;
+  outline: none;
+  box-shadow: none;
+}
+
+entry selection {
+  background-color: #7aa2f7;
+  color: #1a1b26;
+}
+
+button {
+  background-image: none;
+  background-color: #414868;
+  color: #c0caf5;
+  border: 1px solid #414868;
+  border-radius: 6px;
+  padding: 8px 18px;
+  margin-top: 8px;
+}
+
+button:hover {
+  background-color: #7aa2f7;
+  color: #1a1b26;
+  border-color: #7aa2f7;
+}
+
+button:active,
+button:checked {
+  background-color: #7aa2f7;
+  color: #1a1b26;
+}
+
+/* Failed login message */
+label#error,
+.error {
+  color: #f7768e;
+}

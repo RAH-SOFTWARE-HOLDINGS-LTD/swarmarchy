@@ -32,6 +32,8 @@ sudo ln -sfn /usr/lib/swarmarchy/bin/swarmarchy-session /usr/local/bin/swarmarch
 sudo mkdir -p /etc/greetd
 sudo install -m 0644 "$SWARMARCHY_PATH/default/greetd/sway-greeter.conf" \
   /etc/greetd/sway-greeter.conf
+sudo install -m 0644 "$SWARMARCHY_PATH/default/greetd/gtkgreet.css" \
+  /etc/greetd/gtkgreet.css
 
 cat <<EOF | sudo tee /etc/greetd/config.toml >/dev/null
 [terminal]
