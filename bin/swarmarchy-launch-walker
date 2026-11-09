@@ -3,7 +3,17 @@
 # swarmarchy:summary=Launch Walker and ensure its Elephant data provider is running
 
 if ! pgrep -x elephant > /dev/null; then
-  setsid -f elephant
+  # Detach elephant from this process's stdio before backgrounding it.
+  #
+  # The first menu opened after login runs this launcher inside a command
+  # substitution -- `case $(menu ...)` in swarmarchy-menu. Without the
+  # redirections, elephant inherits that substitution's stdout pipe and holds it
+  # open for the rest of the session, so the substitution never sees EOF. The
+  # menu process hangs with the selection unread, and picks like
+  # System -> Logout appear to do nothing at all. Confirmed by matching
+  # elephant's fd 1 to the stuck `swarmarchy-menu system` process's fd 3: the
+  # same pipe. setsid alone does not help; the inherited fd is the problem.
+  setsid -f elephant </dev/null >/dev/null 2>&1
 fi
 
 # Deliberately NOT starting `walker --gapplication-service`: with walker 2.16 +
