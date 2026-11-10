@@ -15,7 +15,6 @@ ignore-empty-password
 show-failed-attempts
 
 # Indicator
-indicator
 indicator-radius=100
 indicator-thickness=10
 font=JetBrains Mono
