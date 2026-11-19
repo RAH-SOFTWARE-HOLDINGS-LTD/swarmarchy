@@ -1,0 +1,101 @@
+#!/bin/bash
+
+# swarmarchy:summary=Describe the Snapdragon X board this system booted on
+# swarmarchy:group=hw
+# swarmarchy:name=snapdragon
+# swarmarchy:args=soc|dtb|cmdline|firmware [--dt-root DIR] [--boot DIR] [--cmdline-file FILE]
+# swarmarchy:examples=swarmarchy hw snapdragon soc | swarmarchy hw snapdragon dtb
+# swarmarchy:hidden=true
+#
+# One place for the board facts the ISO installer (.automated_script.sh,
+# swarmarchy-stage-qcom-firmware) and install/login/limine-snapper.sh need, so neither
+# hardcodes one laptop. Everything is read from the live device tree, which the bootloader
+# loaded for this exact board:
+#
+#   soc       the Snapdragon X SoC ids in the DT compatible, most specific first, one per line
+#             (e.g. x1e80100). Exit 1 when this is not a Snapdragon X1/X2 machine.
+#   dtb       the board DTB relative to /boot, e.g. dtbs/qcom/x1e80100-lenovo-yoga-slim7x.dtb.
+#             Taken from swarmarchy.dtb= on the kernel cmdline (set by the ISO's GRUB) when that
+#             file exists, else found by matching the DT's first compatible string against
+#             /boot/dtbs/qcom/*.dtb. Exit 1 when neither finds exactly one.
+#   cmdline   the kernel arguments these boards need to boot with clocks/power domains intact.
+#   firmware  every firmware file the enabled DT nodes request (firmware-name), one per line,
+#             relative to /lib/firmware, e.g. qcom/x1e80100/LENOVO/83ED/qcadsp8380.mbn.
+#
+# --dt-root / --boot / --cmdline-file point at a different tree, for the installer (target
+# /boot under /mnt) and for offline tests against unpacked device trees.
+
+set -uo pipefail
+
+dt_root=/sys/firmware/devicetree/base
+boot_dir=/boot
+cmdline_file=/proc/cmdline
+cmd=""
+
+while (( $# )); do
+  case $1 in
+    --dt-root) dt_root=$2; shift 2 ;;
+    --boot) boot_dir=$2; shift 2 ;;
+    --cmdline-file) cmdline_file=$2; shift 2 ;;
+    soc | dtb | cmdline | firmware) cmd=$1; shift ;;
+    *) echo "Usage: swarmarchy-hw-snapdragon soc|dtb|cmdline|firmware [--dt-root DIR] [--boot DIR] [--cmdline-file FILE]" >&2; exit 2 ;;
+  esac
+done
+[[ -n $cmd ]] || { echo "Usage: swarmarchy-hw-snapdragon soc|dtb|cmdline|firmware" >&2; exit 2; }
+
+# Compatible strings, one per line (the property is a NUL-separated list).
+compatibles() {
+  [[ -r $dt_root/compatible ]] || return 1
+  tr '\0' '\n' <"$dt_root/compatible" | sed '/^$/d'
+}
+
+# Snapdragon X1 (x1e*/x1p*, codenames hamoa/purwa) and X2 (glymur, mahua).
+socs() {
+  compatibles | sed -nE 's/^qcom,((x1e|x1p)[0-9a-z]+|hamoa|purwa|glymur|mahua)$/\1/p'
+}
+
+case $cmd in
+  soc)
+    out=$(socs)
+    [[ -n $out ]] || exit 1
+    echo "$out"
+    ;;
+
+  cmdline)
+    [[ -n $(socs) ]] || exit 1
+    # Without these the board boots with clocks and power domains gated off: USB-C hubs do not
+    # enumerate and the display stack misbehaves. Proven on the Yoga Slim 7x (x1e80100); the
+    # same list is used for every Snapdragon X board until one is shown to need otherwise.
+    echo "pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait"
+    ;;
+
+  dtb)
+    [[ -n $(socs) ]] || exit 1
+    from_cmdline=$(tr ' ' '\n' <"$cmdline_file" 2>/dev/null | sed -n 's/^swarmarchy\.dtb=//p' | tail -1)
+    if [[ -n $from_cmdline && $from_cmdline != */../* && -f $boot_dir/$from_cmdline ]]; then
+      echo "$from_cmdline"
+      exit 0
+    fi
+
+    # Fallback for systems GRUB did not boot (e.g. a manual docs/05 install): the board's own
+    # compatible string, NUL-terminated so "lenovo,thinkpad-t14s" does not also match the
+    # "-oled" variant. -el2 DTBs are a different boot mode and never the answer here.
+    board=$(compatibles | head -1)
+    [[ -n $board ]] || exit 1
+    mapfile -t hits < <(grep -laP "\\Q${board}\\E\\x00" "$boot_dir"/dtbs/qcom/*.dtb 2>/dev/null | grep -v -- '-el2\.dtb$')
+    (( ${#hits[@]} == 1 )) || exit 1
+    echo "${hits[0]#"$boot_dir"/}"
+    ;;
+
+  firmware)
+    [[ -n $(socs) ]] || exit 1
+    while IFS= read -r -d '' prop; do
+      node=${prop%/firmware-name}
+      if [[ -r $node/status ]]; then
+        status=$(tr -d '\0' <"$node/status")
+        [[ $status == "okay" || $status == "ok" ]] || continue
+      fi
+      tr '\0' '\n' <"$prop" | sed '/^$/d'
+    done < <(find "$dt_root" -name firmware-name -type f -print0 2>/dev/null) | sort -u
+    ;;
+esac

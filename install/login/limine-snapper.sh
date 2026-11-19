@@ -52,14 +52,14 @@ EOF
     CMDLINE="root=UUID=${derived_uuid} rootflags=subvol=${derived_subvol:-@} rw"
 
     # Board-gated kernel arguments. The derived cmdline above has ONLY root=, so without
-    # this the Snapdragon X Elite boots but with clocks and power domains gated off:
+    # this a Snapdragon X board boots but with clocks and power domains gated off:
     # USB-C hubs do not enumerate and the display stack misbehaves -- while the install
-    # still reports success. Keep this list in step with install_dualboot_bootloader()
-    # in swarmarchy-iso/configs/airootfs/root/.automated_script.sh, which is where these
-    # normally come from.
-    if grep -qa "x1e80100" /sys/firmware/devicetree/base/compatible 2>/dev/null; then
-      CMDLINE+=" pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait"
-      echo "Warning: re-added x1e80100 board kernel arguments to the derived cmdline" >&2
+    # still reports success. swarmarchy-hw-snapdragon is the one list of these, shared with
+    # install_dualboot_bootloader() in swarmarchy-iso's .automated_script.sh, which is where
+    # they normally come from. It prints nothing (exit 1) on other hardware.
+    if board_args=$(swarmarchy-hw-snapdragon cmdline 2>/dev/null); then
+      CMDLINE+=" $board_args"
+      echo "Warning: re-added Snapdragon X board kernel arguments to the derived cmdline" >&2
     fi
 
     echo "Warning: no root= in $limine_config; derived it from the live system" >&2
@@ -157,11 +157,12 @@ if ! grep -q "^/" /boot/limine.conf; then
 
   # Snapdragon boards boot via device tree, not ACPI. global_dtb applies to every
   # entry that does not set its own dtb_path, so any entries generated later
-  # inherit it too.
-  board_dtb="$(find /boot/dtbs -name 'x1e80100-lenovo-yoga-slim7x.dtb' 2>/dev/null | head -1)"
+  # inherit it too. swarmarchy-hw-snapdragon prints it relative to /boot (e.g.
+  # dtbs/qcom/x1e80100-lenovo-yoga-slim7x.dtb), or nothing on other hardware.
+  board_dtb="$(swarmarchy-hw-snapdragon dtb 2>/dev/null || true)"
   if [[ -n $board_dtb ]]; then
     grep -q '^global_dtb:' /boot/limine.conf ||
-      sudo sed -i "1i global_dtb: boot():/${board_dtb#/boot/}" /boot/limine.conf
+      sudo sed -i "1i global_dtb: boot():/${board_dtb}" /boot/limine.conf
   fi
 
   cmdline="root=UUID=${root_uuid} rootflags=subvol=${root_subvol:-@} rw"

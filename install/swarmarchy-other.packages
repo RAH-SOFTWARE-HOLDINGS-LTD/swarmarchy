@@ -24,11 +24,12 @@ linux-firmware-cirrus      # REQUIRED: the CS35L41 speaker amps (cs35l41-dsp1-sp
                            # automatically and is not listed. linux-firmware-other was dropped: its
                            # 44.7 MiB is 3com/Adaptec/DVB-tuner/Myricom/dsp56k-era hardware, nothing
                            # this board touches, and only the linux-firmware meta ever wanted it.)
-linux-firmware-qcom        # ONLY for gen70500_sqe.fw + gen70500_gmu.bin (Adreno microcode, 156 KiB)
-                           # and X1E80100-LENOVO-Yoga-Slim7x-tplg.bin (audio topology). Everything
-                           # else this board needs -- qcadsp8380.mbn, adsp_dtbs.elf, qccdsp8380.mbn,
-                           # cdsp_dtbs.elf, qcdxkmsuc8380.mbn -- comes from the Windows DriverStore
-                           # via swarmarchy-stage-qcom-firmware and differs from the package's copies.
+linux-firmware-qcom        # For Adreno microcode (qcom/gen*), audio topologies (*-tplg.bin) and, as a
+                           # fallback, the board blobs the device tree names (on the Yoga Slim 7x:
+                           # qcadsp8380.mbn, adsp_dtbs.elf, qccdsp8380.mbn, cdsp_dtbs.elf,
+                           # qcdxkmsuc8380.mbn, qcvss8380.mbn). swarmarchy-stage-qcom-firmware
+                           # overwrites those with the machine's own Windows DriverStore copies, which
+                           # differ from the package's, and marks them NoUpgrade.
                            # MUST be constrained by the NoExtract rules: unrestricted it lands 557 MiB
                            # of every Snapdragon, and puts cross-SoC PDR maps on the firmware search
                            # path (x1e80100/battmgr.jsn -> ../qcm6490/, adsp*/cdspr -> ../eliza/) that
@@ -65,7 +66,7 @@ vulkan-freedreno           # Vulkan ("turnip") driver for the Adreno GPU; Sway r
 # the ISO's `pacman -Syw` step can't fetch them. Install via an AUR helper (yay) or
 # a custom repo — see swarmarchy-iso/BUILD-AARCH64.md. Listed so they aren't lost:
 #
-#   linux-aarch64 (mainline 6.14+) + qcom/x1e80100-lenovo-yoga-slim7x.dtb  # the kernel
+#   linux-aarch64 (mainline 6.14+) + the board's qcom/*.dtb (e.g. x1e80100-lenovo-yoga-slim7x.dtb)
 #   Qualcomm firmware (ath12k Wi-Fi, Adreno A7xx) — extract from the Windows partition
 #   walker            # keyboard-first app launcher (wlroots-native)
 #   yay               # AUR helper
