@@ -2,15 +2,18 @@
 <#
 .SYNOPSIS
   Collect the Qualcomm firmware Linux needs (*.mbn, *.jsn, *dtbs.elf) from the Windows
-  DriverStore onto a USB stick, for bringing up Linux on a Snapdragon X Elite
-  (Lenovo Yoga Slim 7x / x1e80100).
+  DriverStore onto a USB stick, for bringing up Linux on a Snapdragon X laptop (first
+  proven on the Lenovo Yoga Slim 7x / x1e80100). Run it on the SAME machine you will install
+  Linux on: these blobs are signed per model.
 
 .DESCRIPTION
   Implements docs/05-install-on-yoga.md, Step 0's "copy out the Qualcomm firmware" bullet.
   Recursively scans C:\Windows\System32\DriverStore\FileRepository\ for the firmware and
   copies it to <Destination>\firmware\, PRESERVING each file's source subfolder so
   same-named blobs (e.g. adsp.mbn) from different driver packages don't overwrite each other.
-  Also writes MANIFEST.csv listing every file and its original path.
+  Also writes MANIFEST.csv listing every file, its original path, its last-write time (UTC)
+  and its path under firmware\ -- the Swarmarchy ISO installer reads the last two to pick the
+  newest copy of a duplicated name, and places the blobs where the device tree asks for them.
 
   Run from an ELEVATED PowerShell -- some DriverStore subtrees are ACL'd and are silently
   skipped otherwise.
@@ -92,9 +95,16 @@ foreach ($f in $found) {
 }
 
 # --- manifest + summary ---
+# LastWriteUtc + RelPath let the Linux installer (swarmarchy-stage-qcom-firmware) pick the
+# newest copy when several driver packages ship the same file name. The date is the SOURCE
+# file's, read here: whether Copy-Item keeps it on the copy is not relied on. 'o' is ISO 8601
+# (e.g. 2025-03-01T10:00:00.0000000Z), which sorts correctly as plain text. RelPath is the
+# path under firmware\ with '/' separators, i.e. exactly where the file sits on the stick.
 $found |
     Select-Object @{n='Ext';e={$_.Extension.ToLower()}}, Name,
-                  @{n='SizeKB';e={[math]::Round($_.Length/1KB,1)}}, FullName |
+                  @{n='SizeKB';e={[math]::Round($_.Length/1KB,1)}}, FullName,
+                  @{n='LastWriteUtc';e={$_.LastWriteTimeUtc.ToString('o')}},
+                  @{n='RelPath';e={$_.FullName.Substring($Source.Length).TrimStart('\').Replace('\','/')}} |
     Sort-Object Ext, Name |
     Export-Csv -NoTypeInformation -Path (Join-Path $destRoot 'MANIFEST.csv')
 
