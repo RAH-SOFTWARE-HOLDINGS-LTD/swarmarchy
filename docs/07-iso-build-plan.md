@@ -18,6 +18,7 @@ Elite) with no install-time prompts.
 | 4 — Firmware staging | ✅ code done, not hardware-tested |
 | 5 — Configurator / dual-boot | ✅ code done, not hardware-tested |
 | 6 — Rewrite `docs/06` | ⬜ not started |
+| 7 — Any Snapdragon X1/X2 board | ✅ code done, offline-tested; only the Yoga has hardware history |
 
 **Current step: the first real install on hardware.** All the installer code is written; nothing
 more can be proven without running it.
@@ -341,6 +342,38 @@ Why not on by default upstream: archinstall/Arch stay conservative for compatibi
 - Fold in what Path A settled (kernel/DTB/GPU all resolved) and point at this file.
 - Do this **after** the first successful hardware install, so it documents what actually happened
   rather than what was planned.
+
+### Step 7 — Generic Snapdragon X1/X2 ✅ CODE DONE (2026-11-16)
+
+Removes every Yoga hardcode from the boot and install path. Design and how to add a board:
+[`06`](./06-custom-iso.md) §"Supported boards".
+
+- **`swarmarchy-hw-snapdragon`** (layer `bin/`): `soc` / `dtb` / `cmdline` / `firmware`, all read
+  from the live device tree. It is the single source of the board kernel arguments, which used to
+  be duplicated in `.automated_script.sh` and `limine-snapper.sh`.
+- **GRUB picks the DTB from SMBIOS:**
+  - `configs/boards.tsv` is generated from dtbloader by `builder/import-dtbloader-boards.py`.
+  - `builder/generate-grub-boards.sh` stages all 32 X1/X2 DTBs (6.8 MB) and writes
+    `boards-match.cfg` / `boards-menu.cfg`.
+  - The `smbios` module is added to mkarchiso's embedded GRUB modules.
+- **Firmware staging follows the DT's `firmware-name` list**, not five fixed names.
+  - On the Yoga this adds `qcvss8380.mbn` (video), which the working install never had.
+  - Staged blobs are marked `NoUpgrade`.
+  - The `NoExtract` keep rules now keep all `qcom/gen*` microcode, all `*-tplg.bin` and every
+    DT-requested path.
+  - `copy-qcom-firmware.ps1` adds `LastWriteUtc` + `RelPath` columns so duplicates resolve to the
+    newest.
+
+**Tested offline:**
+- the helper against all 32 packaged DTBs (DT unpacked to a `/sys`-style tree)
+- stager scenarios: flat, per-board, dated duplicates, NPU copy, old manifest, non-Snapdragon
+- `grub-script-check` on all four GRUB files.
+
+**Not yet tested:**
+- GRUB's SMBIOS match at runtime (no QEMU on this machine)
+- pacman's actual extraction under the new `NoExtract` rules
+- the `.ps1` (no PowerShell here)
+- any board but the Yoga.
 
 ---
 

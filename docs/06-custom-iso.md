@@ -161,6 +161,40 @@ Then continue with §"Running the installer" below.
 
 ---
 
+## Supported boards (Snapdragon X1 / X2)
+
+The ISO is no longer Yoga-only. Every Snapdragon X laptop the stock ALARM `linux-aarch64` ships a
+device tree for can boot it. That is 32 DTBs as of 7.3.3: `x1e*`, `x1p*`, `hamoa`, `purwa`,
+`glymur`, `mahua`, with the `-el2` variants left out. **Only the Yoga Slim 7x has been booted.**
+Every other board is untested.
+
+How the pieces fit:
+
+| Step | Where | What it does |
+|---|---|---|
+| Pick the DTB | `configs/grub/grub.cfg` + generated `boards-match.cfg` | GRUB reads SMBIOS Manufacturer/Product Name. A row in `configs/boards.tsv` boots its DTB straight away. No match: a menu of every DTB. |
+| Remember it | `swarmarchy.dtb=` on the live cmdline | `swarmarchy-hw-snapdragon dtb` returns it to the installer. |
+| Boot args + DTB | `.automated_script.sh`, `install/login/limine-snapper.sh` | Both call `swarmarchy-hw-snapdragon cmdline` / `dtb`. Nothing names a board. |
+| Firmware | `swarmarchy-stage-qcom-firmware` | Places every file the DT's `firmware-name` properties request, from the private bundle or a `copy-qcom-firmware.ps1` stick. |
+
+**Adding or fixing a board:**
+- **Regenerate the table** from a dtbloader checkout:
+  `builder/import-dtbloader-boards.py <dtbloader> <commit> > configs/boards.tsv`.
+  - dtbloader is <https://github.com/TravMurav/dtbloader>, BSD-3.
+  - It joins dtbloader's per-machine `fwupdtool hwids` dumps to its DTB list.
+  - Lenovo matches on the 4-character machine type (`^83ED`); other vendors match exactly.
+- **Add a hand-made row** below the `# --- local rows below ---` marker. Columns:
+  `vendor`, `product_re`, `dtb`, `name`, `auto`, `verified`, `source`.
+- **Rows whose DTB the kernel does not ship are skipped** with a build warning. As of dtbloader
+  `b1bf23e`, 9 of 31 are skipped, mostly name mismatches such as `sp12` vs `sp12in`. Those
+  machines still boot from the menu.
+- **Mark a row `verified=yes`** once someone has booted the ISO on it.
+
+**Bundled firmware (private ISO):** `~/swarmarchy-pkgs-build/local/firmware` is laid out by DT
+firmware dir, e.g. `x1e80100/LENOVO/83ED/qcadsp8380.mbn`, so one ISO can carry several boards and
+each only ever gets its own blobs. Loose files at the top are ignored, with a log line saying so.
+Run `swarmarchy-hw-snapdragon firmware` on a board to see the exact dir it wants.
+
 ## Running the installer (boot → shrink → install)
 
 The dual-boot install, start to finish, on the Yoga. Assumes a USB already flashed with
@@ -176,6 +210,8 @@ any existing Linux are only read, never written.
 
    - Secure Boot must be off (`05` Step 0).
    - No USB entry? Re-seat the stick and retry — the firmware only rescans on a cold boot.
+   - A laptop in `configs/boards.tsv` boots straight to the installer, as before. Any other laptop
+     stops at a GRUB menu: pick **"Swarmarchy on <your laptop>"**. The DTB name is in brackets.
 
 2. **Get a shell instead of the installer**
 
@@ -253,11 +289,15 @@ any existing Linux are only read, never written.
    - The free-space line is what the installer will offer to use.
    - The partition keeps its UUID and number, so the existing GRUB entry still boots.
 
-9. **Stage the Qualcomm firmware (optional, Yoga only)**
+9. **Stage the Qualcomm firmware (optional)**
 
-   Plug in the stick holding the `firmware/` directory from `copy-qcom-firmware.ps1`.
+   Plug in the stick holding the `firmware/` directory from `copy-qcom-firmware.ps1`, run on
+   **this** laptop's Windows. The blobs are signed per model.
 
-   - The installer scans attached filesystems for it and places the blobs at the board path.
+   - The installer scans attached filesystems for it and places each blob at the path the board's
+     device tree names.
+   - When Windows has several copies of a name, it takes the newest by the manifest's
+     `LastWriteUtc`, and never the NPU package's (`qcnspmcdm*`) when another copy exists.
    - Skip it and the install still finishes — you just get no DP-alt monitors, no audio and
      software rendering until the blobs are added by hand (`05` §"External monitors").
 
