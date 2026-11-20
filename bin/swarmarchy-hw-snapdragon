@@ -3,7 +3,7 @@
 # swarmarchy:summary=Describe the Snapdragon X board this system booted on
 # swarmarchy:group=hw
 # swarmarchy:name=snapdragon
-# swarmarchy:args=soc|dtb|cmdline|firmware [--dt-root DIR] [--boot DIR] [--cmdline-file FILE]
+# swarmarchy:args=soc|dtb|cmdline [--all]|firmware [--dt-root DIR] [--boot DIR] [--cmdline-file FILE]
 # swarmarchy:examples=swarmarchy hw snapdragon soc | swarmarchy hw snapdragon dtb
 # swarmarchy:hidden=true
 #
@@ -19,6 +19,7 @@
 #             file exists, else found by matching the DT's first compatible string against
 #             /boot/dtbs/qcom/*.dtb. Exit 1 when neither finds exactly one.
 #   cmdline   the kernel arguments these boards need to boot with clocks/power domains intact.
+#             --all prints them without checking the board (used by the ISO build).
 #   firmware  every firmware file the enabled DT nodes request (firmware-name), one per line,
 #             relative to /lib/firmware, e.g. qcom/x1e80100/LENOVO/83ED/qcadsp8380.mbn.
 #
@@ -31,12 +32,14 @@ dt_root=/sys/firmware/devicetree/base
 boot_dir=/boot
 cmdline_file=/proc/cmdline
 cmd=""
+all=0
 
 while (( $# )); do
   case $1 in
     --dt-root) dt_root=$2; shift 2 ;;
     --boot) boot_dir=$2; shift 2 ;;
     --cmdline-file) cmdline_file=$2; shift 2 ;;
+    --all) all=1; shift ;;
     soc | dtb | cmdline | firmware) cmd=$1; shift ;;
     *) echo "Usage: swarmarchy-hw-snapdragon soc|dtb|cmdline|firmware [--dt-root DIR] [--boot DIR] [--cmdline-file FILE]" >&2; exit 2 ;;
   esac
@@ -62,7 +65,9 @@ case $cmd in
     ;;
 
   cmdline)
-    [[ -n $(socs) ]] || exit 1
+    # --all prints the list without checking this machine: the ISO build uses it to put the
+    # same arguments on its GRUB entries, since the live system needs them to boot at all.
+    (( all )) || [[ -n $(socs) ]] || exit 1
     # Without these the board boots with clocks and power domains gated off: USB-C hubs do not
     # enumerate and the display stack misbehaves. Proven on the Yoga Slim 7x (x1e80100); the
     # same list is used for every Snapdragon X board until one is shown to need otherwise.
