@@ -15,7 +15,7 @@
 #   soc       the Snapdragon X SoC ids in the DT compatible, most specific first, one per line
 #             (e.g. x1e80100). Exit 1 when this is not a Snapdragon X1/X2 machine.
 #   dtb       the board DTB relative to /boot, e.g. dtbs/qcom/x1e80100-lenovo-yoga-slim7x.dtb.
-#             Taken from swarmarchy.dtb= on the kernel cmdline (set by the ISO's GRUB) when that
+#             Taken from swarmarchy.devicetree= on the kernel cmdline (set by the ISO's GRUB) when that
 #             file exists, else found by matching the DT's first compatible string against
 #             /boot/dtbs/qcom/*.dtb. Exit 1 when neither finds exactly one.
 #   cmdline   the kernel arguments these boards need to boot with clocks/power domains intact.
@@ -71,7 +71,7 @@ case $cmd in
 
   dtb)
     [[ -n $(socs) ]] || exit 1
-    from_cmdline=$(tr ' ' '\n' <"$cmdline_file" 2>/dev/null | sed -n 's/^swarmarchy\.dtb=//p' | tail -1)
+    from_cmdline=$(tr ' ' '\n' <"$cmdline_file" 2>/dev/null | sed -n 's/^swarmarchy\.devicetree=//p' | tail -1)
     if [[ -n $from_cmdline && $from_cmdline != */../* && -f $boot_dir/$from_cmdline ]]; then
       echo "$from_cmdline"
       exit 0

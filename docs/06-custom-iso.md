@@ -173,7 +173,7 @@ How the pieces fit:
 | Step | Where | What it does |
 |---|---|---|
 | Pick the DTB | `configs/grub/grub.cfg` + generated `boards-match.cfg` | GRUB reads SMBIOS Manufacturer/Product Name. A row in `configs/boards.tsv` boots its DTB straight away. No match: a menu of every DTB. |
-| Remember it | `swarmarchy.dtb=` on the live cmdline | `swarmarchy-hw-snapdragon dtb` returns it to the installer. |
+| Remember it | `swarmarchy.devicetree=` on the live cmdline | `swarmarchy-hw-snapdragon dtb` returns it to the installer. |
 | Boot args + DTB | `.automated_script.sh`, `install/login/limine-snapper.sh` | Both call `swarmarchy-hw-snapdragon cmdline` / `dtb`. Nothing names a board. |
 | Firmware | `swarmarchy-stage-qcom-firmware` | Places every file the DT's `firmware-name` properties request, from the private bundle or a `copy-qcom-firmware.ps1` stick. |
 
