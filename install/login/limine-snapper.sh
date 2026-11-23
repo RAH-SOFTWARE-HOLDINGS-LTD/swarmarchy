@@ -118,6 +118,29 @@ fi
 
 echo "mkinitcpio hooks re-enabled"
 
+# Rebuild the initramfs now that every hook config is in place (swarmarchy_hooks.conf above,
+# plus drop-ins such as swarmarchy_resume.conf from hibernation.sh).
+#
+# On x86_64 the limine-mkinitcpio-hook install below does this through its pacman hooks. On
+# Arch Linux ARM it does not: the package is usually installed earlier, while preflight had
+# the mkinitcpio hooks disabled, so pacman reports it "up to date -- skipping" here and
+# nothing rebuilds. The only image left is archinstall's, built before swarmarchy_hooks.conf
+# existed -- without `encrypt` -- so an encrypted install waits forever for its root device
+# (rootwait) on a black screen. Seen on the Yoga Slim 7x, 2026-11-23.
+if [[ $(uname -m) != "x86_64" ]]; then
+  sudo mkinitcpio -P
+
+  # Refuse to finish with an image that lacks a runtime hook the config asks for: an
+  # unbootable install must fail here, loudly, not at the first boot.
+  for hook in encrypt resume; do
+    grep -qsE "^HOOKS(\+)?=\(.*\b${hook}\b" /etc/mkinitcpio.conf.d/*.conf /etc/mkinitcpio.conf || continue
+    if ! lsinitcpio -a /boot/initramfs-linux.img 2>/dev/null | grep -A1 'Hook run order' | grep -qw "$hook"; then
+      echo "Error: /boot/initramfs-linux.img is missing the '$hook' hook after mkinitcpio -P" >&2
+      exit 1
+    fi
+  done
+fi
+
 # Installing limine-mkinitcpio-hook above already triggered a full UKI rebuild
 # (via 80-limine-efi-deploy.hook + 90-mkinitcpio-install.hook), which writes the
 # boot entries into /boot/limine.conf. Only fall back to limine-update if those
