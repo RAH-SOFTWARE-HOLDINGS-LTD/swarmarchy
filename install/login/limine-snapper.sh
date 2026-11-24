@@ -128,6 +128,17 @@ echo "mkinitcpio hooks re-enabled"
 # existed -- without `encrypt` -- so an encrypted install waits forever for its root device
 # (rootwait) on a black screen. Seen on the Yoga Slim 7x, 2026-11-23.
 if [[ $(uname -m) != "x86_64" ]]; then
+  # The built-in keyboard on Snapdragon X laptops is I2C HID (i2c_hid_of + i2c_hid), and ALARM
+  # builds both as modules that live on the root filesystem. The LUKS passphrase is typed before
+  # the root is unlocked, so without them in the initramfs only a USB keyboard (usbhid is built
+  # into the kernel) can unlock the laptop. Tested on the Yoga Slim 7x, 2026-11-23: built-in
+  # keyboard failed without these, USB worked. ~54 KB.
+  if swarmarchy-hw-snapdragon soc &>/dev/null; then
+    sudo tee /etc/mkinitcpio.conf.d/swarmarchy_keyboard.conf <<EOF >/dev/null
+MODULES+=(i2c_hid_of i2c_hid)
+EOF
+  fi
+
   sudo mkinitcpio -P
 
   # Refuse to finish with an image that lacks a runtime hook the config asks for: an
