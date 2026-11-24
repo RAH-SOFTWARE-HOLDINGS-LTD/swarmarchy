@@ -71,7 +71,12 @@ case $cmd in
     # Without these the board boots with clocks and power domains gated off: USB-C hubs do not
     # enumerate and the display stack misbehaves. Proven on the Yoga Slim 7x (x1e80100); the
     # same list is used for every Snapdragon X board until one is shown to need otherwise.
-    echo "pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait"
+    # console=tty0: the device tree's /chosen/stdout-path is serial0, so without a console=
+    # the kernel makes the debug UART (ttyMSM0) /dev/console. The encrypt hook's passphrase
+    # prompt then goes to -- and reads from -- a serial port with nothing attached, and an
+    # encrypted install sits on a black screen forever (Yoga Slim 7x, 2026-11-23). tty0 puts
+    # /dev/console on the screen and keyboard.
+    echo "pd_ignore_unused clk_ignore_unused fw_devlink=off efi=novamap cma=128M rootwait console=tty0"
     ;;
 
   dtb)
