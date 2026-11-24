@@ -137,6 +137,16 @@ if [[ $(uname -m) != "x86_64" ]]; then
     sudo tee /etc/mkinitcpio.conf.d/swarmarchy_keyboard.conf <<EOF >/dev/null
 MODULES+=(i2c_hid_of i2c_hid)
 EOF
+
+    # Light the screen inside the initramfs, so the LUKS passphrase prompt is visible instead
+    # of a black screen. msm only binds once EVERY DisplayPort output is ready, including the
+    # USB-C ones; those wait on the pmic_glink altmode bridges (and the ps883x retimers), and
+    # pmic_glink needs qrtr plus the in-kernel PD mapper to initialise. No firmware is needed
+    # just for the bridges to register. ~58 KB compressed. Found with devices_deferred in the
+    # initramfs and tested on the Yoga Slim 7x, 2026-11-24.
+    sudo tee /etc/mkinitcpio.conf.d/swarmarchy_display.conf <<EOF >/dev/null
+MODULES+=(pmic_glink pmic_glink_altmode ps883x qrtr qcom_pd_mapper)
+EOF
   fi
 
   sudo mkinitcpio -P
