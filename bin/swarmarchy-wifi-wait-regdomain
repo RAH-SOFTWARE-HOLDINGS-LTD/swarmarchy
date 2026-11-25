@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# swarmarchy:summary=Wait until Qualcomm ath12k Wi-Fi has its regulatory domain (run before iwd)
+# swarmarchy:hidden=true
+
+# ath12k is "self-managed": the firmware, not the kernel, sets the country rules, and it
+# does so a moment after the chip appears. If iwd asks about the chip in that window, the
+# kernel hits WARN_ON(!regdom && self_managed) in nl80211_get_reg_do and prints a stack
+# trace (harmless, but it lands in the boot log, and on Arch too, by luck of timing).
+# iwd.service.d/wait-regdomain.conf runs this first, so iwd only starts once each ath12k
+# chip has its rules.
+#
+# The check uses `iw reg get`, a dump: the kernel's dump path skips a chip that has no
+# rules yet instead of warning, so polling cannot trigger the warning itself.
+#
+# A Qualcomm PCI network controller (vendor 0x17cb, class 0x0280) counts as pending until
+# its phy exists and, if its driver is ath12k, `iw reg get` lists that phy. Other drivers
+# are not waited on. Gives up after TIMEOUT seconds and always exits 0: iwd must start
+# regardless.
+
+TIMEOUT=15
+
+# Without iw there is no way to check, so do not hold iwd back.
+command -v iw >/dev/null || exit 0
+
+pending() {
+  local dev phy driver
+  for dev in /sys/bus/pci/devices/*; do
+    [[ $(<"$dev/vendor") == "0x17cb" && $(<"$dev/class") == 0x0280* ]] || continue
+    phy=$(ls "$dev/ieee80211" 2>/dev/null | head -n 1)
+    [[ -n $phy ]] || return 0
+    driver=$(basename "$(readlink "$dev/driver")")
+    [[ $driver == ath12k* ]] || continue
+    iw reg get 2>/dev/null | grep -q "^phy#${phy#phy} (self-managed)" || return 0
+  done
+  return 1
+}
+
+for (( i = 0; i < TIMEOUT * 10; i++ )); do
+  pending || exit 0
+  sleep 0.1
+done
+echo "Wi-Fi regulatory domain not set after ${TIMEOUT}s; starting iwd anyway." >&2
+exit 0
