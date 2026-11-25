@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# swarmarchy:summary=Show how long each step from boot to desktop took
+# swarmarchy:group=debug
+# swarmarchy:name=login-timing
+# swarmarchy:args=[-b BOOT] [-D JOURNAL_DIR]
+# swarmarchy:examples=swarmarchy debug login-timing | swarmarchy debug login-timing -b -1 | sudo swarmarchy debug login-timing -D /mnt/var/log/journal
+
+# Reads one boot's journal and prints each milestone on the since-boot clock, with
+# the time since the previous one. The since-boot clock is used because the wall
+# clock jumps when the network time syncs, often in the middle of a login.
+#
+# Only markers from systemd and logind are used: greetd.service is capped at
+# LogLevelMax=warning (see greetd.service.d/log-less.conf), so its own info lines
+# ("session opened", "PAM authentication") are not in the journal.
+#
+#   system ready          systemd's "Startup finished" (its kernel figure includes
+#                         the time spent typing the disk passphrase)
+#   login screen session  logind opens the greeter's session
+#   login screen drawn    first output of the greeter's sway (journalctl -t greeter)
+#   login screen closed   logind: the greeter's session logged out (right after the
+#                         password is accepted, once its PAM close steps finish)
+#   your session          logind opens the user's session
+#   sway autostart        the user manager reaches sway-session.target, which sway's
+#                         autostart starts once it is running
+
+boot=0
+dir_args=()
+while (( $# )); do
+  case $1 in
+    -b) boot=$2; shift 2 ;;
+    -D) dir_args=(-D "$2"); shift 2 ;;
+    -h|--help) sed -n '3,7p' "$0" | sed 's/^# swarmarchy:[a-z]*=//'; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; exit 1 ;;
+  esac
+done
+
+log=$(journalctl "${dir_args[@]}" -b "$boot" --no-pager -o short-monotonic 2>/dev/null)
+if [[ -z $log ]]; then
+  echo "No journal for boot $boot. Reading another system's journal or all boots may need sudo." >&2
+  exit 1
+fi
+
+# First line matching a pattern, as "seconds<TAB>line".
+first() {
+  grep -m1 -E "$1" <<<"$log" | sed -E 's/^\[ *([0-9.]+)\] [^ ]+ /\1\t/'
+}
+
+greeter_session=$(grep -m1 -oE "New session '[^']+' of user '[^']+' with class 'greeter'" <<<"$log" | cut -d"'" -f2)
+
+rows=(
+  "system ready|systemd\[1\]: Startup finished"
+  "login screen session|with class 'greeter'"
+  "login screen drawn| greeter\[[0-9]+\]: "
+  "login screen closed|systemd-logind\[[0-9]+\]: Session ${greeter_session:-NONE} logged out"
+  "your session|New session '[^']+' of user '[^']+' with class 'user'"
+  "sway autostart|Reached target Sway session"
+)
+
+printf '%-22s %9s %9s\n' "step" "at (s)" "+ (s)"
+prev=""
+for row in "${rows[@]}"; do
+  label=${row%%|*}
+  hit=$(first "${row#*|}")
+  if [[ -z $hit ]]; then
+    printf '%-22s %9s %9s\n' "$label" "-" "-"
+    continue
+  fi
+  t=${hit%%$'\t'*}
+  if [[ -n $prev ]]; then
+    delta=$(awk -v a="$t" -v b="$prev" 'BEGIN { printf "%.2f", a - b }')
+  else
+    delta=""
+  fi
+  printf '%-22s %9.2f %9s\n' "$label" "$t" "$delta"
+  prev=$t
+done
+
+startup=$(first "systemd\[1\]: Startup finished")
+[[ -n $startup ]] && echo && echo "${startup#*$'\t'}" | sed 's/^systemd\[1\]: //'
+exit 0

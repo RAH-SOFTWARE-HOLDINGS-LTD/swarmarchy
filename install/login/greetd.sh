@@ -104,13 +104,19 @@ password   include      system-local-login
 password   optional     pam_oo7.so
 
 session    include      system-local-login
+# Skip the keyring steps for system accounts -- above all greetd's own "greeter"
+# user, whose session this stack also opens and closes. It has no keyring, so the
+# socket wait (10s) and both checks (2s + 3s) ran out in full: 15s before the login
+# screen appeared, and 5s more when it closed after the password was accepted.
+session    [success=6 default=ignore]     pam_succeed_if.so quiet uid < 1000
 # Wait for oo7's PAM socket, then up to 3 unlock attempts. After each attempt the
 # check exits 0 if the keyring is unlocked (skipping the rest), else waits and retries.
-session    optional                       pam_exec.so quiet /usr/local/lib/oo7-wait-pam-socket
+# type=open_session: pam_exec otherwise runs these on session close too, and sleeps.
+session    optional                       pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket
 session    optional                       pam_oo7.so
-session    [success=3 default=ignore]     pam_exec.so quiet /usr/local/lib/oo7-wait-pam-socket check 2
+session    [success=3 default=ignore]     pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket check 2
 session    optional                       pam_oo7.so
-session    [success=1 default=ignore]     pam_exec.so quiet /usr/local/lib/oo7-wait-pam-socket check 3
+session    [success=1 default=ignore]     pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket check 3
 session    optional                       pam_oo7.so
 session    optional                       pam_permit.so
 PAMEOF
