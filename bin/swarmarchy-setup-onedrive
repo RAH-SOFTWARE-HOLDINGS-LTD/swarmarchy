@@ -53,6 +53,31 @@ else
   fi
 fi
 
+# Make sure the remote points at the account's MAIN drive. `rclone config create` is
+# non-interactive, so it takes the first entry of /me/drives -- and on some personal
+# accounts that list starts with Microsoft-internal drives (ODCMetadataArchive, Bundles_*,
+# GUID-named), which answer "400 invalidRequest: ObjectHandle is Invalid". rclone then saves
+# no drive_id and the mount never comes up. /me/drive always names the main OneDrive.
+if ! rclone config show onedrive 2>/dev/null | grep -q '^drive_id = .'; then
+  access_token=$(rclone config dump | jq -r '.onedrive.token // empty' | jq -r '.access_token // empty')
+  drive_id=""
+  if [[ -n $access_token ]]; then
+    # Header via stdin, so the token never appears on a command line.
+    drive_id=$(printf 'Authorization: Bearer %s\n' "$access_token" |
+      curl -fsS -m 30 -H @- 'https://graph.microsoft.com/v1.0/me/drive?$select=id' |
+      jq -r '.id // empty')
+  fi
+  unset access_token
+  if [[ -z $drive_id ]]; then
+    echo "Could not determine the main OneDrive drive (Microsoft's /me/drive)." >&2
+    exit 1
+  fi
+  # Written straight into rclone.conf: `rclone config update` re-runs the sign-in flow.
+  conf=$(rclone config file | tail -n 1)
+  sed -i "/^\[onedrive\]$/a drive_id = $drive_id" "$conf"
+  echo "OneDrive: using the main drive ($drive_id)."
+fi
+
 mkdir -p "$MOUNT"
 systemctl --user daemon-reload
 systemctl --user enable --now "$UNIT"
