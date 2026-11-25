@@ -56,6 +56,7 @@ wiremix                    # PipeWire mixer as a TUI
 
 # ─── Networking & Wi-Fi (Qualcomm wifi) ───
 iwd                        # Wi-Fi daemon (connects/manages wireless)
+iw                         # Wi-Fi query tool (swarmarchy-wifi-wait-regdomain reads regulatory state)
 impala                     # friendly TUI front-end for iwd
 wireless-regdb             # wireless regulatory database (legal channel/power limits)
 avahi                      # mDNS / zeroconf service discovery on the LAN
