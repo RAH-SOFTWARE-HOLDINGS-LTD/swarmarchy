@@ -35,12 +35,20 @@ sudo install -m 0644 "$SWARMARCHY_PATH/default/greetd/sway-greeter.conf" \
 sudo install -m 0644 "$SWARMARCHY_PATH/default/greetd/gtkgreet.css" \
   /etc/greetd/gtkgreet.css
 
+# The greeter's sway and gtkgreet write their logs to stdout/stderr, which greetd leaves
+# on VT1 -- so output notes, GTK warnings and Mesa's "shader cache (Permission denied)"
+# printed over the boot screen before the login prompt. systemd-cat sends them to the
+# journal instead (journalctl -t greeter). The Mesa error is because the greeter user's
+# home is /, so it has nowhere to keep ~/.cache; XDG_CACHE_HOME gives it one, which also
+# lets it reuse compiled shaders on the next boot instead of rebuilding them.
+sudo install -d -m 0750 -o greeter -g greeter /var/cache/greeter
+
 cat <<EOF | sudo tee /etc/greetd/config.toml >/dev/null
 [terminal]
 vt = 1
 
 [default_session]
-command = "sway --config /etc/greetd/sway-greeter.conf"
+command = "env XDG_CACHE_HOME=/var/cache/greeter systemd-cat -t greeter sway --config /etc/greetd/sway-greeter.conf"
 user = "greeter"
 EOF
 
