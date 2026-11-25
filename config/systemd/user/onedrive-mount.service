@@ -6,11 +6,20 @@ Wants=network-online.target
 [Service]
 Type=notify
 ExecStartPre=/usr/bin/mkdir -p %h/Onedrive
+# --dir-cache-time 5m, not 1000h: polling (--poll-interval) is the only thing that refreshes
+# a cached listing, and rclone's OneDrive change listener dies after a single transient
+# Microsoft error (serviceNotAvailable): it then polls /delta with an empty token, which is
+# rejected forever ("[token.String] A value is required") until the service restarts. On the
+# Yoga that happened in nearly every run -- 224,900 failures -- so new folders from other
+# devices never appeared. 5m bounds the staleness whether or not polling works.
+# --exclude Personal Vault: Microsoft does not let apps open the Vault ("ObjectHandle is
+# Invalid"); without this every listing of the root logs an error.
 ExecStart=/usr/bin/rclone mount onedrive: %h/Onedrive \
     --vfs-cache-mode writes \
     --vfs-cache-max-age 24h \
-    --dir-cache-time 1000h \
+    --dir-cache-time 5m \
     --poll-interval 15s \
+    --exclude "/Personal Vault/**" \
     --umask 022 \
     --log-level INFO
 ExecStop=/usr/bin/fusermount3 -uz %h/Onedrive
