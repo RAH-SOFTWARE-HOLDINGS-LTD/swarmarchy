@@ -1,0 +1,15 @@
+#%PAM-1.0
+# Swarmarchy: greetd login, default. Nothing here touches the keyring: it has no real
+# password and oo7 unlocks it on its own at startup (see no-password.conf in
+# ~/.config/systemd/user/oo7-daemon.service.d/). swarmarchy toggle keyring-password on
+# installs pam-greetd-protected instead.
+
+auth       required     pam_securetty.so
+auth       requisite    pam_nologin.so
+auth       include      system-local-login
+
+account    include      system-local-login
+
+password   include      system-local-login
+
+session    include      system-local-login

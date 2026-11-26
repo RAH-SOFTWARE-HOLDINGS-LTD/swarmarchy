@@ -1,0 +1,32 @@
+#%PAM-1.0
+# Swarmarchy: greetd login WITH the keyring password on (swarmarchy toggle keyring-password on).
+# The login password unlocks the oo7 keyring. The default is pam-greetd, which leaves the keyring alone.
+
+auth       required     pam_securetty.so
+auth       requisite    pam_nologin.so
+auth       include      system-local-login
+# Stash the login password. Must come AFTER the real auth, or PAM_AUTHTOK is unset.
+auth       optional     pam_oo7.so
+
+account    include      system-local-login
+
+password   include      system-local-login
+# Keep the keyring password in step when the login password changes.
+password   optional     pam_oo7.so
+
+session    include      system-local-login
+# Skip the keyring steps for system accounts -- above all greetd's own "greeter"
+# user, whose session this stack also opens and closes. It has no keyring, so the
+# socket wait (10s) and both checks (2s + 3s) ran out in full: 15s before the login
+# screen appeared, and 5s more when it closed after the password was accepted.
+session    [success=6 default=ignore]     pam_succeed_if.so quiet uid < 1000
+# Wait for oo7's PAM socket, then up to 3 unlock attempts. After each attempt the
+# check exits 0 if the keyring is unlocked (skipping the rest), else waits and retries.
+# type=open_session: pam_exec otherwise runs these on session close too, and sleeps.
+session    optional                       pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket
+session    optional                       pam_oo7.so
+session    [success=3 default=ignore]     pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket check 2
+session    optional                       pam_oo7.so
+session    [success=1 default=ignore]     pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket check 3
+session    optional                       pam_oo7.so
+session    optional                       pam_permit.so

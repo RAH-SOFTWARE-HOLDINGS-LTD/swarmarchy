@@ -30,10 +30,11 @@ gsettings set org.gnome.desktop.interface gtk-enable-primary-paste true
 systemctl --user daemon-reload
 systemctl --user enable --now swayosd-server.service
 systemctl --user enable --now swayidle.service
-# oo7-daemon must already be starting when PAM's session phase runs, so it can
-# hand the stashed login password to the daemon's socket and unlock the keyring.
-# Without this the Secret Service never unlocks and Chromium-based browsers hang
-# on every page load. See install/login/greetd.sh for the full explanation.
+# Start oo7-daemon with the session so the keyring is unlocked before any app asks:
+# by default it unlocks itself at startup (oo7-daemon.service.d/no-password.conf);
+# with `swarmarchy toggle keyring-password on`, PAM's session phase hands it the
+# login password and must find it already starting. A locked Secret Service makes
+# Chromium-based browsers hang on every page load. See install/login/greetd.sh.
 systemctl --user enable oo7-daemon.service
 
 elephant service enable

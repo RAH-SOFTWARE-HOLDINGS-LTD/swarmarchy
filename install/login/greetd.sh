@@ -65,69 +65,29 @@ if [[ $(getent passwd greeter | cut -d: -f6) != "/var/lib/greeter" ]]; then
   sudo usermod -d /var/lib/greeter greeter
 fi
 
-# ─── oo7 keyring unlock at login ────────────────────────────────────────────
+# ─── oo7 keyring ────────────────────────────────────────────────────────────
 #
-# swarmarchy-base.packages ships oo7 as the Secret Service provider, but nothing
-# unlocked it, so org.freedesktop.secrets stayed locked for the whole session.
-# Chromium-based browsers block waiting for their cookie-encryption key and every
-# page navigation is cancelled before it reaches DNS, while the browser's own
-# background traffic and curl work fine -- which makes it look like a network
-# fault for a long time. Firefox is unaffected; it does not use the keyring.
+# swarmarchy-base.packages ships oo7 as the Secret Service provider. It must be
+# unlocked for the whole session: Chromium-based browsers block waiting for their
+# cookie-encryption key, and every page navigation is cancelled before it reaches
+# DNS while curl and Firefox work fine -- which looks like a network fault.
 #
-# The race: pam_oo7 (session phase) makes ONE attempt to connect to
-# /run/user/<uid>/oo7-pam.sock. oo7-daemon.service is started by the user manager
-# in parallel with login and creates that socket ~100ms later, and PAM does not
-# wait for user units. So the stashed password is dropped and the keyring stays
-# locked.
+# Default: no real keyring password. oo7 unlocks the keyring on its own at startup
+# with a fixed value (config/systemd/user/oo7-daemon.service.d/no-password.conf),
+# so the login below does not touch the keyring and nothing waits for it.
 #
-# Do NOT use `pam_oo7.so auto_start` to work around this: it hard-codes
-# /usr/bin/oo7-daemon while Arch installs the binary at /usr/lib/oo7-daemon, and
-# symlinking the two makes auto_start spawn a second daemon outside systemd that
-# races the enabled unit.
-# Symlink for the same reason: /usr/share/swarmarchy/default persists, the source
-# tree does not, and PAM needs an absolute path that stays correct after a redeploy.
+# `swarmarchy toggle keyring-password on` switches to the login password instead:
+# it installs default/oo7/pam-greetd-protected (pam_oo7 hands the login password to
+# the daemon) and default/oo7/wait-for-pam-socket.conf. The helper below is only
+# used in that mode; it is symlinked so the path stays valid after a redeploy.
 sudo mkdir -p /usr/local/lib
 sudo ln -sfn /usr/share/swarmarchy/default/oo7/oo7-wait-pam-socket \
   /usr/local/lib/oo7-wait-pam-socket
 
-# PAM stack. Every added line is optional or default=ignore, so a keyring failure
-# can never block a login. The success=N jump counts depend on the exact line
-# order below -- do not insert lines between them.
 sudo mkdir -p /etc/pam.d
 [[ -f /etc/pam.d/greetd && ! -f /etc/pam.d/greetd.bak-pre-oo7 ]] &&
   sudo cp /etc/pam.d/greetd /etc/pam.d/greetd.bak-pre-oo7
-cat <<'PAMEOF' | sudo tee /etc/pam.d/greetd >/dev/null
-#%PAM-1.0
-
-auth       required     pam_securetty.so
-auth       requisite    pam_nologin.so
-auth       include      system-local-login
-# Stash the login password. Must come AFTER the real auth, or PAM_AUTHTOK is unset.
-auth       optional     pam_oo7.so
-
-account    include      system-local-login
-
-password   include      system-local-login
-# Keep the keyring password in step when the login password changes.
-password   optional     pam_oo7.so
-
-session    include      system-local-login
-# Skip the keyring steps for system accounts -- above all greetd's own "greeter"
-# user, whose session this stack also opens and closes. It has no keyring, so the
-# socket wait (10s) and both checks (2s + 3s) ran out in full: 15s before the login
-# screen appeared, and 5s more when it closed after the password was accepted.
-session    [success=6 default=ignore]     pam_succeed_if.so quiet uid < 1000
-# Wait for oo7's PAM socket, then up to 3 unlock attempts. After each attempt the
-# check exits 0 if the keyring is unlocked (skipping the rest), else waits and retries.
-# type=open_session: pam_exec otherwise runs these on session close too, and sleeps.
-session    optional                       pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket
-session    optional                       pam_oo7.so
-session    [success=3 default=ignore]     pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket check 2
-session    optional                       pam_oo7.so
-session    [success=1 default=ignore]     pam_exec.so quiet type=open_session /usr/local/lib/oo7-wait-pam-socket check 3
-session    optional                       pam_oo7.so
-session    optional                       pam_permit.so
-PAMEOF
+sudo install -m 0644 "$SWARMARCHY_PATH/default/oo7/pam-greetd" /etc/pam.d/greetd
 
 # Don't use chrootable here as --now will cause issues for manual installs
 sudo systemctl enable greetd.service
