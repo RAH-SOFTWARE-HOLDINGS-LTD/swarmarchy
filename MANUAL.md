@@ -12,6 +12,7 @@ Open this any time from **Super+Space → Learn → Swarmarchy**. It is installe
 - [Everyday tools](#everyday-tools)
 - [Customizing](#customizing)
 - [After an install](#after-an-install)
+- [When something goes wrong](#when-something-goes-wrong)
 
 ## Getting around
 
@@ -120,6 +121,8 @@ turns it back on.
 | **Super+Ctrl+Shift+,** | Click the notification's action (open the chat, the screenshot, …) |
 | **Super+Ctrl+N** | Do not disturb on/off |
 
+New notifications stack on top, and the last 15 dismissed ones can be brought back.
+
 ### Reminders
 
 **Super+Ctrl+R** sets one (minutes, then an optional message). **Super+Ctrl+Shift+R** shows the
@@ -153,6 +156,27 @@ LocalSend, **Alt+E** extracts an archive, **C** compresses.
 | **Super+Mute** | Switch audio output (speakers, headphones, monitor) |
 
 Media keys work as labelled, also on the lock screen.
+
+### Passwords for apps (keyring)
+
+Apps such as Brave keep their secrets (saved logins, the key that encrypts their cookies) in the
+keyring (oo7). By default it has **no password** and unlocks by itself when you log in; while the
+laptop is off, the disk encryption protects it.
+
+```bash
+swarmarchy toggle keyring-password status   # on or off, and whether it is unlocked now
+swarmarchy toggle keyring-password on       # protect it with your login password
+swarmarchy toggle keyring-password off      # back to no password
+```
+
+Close the browser before switching; it asks for your login password. With it **on**, the login
+unlocks the keyring with your password (logging in takes about half a second longer), and a
+password changed with `passwd` no longer matches the keyring: turn it off first, change the
+password, then turn it on again.
+
+The no-password setting is
+`~/.config/systemd/user/oo7-daemon.service.d/no-password.conf`. Don't change the value in it:
+the keyring is encrypted with it.
 
 ### Bar and launcher
 
@@ -189,6 +213,11 @@ to reset something. Every file you can customize: `ls /etc/skel/.config/`
 | Terminal | `~/.config/foot/foot.ini` | `/etc/skel/.config/foot/foot.ini` |
 | Lock screen | `~/.config/swaylock/config` | `/etc/skel/.config/swaylock/config` |
 | Weather cities | `~/.config/swarmarchy/weather-location` | — |
+| Login screen: its monitor layout, its look | `/etc/greetd/sway-greeter.conf`, `/etc/greetd/gtkgreet.css` (with `sudo`) | `/usr/share/swarmarchy/default/greetd/` |
+| Keyring password | use `swarmarchy toggle keyring-password`, not the files in `~/.config/systemd/user/oo7-daemon.service.d/` | `/etc/skel/.config/systemd/user/oo7-daemon.service.d/` |
+
+The login screen runs before you log in, so it doesn't read `~/.config/sway/monitors.conf`: give
+it its own `output` lines in `/etc/greetd/sway-greeter.conf`. It applies at the next login screen.
 
 ### Applying changes
 
@@ -246,7 +275,8 @@ swarmarchy commands        # every command with a one-line summary
 Things to do by hand, in any order.
 
 - **OneDrive**: sign in when asked at first login; it mounts at `~/Onedrive`. To redo it later:
-  `swarmarchy setup onedrive`.
+  `swarmarchy setup onedrive`. Files and folders added from other devices show up within about
+  5 minutes. The Personal Vault isn't shown: Microsoft doesn't let apps open it.
 - **Weather cities**: see [Bar and launcher](#bar-and-launcher).
 - **SSH and GPG keys**: restore `~/.ssh` and `~/.gnupg` first; the clones below need them.
 - **Neovim**: clone your config, e.g. `git clone git@github.com:<user>/<nvim-config>.git ~/.config/nvim`
@@ -257,3 +287,13 @@ Things to do by hand, in any order.
   The token can't create buckets, so pass `--s3-no-check-bucket` to `rclone copy`.
 
 Your git name and email are set by the installer's prompts.
+
+## When something goes wrong
+
+| Problem | What to do |
+|---|---|
+| Brave won't load pages, but other apps reach the internet | The keyring is locked. Check with `swarmarchy toggle keyring-password status`. If the password is off, restore its setting and restart the keyring: `swarmarchy refresh config systemd/user/oo7-daemon.service.d/no-password.conf`, then `systemctl --user restart oo7-daemon`. |
+| The whole screen is frozen and no key works | Hold **Alt+SysRq** (SysRq is the Print Screen key on most laptops) and press **R, E, I, S, U, B** one at a time, a second apart. The kernel saves your files to disk and restarts, which is safer than holding the power button. |
+| Something in the desktop misbehaves | Read the session log: `~/.local/state/swarmarchy/session.log` (Sway and everything it starts). |
+| The login screen shows an error or looks wrong | Its messages are in the system log: `journalctl -b -t greeter`. |
+| Boot or login feels slow | `swarmarchy debug login-timing` shows how long each step took, from "system ready" to the desktop (add `-b -1` for the previous boot). |
