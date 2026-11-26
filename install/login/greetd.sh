@@ -38,17 +38,13 @@ sudo install -m 0644 "$SWARMARCHY_PATH/default/greetd/gtkgreet.css" \
 # The greeter's sway and gtkgreet write their logs to stdout/stderr, which greetd leaves
 # on VT1 -- so output notes, GTK warnings and Mesa's "shader cache (Permission denied)"
 # printed over the boot screen before the login prompt. systemd-cat sends them to the
-# journal instead (journalctl -t greeter). The Mesa error is because the greeter user's
-# home is /, so it has nowhere to keep ~/.cache; XDG_CACHE_HOME gives it one, which also
-# lets it reuse compiled shaders on the next boot instead of rebuilding them.
-sudo install -d -m 0750 -o greeter -g greeter /var/cache/greeter
-
+# journal instead (journalctl -t greeter).
 cat <<EOF | sudo tee /etc/greetd/config.toml >/dev/null
 [terminal]
 vt = 1
 
 [default_session]
-command = "env XDG_CACHE_HOME=/var/cache/greeter systemd-cat -t greeter sway --config /etc/greetd/sway-greeter.conf"
+command = "systemd-cat -t greeter sway --config /etc/greetd/sway-greeter.conf"
 user = "greeter"
 EOF
 
@@ -56,6 +52,18 @@ EOF
 # logind normally delegates both to the session on the seat; the group membership
 # is a cheap hedge against a lockout if it does not.
 sudo usermod -aG input greeter
+
+# Give the greeter a home it can write. greetd's sysusers entry makes it /, so Mesa in
+# the greeter's sway could not create ~/.cache ("shader cache (Permission denied)") and
+# rebuilt every shader at each boot. XDG_CACHE_HOME does not help: Arch's sway carries
+# cap_sys_nice, which makes it a secure-exec process, and Mesa then ignores the
+# environment and uses the passwd home. systemd-sysusers never changes an existing
+# account, so the new home sticks. usermod refuses while the greeter is running, which
+# only happens at the login screen -- never while an install or redeploy runs.
+sudo install -d -m 0750 -o greeter -g greeter /var/lib/greeter
+if [[ $(getent passwd greeter | cut -d: -f6) != "/var/lib/greeter" ]]; then
+  sudo usermod -d /var/lib/greeter greeter
+fi
 
 # ─── oo7 keyring unlock at login ────────────────────────────────────────────
 #
