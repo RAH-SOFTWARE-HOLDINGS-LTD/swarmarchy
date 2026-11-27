@@ -31,6 +31,7 @@ wf-recorder                # screen-recording backend (wlroots); Alt+Print
 satty                      # screenshot annotation editor (arrows, blur, crop)
 wl-clipboard               # clipboard from the CLI (wl-copy / wl-paste)
 wtype                      # synthesises keystrokes (Mac-style SUPER shortcuts in Sway)
+socat                      # talks to a running Chromium browser's socket (fast new window in swarmarchy-launch-browser)
 wlsunset                   # night-light (warms screen colour temperature)
 xdg-desktop-portal-wlr     # screenshare/screencast portal for wlroots compositors
 xdg-desktop-portal-gtk     # file-picker + settings portal (GTK side)

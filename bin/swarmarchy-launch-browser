@@ -4,6 +4,30 @@
 # swarmarchy:args=[url]
 
 default_browser=$(xdg-settings get default-web-browser)
+
+# A running Chromium-based browser takes new-window requests on its singleton
+# socket. Sending the request directly (~15ms) skips starting a second browser
+# process only for it to forward the request and exit (~0.2s). Anything else
+# (not Chromium, not running, no ACK) falls through to a normal launch.
+config_home=${XDG_CONFIG_HOME:-$HOME/.config}
+case $default_browser in
+  brave-browser.desktop) profile_dir=$config_home/BraveSoftware/Brave-Browser ;;
+  google-chrome.desktop) profile_dir=$config_home/google-chrome ;;
+  chromium.desktop) profile_dir=$config_home/chromium ;;
+  microsoft-edge.desktop) profile_dir=$config_home/microsoft-edge ;;
+esac
+
+if [[ -S $profile_dir/SingletonSocket ]] && swarmarchy-cmd-present socat; then
+  if [[ $default_browser == "microsoft-edge.desktop" ]]; then
+    private_flag="--inprivate"
+  else
+    private_flag="--incognito"
+  fi
+  reply=$(printf '%s\0' START "$PWD" browser "${@/--private/$private_flag}" |
+    socat -t 1 - "UNIX-CONNECT:$profile_dir/SingletonSocket" 2>/dev/null)
+  [[ $reply == "ACK" ]] && exit 0
+fi
+
 browser_exec=$(sed -n 's/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr}/share/applications/$default_browser 2>/dev/null | head -1)
 
 if [[ -z $browser_exec ]]; then
